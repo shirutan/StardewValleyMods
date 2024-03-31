@@ -40,6 +40,7 @@ using Location = xTile.Dimensions.Location;
 using StardewValley.TerrainFeatures;
 using System.Reflection.PortableExecutable;
 using System.Reflection.Metadata;
+using StardewValley.Pathfinding;
 
 namespace SpaceCore
 {
@@ -84,6 +85,8 @@ namespace SpaceCore
             this.Config = helper.ReadConfig<Configuration>();
 
             GatherLocals();
+
+            WarpPathfindingCache.IgnoreLocationNames.Add("VolcanoEntrance");
 
             helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
             helper.Events.Input.ButtonPressed += this.Input_ButtonPressed;
