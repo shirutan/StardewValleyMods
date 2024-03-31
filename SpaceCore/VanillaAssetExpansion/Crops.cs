@@ -69,7 +69,7 @@ namespace SpaceCore.VanillaAssetExpansion
                     }
                     else
                     {
-                        Game1.createItemDebris(harvestedItem.getOne(), new Vector2(xTile * 64 + 32, yTile * 64 + 32), -1);
+                        drops.Add(harvestedItem.getOne());
                     }
                     success = localSuccess = true;
                 }
@@ -157,7 +157,8 @@ namespace SpaceCore.VanillaAssetExpansion
                 {
                     cropQuality = 1;
                 }
-                cropQuality = MathHelper.Clamp(cropQuality, data?.HarvestMinQuality ?? 0, data?.HarvestMaxQuality ?? cropQuality); int numToHarvest = 1;
+                cropQuality = MathHelper.Clamp(cropQuality, data?.HarvestMinQuality ?? 0, data?.HarvestMaxQuality ?? cropQuality);
+                int numToHarvest = 1;
                 if (data != null)
                 {
                     int minStack = data.HarvestMinStack;
@@ -184,7 +185,7 @@ namespace SpaceCore.VanillaAssetExpansion
                 } : ItemRegistry.Create(__instance.indexOfHarvest, 1, cropQuality));
 
                 bool localSuccess = false;
-                DoStuff(harvestedItem, 1, ref localSuccess);
+                DoStuff(harvestedItem, numToHarvest, ref localSuccess);
                 if (localSuccess)
                 {
                     harvestedItem = (__instance.programColored ? new ColoredObject(__instance.indexOfHarvest, 1, __instance.tintColor.Value) : ItemRegistry.Create(__instance.indexOfHarvest));
@@ -224,7 +225,6 @@ namespace SpaceCore.VanillaAssetExpansion
                     DoStuff(harvestedItem, numToHarvest, ref localSuccess);
                     if (localSuccess)
                     {
-                        harvestedItem = (__instance.programColored ? new ColoredObject(__instance.indexOfHarvest, 1, __instance.tintColor.Value) : ItemRegistry.Create(__instance.indexOfHarvest));
                         int price = 0;
                         StardewValley.Object obj = harvestedItem as StardewValley.Object;
                         if (obj != null)
