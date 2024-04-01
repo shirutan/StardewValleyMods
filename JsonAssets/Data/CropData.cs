@@ -83,7 +83,7 @@ namespace JsonAssets.Data
             }
             else
                 str += "false";
-            str += $"/JA\\Crop\\{this.Name}";
+            str += $"/JA\\Crop\\{this.Name.FixIdJA()}";
             return str;
         }
 

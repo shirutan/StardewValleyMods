@@ -58,9 +58,9 @@ namespace JsonAssets.Framework
             {
                 try
                 {
-                    ToLoad.Add("JA/Crop/" + crop.Name, crop.Texture);
+                    ToLoad.Add("JA/Crop/" + crop.Name.FixIdJA(), crop.Texture);
                     if (crop.GiantTexture != null)
-                        ToLoad.Add("JA/CropGiant/" + crop.Name, crop.GiantTexture);
+                        ToLoad.Add("JA/CropGiant/" + crop.Name.FixIdJA(), crop.GiantTexture);
                 }
                 catch (Exception e)
                 {
@@ -71,11 +71,11 @@ namespace JsonAssets.Framework
             {
                 try
                 {
-                    ToLoad.Add("JA/FruitTree/" + ftree.Name, ftree.Texture);
+                    ToLoad.Add("JA/FruitTree/" + ftree.Name.FixIdJA(), ftree.Texture);
                 }
                 catch (Exception e)
                 {
-                    Log.Error($"Exception loading fruit tree texture for {ftree.Name}: {e}");
+                    Log.Error($"Exception loading fruit tree texture for {ftree.Name.FixIdJA()}: {e}");
                 }
             }
             foreach (var big in Mod.instance.BigCraftables)
@@ -244,12 +244,12 @@ namespace JsonAssets.Framework
                         ExtraHarvestChance = crop.Bonus?.ExtraChance ?? 0,
                         HarvestMethod = crop.HarvestWithScythe ? StardewValley.GameData.Crops.HarvestMethod.Scythe : StardewValley.GameData.Crops.HarvestMethod.Grab,
                         TintColors = colors,
-                        Texture = "JA/Crop/" + crop.Name,
+                        Texture = "JA/Crop/" + crop.Name.FixIdJA(),
                     });
                 }
                 catch (Exception e)
                 {
-                    Log.Error($"Exception injecting crop for {crop.Name}: {e}");
+                    Log.Error($"Exception injecting crop for {crop.Name.FixIdJA()}: {e}");
                 }
             }
         }
@@ -269,17 +269,17 @@ namespace JsonAssets.Framework
                         {
                             new StardewValley.GameData.FruitTrees.FruitTreeFruitData()
                             {
-                                ItemId = "(O)" + fruitTree.Product.ToString(),
+                                ItemId = "(O)" + fruitTree.Product.ToString().FixIdJA(),
                             }
                         } ),
-                        Texture = "JA/FruitTree/" + fruitTree.Name,
+                        Texture = "JA/FruitTree/" + fruitTree.Name.FixIdJA(),
                         TextureSpriteRow = 0,
 
                     });
                 }
                 catch (Exception e)
                 {
-                    Log.Error($"Exception injecting fruit tree for {fruitTree.Name}: {e}");
+                    Log.Error($"Exception injecting fruit tree for {fruitTree.Name.FixIdJA()}: {e}");
                 }
             }
         }
@@ -294,12 +294,12 @@ namespace JsonAssets.Framework
                         continue;
                     if (obj.Category != ObjectCategory.Cooking)
                         continue;
-                    Log.Verbose($"Injecting to cooking recipes: {obj.Name}: {obj.Recipe.GetRecipeString(obj)}");
-                    data.Add(obj.Name, obj.Recipe.GetRecipeString(obj));
+                    Log.Verbose($"Injecting to cooking recipes: {obj.Name.FixIdJA()}: {obj.Recipe.GetRecipeString(obj)}");
+                    data.Add(obj.Name.FixIdJA(), obj.Recipe.GetRecipeString(obj));
                 }
                 catch (Exception e)
                 {
-                    Log.Error($"Exception injecting cooking recipe for {obj.Name}: {e}");
+                    Log.Error($"Exception injecting cooking recipe for {obj.Name.FixIdJA()}: {e}");
                 }
             }
         }
@@ -314,12 +314,12 @@ namespace JsonAssets.Framework
                         continue;
                     if (obj.Category == ObjectCategory.Cooking)
                         continue;
-                    Log.Verbose($"Injecting to crafting recipes: {obj.Name}: {obj.Recipe.GetRecipeString(obj)}");
+                    Log.Verbose($"Injecting to crafting recipes: {obj.Name.FixIdJA()}: {obj.Recipe.GetRecipeString(obj)}");
                     data.Add(obj.Name.FixIdJA(), obj.Recipe.GetRecipeString(obj));
                 }
                 catch (Exception e)
                 {
-                    Log.Error($"Exception injecting crafting recipe for {obj.Name}: {e}");
+                    Log.Error($"Exception injecting crafting recipe for {obj.Name.FixIdJA()}: {e}");
                 }
             }
             foreach (var big in Mod.instance.BigCraftables)
@@ -328,12 +328,12 @@ namespace JsonAssets.Framework
                 {
                     if (big.Recipe == null)
                         continue;
-                    Log.Verbose($"Injecting to crafting recipes: {big.Name}: {big.Recipe.GetRecipeString(big)}");
+                    Log.Verbose($"Injecting to crafting recipes: {big.Name.FixIdJA()}: {big.Recipe.GetRecipeString(big)}");
                     data.Add(big.Name.FixIdJA(), big.Recipe.GetRecipeString(big));
                 }
                 catch (Exception e)
                 {
-                    Log.Error($"Exception injecting crafting recipe for {big.Name}: {e}");
+                    Log.Error($"Exception injecting crafting recipe for {big.Name.FixIdJA()}: {e}");
                 }
             }
         }
@@ -344,12 +344,12 @@ namespace JsonAssets.Framework
             {
                 try
                 {
-                    Log.Verbose($"Injecting to big craftables: {big.Name}: {big.GetCraftableInformation()}");
+                    Log.Verbose($"Injecting to big craftables: {big.Name.FixIdJA()}: {big.GetCraftableInformation()}");
                     data.Add(big.Name.FixIdJA(), big.GetCraftableInformation());
                 }
                 catch (Exception e)
                 {
-                    Log.Error($"Exception injecting object information for {big.Name}: {e}");
+                    Log.Error($"Exception injecting object information for {big.Name.FixIdJA()}: {e}");
                 }
             }
         }
@@ -360,12 +360,12 @@ namespace JsonAssets.Framework
             {
                 try
                 {
-                    Log.Verbose($"Injecting to hats: {hat.Name}: {hat.GetHatInformation()}");
+                    Log.Verbose($"Injecting to hats: {hat.Name.FixIdJA()}: {hat.GetHatInformation()}");
                     data.Add(hat.Name.FixIdJA(), hat.GetHatInformation());
                 }
                 catch (Exception e)
                 {
-                    Log.Error($"Exception injecting hat information for {hat.Name}: {e}");
+                    Log.Error($"Exception injecting hat information for {hat.Name.FixIdJA()}: {e}");
                 }
             }
         }
@@ -394,13 +394,13 @@ namespace JsonAssets.Framework
                         AreaOfEffect = weapon.ExtraSwingArea,
                         CritChance = ( float ) weapon.CritChance,
                         CritMultiplier = ( float ) weapon.CritMultiplier,
-                        Texture = $"JA/Weapon/{weapon.Name}",
+                        Texture = $"JA/Weapon/{weapon.Name.FixIdJA()}",
                         SpriteIndex = 0,
                     }); ;
                 }
                 catch (Exception e)
                 {
-                    Log.Error($"Exception injecting weapon information for {weapon.Name}: {e}");
+                    Log.Error($"Exception injecting weapon information for {weapon.Name.FixIdJA()}: {e}");
                 }
             }
         }
@@ -411,24 +411,24 @@ namespace JsonAssets.Framework
             {
                 try
                 {
-                    Log.Verbose($"Injecting to clothing information: {shirt.Name}: {shirt.GetClothingInformation()}");
+                    Log.Verbose($"Injecting to clothing information: {shirt.Name.FixIdJA()}: {shirt.GetClothingInformation()}");
                     data.Add(shirt.Name.FixIdJA(), shirt.GetClothingInformation());
                 }
                 catch (Exception e)
                 {
-                    Log.Error($"Exception injecting clothing information for {shirt.Name}: {e}");
+                    Log.Error($"Exception injecting clothing information for {shirt.Name.FixIdJA()}: {e}");
                 }
             }
             foreach (var pants in Mod.instance.Pants)
             {
                 try
                 {
-                    Log.Verbose($"Injecting to clothing information: {pants.Name}: {pants.GetClothingInformation()}");
+                    Log.Verbose($"Injecting to clothing information: {pants.Name.FixIdJA()}: {pants.GetClothingInformation()}");
                     data.Add(pants.Name.FixIdJA(), pants.GetClothingInformation());
                 }
                 catch (Exception e)
                 {
-                    Log.Error($"Exception injecting clothing information for {pants.Name}: {e}");
+                    Log.Error($"Exception injecting clothing information for {pants.Name.FixIdJA()}: {e}");
                 }
             }
         }
@@ -455,12 +455,12 @@ namespace JsonAssets.Framework
             {
                 try
                 {
-                    Log.Verbose($"Injecting to boots: {boots.Name}: {boots.GetBootsInformation()}");
+                    Log.Verbose($"Injecting to boots: {boots.Name.FixIdJA()}: {boots.GetBootsInformation()}");
                     data.Add(boots.Name.FixIdJA(), boots.GetBootsInformation());
                 }
                 catch (Exception e)
                 {
-                    Log.Error($"Exception injecting boots information for {boots.Name}: {e}");
+                    Log.Error($"Exception injecting boots information for {boots.Name.FixIdJA()}: {e}");
                 }
             }
         }
