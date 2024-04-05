@@ -86,6 +86,7 @@ namespace JsonAssets
             helper.Events.Display.MenuChanged += this.OnMenuChanged;
             helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
             helper.Events.GameLoop.UpdateTicked += this.OnTick;
+            helper.Events.GameLoop.ReturnedToTitle += this.GameLoop_ReturnedToTitle;
             helper.Events.Specialized.LoadStageChanged += this.OnLoadStageChanged;
             helper.Events.Multiplayer.PeerContextReceived += this.ClientConnected;
 
@@ -97,6 +98,11 @@ namespace JsonAssets
                 new HoeDirtPatcher(),
                 new ShopMenuPatcher()
             );
+        }
+
+        private void GameLoop_ReturnedToTitle(object sender, ReturnedToTitleEventArgs e)
+        {
+            DidInit = false;
         }
 
         private Api Api;

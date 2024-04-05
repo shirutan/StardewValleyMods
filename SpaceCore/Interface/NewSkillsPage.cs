@@ -870,7 +870,7 @@ namespace SpaceCore.Interface
 			    b.Draw(Game1.mouseCursors_1_6, new Vector2(x - 80, y - 16), new Rectangle(414, 250, 52, 47), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
 		    }
 		    x += 124;
-		    b.Draw(Game1.staminaRect, new Rectangle(x, y - 16, 4, (int)((float)base.height / 3f) - 32 - 4), new Color(214, 143, 84));
+		    //b.Draw(Game1.staminaRect, new Rectangle(x, y - 16, 4, (int)((float)base.height / 3f) - 32 - 4), new Color(214, 143, 84));
 		    int xHouseOffset = 0;
 		    if (Game1.smallFont.MeasureString(Game1.content.LoadString("Strings\\UI:Inventory_PortraitHover_Level", (int)Game1.player.houseUpgradeLevel + 1)).X > 120f)
 		    {

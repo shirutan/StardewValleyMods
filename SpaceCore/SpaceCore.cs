@@ -154,9 +154,14 @@ namespace SpaceCore
                     error = "Not enough arguments";
                     return false;
                 }
+                Item item = null;
+                if (ArgUtility.TryGetOptional(args, 2, out string qualItemId, out error))
+                {
+                    item = ItemRegistry.Create(qualItemId);
+                }
 
                 error = null;
-                Game1.addHUDMessage(new HUDMessage(args[1]));
+                Game1.addHUDMessage(new HUDMessage(args[1]) { noIcon = item == null, messageSubject = item});
                 return true;
             });
 
@@ -178,16 +183,36 @@ namespace SpaceCore
                 return true;
             });
 
-            GameStateQuery.Register("NEARBY_CROP", (string[] query, GameStateQueryContext ctx) =>
+            TriggerActionManager.RegisterAction("spacechase0.SpaceCore_DamageCurrentFarmer", (string[] args, TriggerActionContext ctx, out string error) =>
+            {
+                if (args.Length < 2)
+                {
+                    error = "Not enough arguments";
+                    return false;
+                }
+                if (!ArgUtility.TryGetInt(args, 1, out int dmg, out error))
+                {
+                    return false;
+                }
+                Game1.player.takeDamage(dmg, false, null);
+                return true;
+            });
+
+            GameStateQuery.Register("PLAYER_SEEN_CONVERSATION_TOPIC", (string[] query, GameStateQueryContext ctx) =>
+            {
+                return GameStateQuery.Helpers.WithPlayer(ctx.Player, query[1], (f) => f.previousActiveDialogueEvents.ContainsKey(query[2]));
+            });
+
+            GameStateQuery.Register("NEARBY_CROPS", (string[] query, GameStateQueryContext ctx) =>
             {
                 if (!ArgUtility.TryGetInt(query, 1, out int radius, out string error) || !ArgUtility.TryGet(query, 2, out string cropSeedId, out error))
                 {
-                    Log.Warn($"Error for NEARBY_CROP: {error}");
+                    Log.Warn($"Error for NEARBY_CROPS: {error}");
                     return false;
                 }
                 if (ctx.CustomFields == null || !ctx.CustomFields.TryGetValue("Tile", out object tileObj) || tileObj is not Vector2 tile)
                 {
-                    Log.Warn("No tile for NEARBY_CROP GSQ");
+                    Log.Warn("No tile for NEARBY_CROPS GSQ");
                     return false;
                 }
 
