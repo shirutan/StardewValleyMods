@@ -34,7 +34,8 @@ namespace JsonAssets.Framework
                 {"Data\\BigCraftables", this.InjectDataBigCraftablesInformation},
                 {"Data\\hats", this.InjectDataHats},
                 {"Data\\Weapons", this.InjectDataWeapons},
-                {"Data\\ClothingInformation", this.InjectDataClothingInformation},
+                {"Data\\Pants", this.InjectDataPants},
+                {"Data\\Shirts", this.InjectDataShirts},
                 {"Data\\TailoringRecipes", this.InjectDataTailoringRecipes},
                 {"Data\\Boots", this.InjectDataBoots},
                 {"spacechase0.SpaceCore/ObjectExtensionData", this.InjectDataObjectExtensionData }
@@ -117,13 +118,7 @@ namespace JsonAssets.Framework
             {
                 try
                 {
-                    ToLoad.Add("JA/ShirtMale/" + shirt.Name.FixIdJA(), shirt.TextureMale);
-                    if (shirt.TextureFemale != null)
-                        ToLoad.Add("JA/ShirtFemale/" + shirt.Name.FixIdJA(), shirt.TextureFemale);
-                    if (shirt.TextureMaleColor != null)
-                        ToLoad.Add("JA/ShirtMaleColor/" + shirt.Name.FixIdJA(), shirt.TextureMaleColor);
-                    if (shirt.TextureFemaleColor != null)
-                        ToLoad.Add("JA/ShirtFemaleColor/" + shirt.Name.FixIdJA(), shirt.TextureFemaleColor);
+                    ToLoad.Add("JA/Shirts/" + shirt.Name.FixIdJA(), shirt.GetShirtTexture());
                 }
                 catch (Exception e)
                 {
@@ -353,6 +348,42 @@ namespace JsonAssets.Framework
                 }
             }
         }
+        private void InjectDataPants(IAssetData asset)
+        {
+            var data = asset.AsDictionary<string, StardewValley.GameData.Pants.PantsData>().Data;
+            foreach (var pants in Mod.instance.Pants)
+            {
+                try
+                {
+                    Log.Verbose($"Injecting to pants: {pants.Name.FixIdJA()}: {pants.GetPantsInformation()}");
+                    data.Add(pants.Name.FixIdJA(), pants.GetPantsInformation());
+                }
+                catch (Exception e)
+                {
+                    Log.Error($"Exception injecting pants information for {pants.Name.FixIdJA()}: {e}");
+                }
+            }
+        }
+        private void InjectDataShirts(IAssetData asset)
+        {
+            var data = asset.AsDictionary<string, StardewValley.GameData.Shirts.ShirtData>().Data;
+            foreach (var shirt in Mod.instance.Shirts)
+            {
+                try
+                {
+                    Log.Verbose($"Injecting to shirts: {shirt.Name.FixIdJA()}: {shirt.GetShirtInformation()}");
+                    data.Add(shirt.HasFemaleVariant ? shirt.Name.FixIdJA() + "_M" : shirt.Name.FixIdJA(), shirt.GetShirtInformation());
+                    if (shirt.HasFemaleVariant)
+                    {
+                        data.Add(shirt.Name.FixIdJA() + "_F", shirt.GetFemaleShirtInformation());
+                    }
+                }
+                catch (Exception e)
+                {
+                    Log.Error($"Exception injecting shirt information for {shirt.Name.FixIdJA()}: {e}");
+                }
+            }
+        }
         private void InjectDataHats(IAssetData asset)
         {
             var data = asset.AsDictionary<string, string>().Data;
@@ -401,34 +432,6 @@ namespace JsonAssets.Framework
                 catch (Exception e)
                 {
                     Log.Error($"Exception injecting weapon information for {weapon.Name.FixIdJA()}: {e}");
-                }
-            }
-        }
-        private void InjectDataClothingInformation(IAssetData asset)
-        {
-            var data = asset.AsDictionary<string, string>().Data;
-            foreach (var shirt in Mod.instance.Shirts)
-            {
-                try
-                {
-                    Log.Verbose($"Injecting to clothing information: {shirt.Name.FixIdJA()}: {shirt.GetClothingInformation()}");
-                    data.Add(shirt.Name.FixIdJA(), shirt.GetClothingInformation());
-                }
-                catch (Exception e)
-                {
-                    Log.Error($"Exception injecting clothing information for {shirt.Name.FixIdJA()}: {e}");
-                }
-            }
-            foreach (var pants in Mod.instance.Pants)
-            {
-                try
-                {
-                    Log.Verbose($"Injecting to clothing information: {pants.Name.FixIdJA()}: {pants.GetClothingInformation()}");
-                    data.Add(pants.Name.FixIdJA(), pants.GetClothingInformation());
-                }
-                catch (Exception e)
-                {
-                    Log.Error($"Exception injecting clothing information for {pants.Name.FixIdJA()}: {e}");
                 }
             }
         }
