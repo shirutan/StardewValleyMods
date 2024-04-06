@@ -8,14 +8,15 @@ namespace JsonAssets.Framework.ContentPatcher
     internal class SpriteCoordinateToken : BaseToken
     {
         public readonly bool CoordinateIsX;
-        private readonly Func<List<DataNeedsIdWithTexture>> ObjsFunc;
-        private IDictionary<string, int> Coordinates = new Dictionary<string, int>();
 
-        public SpriteCoordinateToken(string type, bool coordinateIsX, Func<List<DataNeedsIdWithTexture>> func)
+        private readonly Func<IDictionary<string, string>> IdsFunc;
+        private IDictionary<string, string> Ids;
+
+        public SpriteCoordinateToken(string type, bool coordinateIsX, Func<IDictionary<string,string>> func)
             : base(type, "Sprite" + (coordinateIsX ? "X" : "Y"))
         {
             this.CoordinateIsX = coordinateIsX;
-            this.ObjsFunc = func;
+            this.IdsFunc = func;
         }
 
         public bool HasBoundedRangeValues(string input, out int min, out int max)
@@ -25,47 +26,39 @@ namespace JsonAssets.Framework.ContentPatcher
             return true;
         }
 
+        public override IEnumerable<string> GetValidInputs()
+        {
+            return this.Ids.Keys;
+        }
+
+        public override bool TryValidateInput(string input, out string error)
+        {
+            error = "";
+            if (!this.Ids.ContainsKey(input))
+            {
+                error = $"Invalid name for {this.Type}: {input}";
+                return false;
+            }
+            return true;
+        }
+
         public override IEnumerable<string> GetValues(string input)
         {
             if (!this.IsReady())
                 return Array.Empty<string>();
 
             if (input == "")
-                return this.Coordinates.Values.Select(p => p.ToString()).ToArray();
+                return this.Ids.Values.Select(p => "0").ToArray();
 
-            return this.Coordinates.TryGetValue(input, out int value)
-                ? new[] { "0" }
-                : Array.Empty<string>();
-        }
+            if (this.Ids.ContainsKey(input))
+                return new[] { "0" };
 
-        public override bool UpdateContext()
-        {
-            if (base.UpdateContext())
-                return true;
-
-            var objs = this.ObjsFunc();
-            if (objs.Count == 0)
-                return false;
-
-            var obj = objs[0];
-            if (!string.IsNullOrEmpty(obj.Tilesheet) && this.Coordinates.Count > 0 && this.Coordinates.First().Value == 0)
-            {
-                this.UpdateContextImpl();
-                return true;
-            }
-
-            return false;
+            return Array.Empty<string>();
         }
 
         protected override void UpdateContextImpl()
         {
-            var dict = new Dictionary<string, int>();
-            var objs = this.ObjsFunc();
-            foreach (var obj in objs)
-            {
-                dict.Add(obj.Name, this.CoordinateIsX ? obj.TilesheetX : obj.TilesheetY);
-            }
-            this.Coordinates = dict;
+            this.Ids = this.IdsFunc();
         }
     }
 }

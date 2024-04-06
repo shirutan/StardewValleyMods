@@ -54,39 +54,6 @@ namespace JsonAssets.Framework.ContentPatcher
 
         protected BaseToken(string type, string name)
         {
-            switch (type)
-            {
-                case "Object":
-                    this.Type = "O";
-                    break;
-                case "Crop":
-                    this.Type = "Crop";
-                    break;
-                case "FruitTree":
-                    this.Type = "FruitTree";
-                    break;
-                case "BigCraftable":
-                    this.Type = "BC";
-                    break;
-                case "Hat":
-                    this.Type = "H";
-                    break;
-                case "Weapon":
-                    this.Type = "W";
-                    break;
-                case "Pants":
-                    this.Type = "P";
-                    break;
-                case "Shirt":
-                    this.Type = "S";
-                    break;
-                case "Boots":
-                    this.Type = "B";
-                    break;
-                default:
-                    this.Type = type;
-                    break;
-            }
             this.Type = type;
             this.TokenName = this.Type + name;
         }
