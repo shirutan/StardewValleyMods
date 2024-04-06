@@ -261,21 +261,7 @@ namespace JsonAssets.Framework
                 try
                 {
                     Log.Verbose($"Injecting to fruit trees: {fruitTree.GetSaplingId()}: {fruitTree.GetFruitTreeInformation()}");
-                    data.Add(fruitTree.GetSaplingId().FixIdJA(), new()
-                    {
-                        DisplayName = fruitTree.Name,
-                        Seasons = new(new[] { Enum.Parse<Season>(fruitTree.Season.Substring(0, 1).ToUpper() + fruitTree.Season.Substring(1)) } ),
-                        Fruit = new( new[]
-                        {
-                            new StardewValley.GameData.FruitTrees.FruitTreeFruitData()
-                            {
-                                ItemId = "(O)" + fruitTree.Product.ToString().FixIdJA(),
-                            }
-                        } ),
-                        Texture = "JA/FruitTree/" + fruitTree.Name.FixIdJA(),
-                        TextureSpriteRow = 0,
-
-                    });
+                    data.Add(fruitTree.GetSaplingId().FixIdJA(), fruitTree.GetFruitTreeInformation());
                 }
                 catch (Exception e)
                 {
