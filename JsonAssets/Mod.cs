@@ -119,6 +119,8 @@ namespace JsonAssets
 
         private List<CustomForgeRecipe> myForgeRecipes = new();
 
+        public List<string> ItemTypes = new List<string> { "O", "Crop", "FruitTree", "BC", "H", "W", "S", "P", "B" };
+
         public static readonly Dictionary<string, IManifest> DupObjects = new();
         public static readonly Dictionary<string, IManifest> DupCrops = new();
         public static readonly Dictionary<string, IManifest> DupFruitTrees = new();

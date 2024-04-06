@@ -83,6 +83,10 @@ namespace JsonAssets
             else
                 return name.FixIdJA();
         }
+        public string GetBootId(string name)
+        {
+            return name.FixIdJA("B");
+        }
 
         public List<string> GetAllObjectsFromContentPack(string cp)
         {
