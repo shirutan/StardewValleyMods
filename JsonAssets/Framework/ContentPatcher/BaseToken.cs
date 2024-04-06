@@ -26,68 +26,9 @@ namespace JsonAssets.Framework.ContentPatcher
             return false;
         }
 
-        // List the dictionaries of names
-        public virtual IEnumerable<string> GetValidInputs()
-        {
-            switch (this.Type)
-            {
-                case "O":
-                    return Mod.instance.OldObjectIds.Values;
-                case "Crop":
-                    return Mod.instance.OldCropIds.Values;
-                case "FruitTree":
-                    return Mod.instance.OldFruitTreeIds.Values;
-                case "BC":
-                    return Mod.instance.OldBigCraftableIds.Values;
-                case "W":
-                    return Mod.instance.OldWeaponIds.Values;
-                case "H":
-                    return Mod.instance.OldHatIds.Values;
-                case "S":
-                case "P":
-                case "Clothing":
-                    return Mod.instance.OldClothingIds.Values;
-                case "B":
-                    return Mod.instance.OldBootsIds.Values;
-            }
-            return new string[0];
-        }
+        public abstract IEnumerable<string> GetValidInputs();
 
-        
-        public virtual bool TryValidateInput(string input, out string error)
-        {
-            error = "";
-            if (Mod.instance.ItemTypes.Contains(this.Type))
-            {
-                if (input.FixIdJA(this.Type) != null)
-                    return true;
-                else
-                {
-                    error = $"JA item with type {this.Type} and matching name not found";
-                    return false;
-                }
-            }
-            else if (this.Type == "Clothing")
-            {
-                if (input.FixIdJA("S") == null)
-                {
-                    if (input.FixIdJA("P") == null)
-                    {
-                        error = "JA item with type Clothing and matching name not found";
-                        return false;
-                    }
-                    else
-                        return true; ;
-                }
-                else
-                    return true;
-            }
-            else
-            {
-                error = "Unknown item type";
-                return false;
-            }
-        }
+        public abstract bool TryValidateInput(string input, out string error);
 
         public virtual bool IsReady()
         {
