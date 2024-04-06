@@ -18,26 +18,10 @@ namespace JsonAssets.Framework.ContentPatcher
             this.ObjsFunc = func;
         }
 
-        public override IEnumerable<string> GetValidInputs()
-        {
-            return this.Coordinates.Keys;
-        }
-
         public bool HasBoundedRangeValues(string input, out int min, out int max)
         {
             min = 0;
             max = 4096;
-            return true;
-        }
-
-        public override bool TryValidateInput(string input, out string error)
-        {
-            error = "";
-            if (!this.Coordinates.ContainsKey(input))
-            {
-                error = $"Invalid name for {this.Type}: {input}";
-                return false;
-            }
             return true;
         }
 

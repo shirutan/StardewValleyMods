@@ -83,9 +83,105 @@ namespace JsonAssets
             else
                 return name.FixIdJA();
         }
+        public string GetShirtId(string name)
+        {
+            return name.FixIdJA("S");
+        }
+        public string GetPantsId(string name)
+        {
+            return name.FixIdJA("P");
+        }
         public string GetBootId(string name)
         {
             return name.FixIdJA("B");
+        }
+
+        public List<string> GetAllObjectIds()
+        {
+            List<string> objectIds = new();
+            foreach (Data.ObjectData obj in Mod.instance.Objects)
+            {
+                objectIds.Add(obj.Name.FixIdJA("O"));
+            }
+            return objectIds;
+        }
+
+        public List<string> GetAllCropIds()
+        {
+            List<string> cropIds = new();
+            foreach (Data.CropData crop in Mod.instance.Crops)
+            {
+                cropIds.Add(crop.Name.FixIdJA("Crop"));
+            }
+            return cropIds;
+        }
+
+        public List<string> GetAllFruitTreeIds()
+        {
+            List<string> fruitTreeIds = new();
+            foreach (Data.FruitTreeData ft in Mod.instance.FruitTrees)
+            {
+                fruitTreeIds.Add(ft.Name.FixIdJA("FruitTree"));
+            }
+            return fruitTreeIds;
+        }
+
+        public List<string> GetAllBigCraftableIds()
+        {
+            List<string> bcIds = new();
+            foreach (Data.BigCraftableData bc in Mod.instance.BigCraftables)
+            {
+                bcIds.Add(bc.Name.FixIdJA("BC"));
+            }
+            return bcIds;
+        }
+
+        public List<string> GetAllHatIds()
+        {
+            List<string> hatIds = new();
+            foreach (Data.HatData hat in Mod.instance.Hats)
+            {
+                hatIds.Add(hat.Name.FixIdJA("H"));
+            }
+            return hatIds;
+        }
+
+        public List<string> GetAllWeaponIds()
+        {
+            List<string> weaponIds = new();
+            foreach (Data.WeaponData weapon in Mod.instance.Weapons)
+            {
+                weaponIds.Add(weapon.Name.FixIdJA("W"));
+            }
+            return weaponIds;
+        }
+
+        public List<string> GetAllClothingIds()
+        {
+            List<string> pants = this.GetAllPantsIds();
+            List<string> shirts = this.GetAllShirtIds();
+            pants.AddRange(shirts);
+            return pants;
+        }
+
+        public List<string> GetAllShirtIds()
+        {
+            List<string> shirtIds = new();
+            foreach (Data.ShirtData shirt in Mod.instance.Shirts)
+            {
+                shirtIds.Add(shirt.Name.FixIdJA("S"));
+            }
+            return shirtIds;
+        }
+
+        public List<string> GetAllPantsIds()
+        {
+            List<string> pantsIds = new();
+            foreach (Data.PantsData pant in Mod.instance.Pants)
+            {
+                pantsIds.Add(pant.Name.FixIdJA("P"));
+            }
+            return pantsIds;
         }
 
         public List<string> GetAllObjectsFromContentPack(string cp)

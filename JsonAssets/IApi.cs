@@ -25,6 +25,18 @@ namespace JsonAssets
         string GetHatId(string name);
         string GetWeaponId(string name);
         string GetClothingId(string name);
+        string GetPantsId(string name);
+        string GetShirtId(string name);
+
+        List<string> GetAllObjectIds();
+        List<string> GetAllCropIds();
+        List<string> GetAllFruitTreeIds();
+        List<string> GetAllBigCraftableIds();
+        List<string> GetAllHatIds();
+        List<string> GetAllWeaponIds();
+        List<string> GetAllClothingIds();
+        List<string> GetAllPantsIds();
+        List<string> GetAllShirtIds();
 
         List<string> GetAllObjectsFromContentPack(string cp);
         List<string> GetAllCropsFromContentPack(string cp);

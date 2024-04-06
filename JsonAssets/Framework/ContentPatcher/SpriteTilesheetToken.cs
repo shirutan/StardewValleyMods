@@ -17,27 +17,6 @@ namespace JsonAssets.Framework.ContentPatcher
             this.ObjsFunc = func;
         }
 
-        public override IEnumerable<string> GetValidInputs()
-        {
-            return this.Tilesheets.Keys;
-        }
-
-        public override bool TryValidateInput(string input, out string error)
-        {
-            error = "";
-            if (!this.Tilesheets.ContainsKey(input))
-            {
-                error = $"Invalid name for {this.Type}: {input}";
-                return false;
-            }
-            return true;
-        }
-
-        public override bool IsReady()
-        {
-            return base.IsReady() && this.Tilesheets?.Count > 0 && !string.IsNullOrEmpty(this.Tilesheets.First().Value);
-        }
-
         public override IEnumerable<string> GetValues(string input)
         {
             if (!this.IsReady())

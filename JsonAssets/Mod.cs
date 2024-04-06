@@ -1567,7 +1567,7 @@ namespace JsonAssets
                     if (!DupCrops.ContainsKey(key.FixIdJA()))
                     {
                         OldCropIds.Remove(crops[key].ToString());
-                        RemovedObjects.Add(key, crops[key]);
+                        RemovedCrops.Add(key, crops[key]);
                     }
                 }
                 var ftrees = LoadDictionary<string, int>("ids-fruittrees.json");

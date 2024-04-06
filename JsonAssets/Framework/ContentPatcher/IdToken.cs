@@ -12,22 +12,12 @@ namespace JsonAssets.Framework.ContentPatcher
         {
         }
 
-        public override IEnumerable<string> GetValidInputs()
-        {
-            return new string[0];
-        }
-
-        public override bool TryValidateInput(string input, out string error)
-        {
-            error = "";
-            return true;
-        }
-
         public override IEnumerable<string> GetValues(string input)
         { 
             if (!this.IsReady())
                 return Array.Empty<string>();
 
+            // Use FixIdJA to check if the item exists and if so, return the result
             if (Mod.instance.ItemTypes.Contains(this.Type))
             {
                 if (input.FixIdJA(this.Type) != null)
@@ -35,6 +25,8 @@ namespace JsonAssets.Framework.ContentPatcher
                 else
                     return Array.Empty<string>();
             }
+
+            // Handle clothing specially because it used to combine pants and shirts
             else if (this.Type == "Clothing")
             {
                 if (input.FixIdJA("S") == null)
