@@ -53,32 +53,35 @@ namespace JsonAssets
 
         public string GetObjectId(string name)
         {
-            return name.FixIdJA();
+            return name.FixIdJA("O");
         }
 
         public string GetCropId(string name)
         {
-            return name.FixIdJA();
+            return name.FixIdJA("Crop");
         }
         public string GetFruitTreeId(string name)
         {
-            return name.FixIdJA();
+            return name.FixIdJA("FruitTree");
         }
         public string GetBigCraftableId(string name)
         {
-            return name.FixIdJA();
+            return name.FixIdJA("BC");
         }
         public string GetHatId(string name)
         {
-            return name.FixIdJA();
+            return name.FixIdJA("H");
         }
         public string GetWeaponId(string name)
         {
-            return name.FixIdJA();
+            return name.FixIdJA("W");
         }
         public string GetClothingId(string name)
         {
-            return name.FixIdJA();
+            if (name.FixIdJA("S") == null)
+                return name.FixIdJA("P");
+            else
+                return name.FixIdJA();
         }
 
         public List<string> GetAllObjectsFromContentPack(string cp)

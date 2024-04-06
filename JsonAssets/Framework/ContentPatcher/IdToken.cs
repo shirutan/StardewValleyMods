@@ -28,7 +28,7 @@ namespace JsonAssets.Framework.ContentPatcher
             if (!this.IsReady())
                 return Array.Empty<string>();
 
-            return new[] { input };
+            return new[] { input.FixIdJA(this.Type) };
         }
 
         protected override void UpdateContextImpl()
