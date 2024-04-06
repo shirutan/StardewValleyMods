@@ -185,6 +185,16 @@ namespace JsonAssets
             return pantsIds;
         }
 
+        public IDictionary<string, string> GetAllBootsIds()
+        {
+            Dictionary<string, string> bootsIds = new();
+            foreach (Data.BootsData boot in Mod.instance.Boots)
+            {
+                bootsIds.Add(boot.Name, boot.Name.FixIdJA("P"));
+            }
+            return bootsIds;
+        }
+
         public List<string> GetAllObjectsFromContentPack(string cp)
         {
             return this.GetAllFromContentPack(Mod.instance.ObjectsByContentPack, cp);
