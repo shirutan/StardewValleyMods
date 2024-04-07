@@ -55,7 +55,7 @@ namespace JsonAssets.Data
 
         internal string GetBootsInformation()
         {
-            return $"{this.Name}/{this.LocalizedDescription()}/{this.Price}/{this.Defense}/{this.Immunity}/0/{this.LocalizedName()}/JA\\BootsColor\\{Name.FixIdJA()}/0/JA\\Boots\\{Name.FixIdJA()}";
+            return $"{this.Name}/{this.LocalizedDescription()}/{this.Price}/{this.Defense}/{this.Immunity}/0/{this.LocalizedName()}/JA\\BootsColor\\{Name.FixIdJA("B")}/0/JA\\Boots\\{Name.FixIdJA("B")}";
         }
 
 

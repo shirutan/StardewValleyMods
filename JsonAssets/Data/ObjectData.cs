@@ -78,7 +78,7 @@ namespace JsonAssets.Data
                 Type = Category == ObjectCategory.Artifact ? "Arch" : (Category == ObjectCategory.Ring ? "Ring" : "Basic"),
                 Category = (int)this.Category,
                 Price = Price,
-                Texture = $"JA\\Object\\{Name.FixIdJA()}",
+                Texture = $"JA\\Object\\{Name.FixIdJA("O")}",
                 SpriteIndex = 0,
                 Edibility = Edibility,
                 IsDrink = EdibleIsDrink,

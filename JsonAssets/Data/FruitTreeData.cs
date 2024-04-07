@@ -37,7 +37,7 @@ namespace JsonAssets.Data
 
         internal string GetFruitTreeInformation()
         {
-            return $"0/{this.Season}/{this.Product}/what goes here?/0/JA\\FruitTree\\{this.Name.FixIdJA()}";
+            return $"0/{this.Season}/{this.Product}/what goes here?/0/JA\\FruitTree\\{this.Name.FixIdJA("FruitTree")}";
         }
 
 

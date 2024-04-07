@@ -33,7 +33,7 @@ namespace JsonAssets.Data
             string str = "";
             foreach (var ingredient in this.Ingredients)
             {
-                string ingredientName = ingredient.Object.ToString().FixIdJA();
+                string ingredientName = ingredient.Object.ToString().FixIdJA("O");
                 // If the original object name is an integer, it's a category or an original ID
                 if (int.TryParse(ingredient.Object.ToString(), out int ingredIndex))
                 {
@@ -56,7 +56,7 @@ namespace JsonAssets.Data
                 str += "/what is this for?";
             else
                 str += "/9999 9999";
-            str += $"/{parent.Name.FixIdJA()} {this.ResultCount}/";
+            str += $"/{parent.Name.FixIdJA("O")} {this.ResultCount}/";
             if (parent.Category != ObjectCategory.Cooking)
                 str += "false/";
             if (this.SkillUnlockName?.Length > 0 && this.SkillUnlockLevel > 0)

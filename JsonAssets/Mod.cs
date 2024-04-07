@@ -299,7 +299,7 @@ namespace JsonAssets
                     PurchaseFrom = obj.Recipe.PurchaseFrom,
                     Price = obj.Recipe.PurchasePrice,
                     PurchaseRequirements = this.ParseAndValidateRequirements(source, obj.Recipe.PurchaseRequirements),
-                    Object = () => new SObject(obj.Name.FixIdJA(), 1, true, obj.Recipe.PurchasePrice)
+                    Object = () => new SObject(obj.Name.FixIdJA("O"), 1, true, obj.Recipe.PurchasePrice)
                 });
 
                 foreach (var entry in obj.Recipe.AdditionalPurchaseData)
@@ -309,7 +309,7 @@ namespace JsonAssets
                         PurchaseFrom = entry.PurchaseFrom,
                         Price = entry.PurchasePrice,
                         PurchaseRequirements = this.ParseAndValidateRequirements(source, entry.PurchaseRequirements),
-                        Object = () => new SObject(obj.Name.FixIdJA(), 1, true, entry.PurchasePrice)
+                        Object = () => new SObject(obj.Name.FixIdJA("O"), 1, true, entry.PurchasePrice)
                     });
                 }
             }
@@ -322,7 +322,7 @@ namespace JsonAssets
                     PurchaseFrom = obj.PurchaseFrom,
                     Price = obj.PurchasePrice,
                     PurchaseRequirements = this.ParseAndValidateRequirements(source, obj.PurchaseRequirements),
-                    Object = () => new SObject(obj.Name.FixIdJA(), int.MaxValue, false, obj.Price)
+                    Object = () => new SObject(obj.Name.FixIdJA("O"), int.MaxValue, false, obj.Price)
                 });
                 foreach (var entry in obj.AdditionalPurchaseData)
                 {
@@ -331,7 +331,7 @@ namespace JsonAssets
                         PurchaseFrom = entry.PurchaseFrom,
                         Price = entry.PurchasePrice,
                         PurchaseRequirements = this.ParseAndValidateRequirements(source, entry.PurchaseRequirements),
-                        Object = () => new SObject(obj.Name.FixIdJA(), int.MaxValue, false, obj.Price)
+                        Object = () => new SObject(obj.Name.FixIdJA("O"), int.MaxValue, false, obj.Price)
                     });
                 }
             }
@@ -445,7 +445,7 @@ namespace JsonAssets
                     PurchaseFrom = crop.Seed.PurchaseFrom,
                     Price = crop.Seed.PurchasePrice,
                     PurchaseRequirements = this.ParseAndValidateRequirements(source, crop.Seed.PurchaseRequirements),
-                    Object = () => new SObject(crop.Seed.Name.FixIdJA(), int.MaxValue, false, crop.Seed.Price),
+                    Object = () => new SObject(crop.Seed.Name.FixIdJA("O"), int.MaxValue, false, crop.Seed.Price),
                     ShowWithStocklist = true
                 });
                 foreach (var entry in crop.Seed.AdditionalPurchaseData)
@@ -455,7 +455,7 @@ namespace JsonAssets
                         PurchaseFrom = entry.PurchaseFrom,
                         Price = entry.PurchasePrice,
                         PurchaseRequirements = this.ParseAndValidateRequirements(source, entry.PurchaseRequirements),
-                        Object = () => new SObject(crop.Seed.Name.FixIdJA(), int.MaxValue, false, crop.Seed.Price)
+                        Object = () => new SObject(crop.Seed.Name.FixIdJA("O"), int.MaxValue, false, crop.Seed.Price)
                     });
                 }
             }
@@ -535,7 +535,7 @@ namespace JsonAssets
             // save data
             this.FruitTrees.Add(tree);
             this.Objects.Add(tree.Sapling);
-            this.FruitTreeSaplings.Add(tree.Name.FixIdJA(), tree.SaplingName.FixIdJA());
+            this.FruitTreeSaplings.Add(tree.Name.FixIdJA("FruitTree"), tree.SaplingName.FixIdJA("O"));
 
             // add sapling to shops
             if (tree.Sapling.CanPurchase)
@@ -545,7 +545,7 @@ namespace JsonAssets
                     PurchaseFrom = tree.Sapling.PurchaseFrom,
                     Price = tree.Sapling.PurchasePrice,
                     PurchaseRequirements = this.ParseAndValidateRequirements(source, tree.Sapling.PurchaseRequirements),
-                    Object = () => new SObject(tree.Sapling.Name.FixIdJA(), int.MaxValue)
+                    Object = () => new SObject(tree.Sapling.Name.FixIdJA("O"), int.MaxValue)
                 });
                 foreach (var entry in tree.Sapling.AdditionalPurchaseData)
                 {
@@ -554,7 +554,7 @@ namespace JsonAssets
                         PurchaseFrom = entry.PurchaseFrom,
                         Price = entry.PurchasePrice,
                         PurchaseRequirements = this.ParseAndValidateRequirements(source, entry.PurchaseRequirements),
-                        Object = () => new SObject(tree.Sapling.Name.FixIdJA(), int.MaxValue)
+                        Object = () => new SObject(tree.Sapling.Name.FixIdJA("O"), int.MaxValue)
                     });
                 }
             }
@@ -610,7 +610,7 @@ namespace JsonAssets
                     PurchaseFrom = craftable.Recipe.PurchaseFrom,
                     Price = craftable.Recipe.PurchasePrice,
                     PurchaseRequirements = this.ParseAndValidateRequirements(source, craftable.Recipe.PurchaseRequirements),
-                    Object = () => new SObject(Vector2.Zero, craftable.Name.FixIdJA(), true)
+                    Object = () => new SObject(Vector2.Zero, craftable.Name.FixIdJA("BC"), true)
                 });
                 foreach (var entry in craftable.Recipe.AdditionalPurchaseData)
                 {
@@ -619,7 +619,7 @@ namespace JsonAssets
                         PurchaseFrom = entry.PurchaseFrom,
                         Price = entry.PurchasePrice,
                         PurchaseRequirements = this.ParseAndValidateRequirements(source, entry.PurchaseRequirements),
-                        Object = () => new SObject(Vector2.Zero, craftable.Name.FixIdJA(), true)
+                        Object = () => new SObject(Vector2.Zero, craftable.Name.FixIdJA("BC"), true)
                     });
                 }
             }
@@ -632,7 +632,7 @@ namespace JsonAssets
                     PurchaseFrom = craftable.PurchaseFrom,
                     Price = craftable.PurchasePrice,
                     PurchaseRequirements = this.ParseAndValidateRequirements(source, craftable.PurchaseRequirements),
-                    Object = () => new SObject(Vector2.Zero, craftable.Name.FixIdJA())
+                    Object = () => new SObject(Vector2.Zero, craftable.Name.FixIdJA("BC"))
                 });
                 foreach (var entry in craftable.AdditionalPurchaseData)
                 {
@@ -641,7 +641,7 @@ namespace JsonAssets
                         PurchaseFrom = entry.PurchaseFrom,
                         Price = entry.PurchasePrice,
                         PurchaseRequirements = this.ParseAndValidateRequirements(source, entry.PurchaseRequirements),
-                        Object = () => new SObject(Vector2.Zero, craftable.Name.FixIdJA())
+                        Object = () => new SObject(Vector2.Zero, craftable.Name.FixIdJA("BC"))
                     });
                 }
             }
@@ -689,7 +689,7 @@ namespace JsonAssets
                     PurchaseFrom = hat.PurchaseFrom,
                     Price = hat.PurchasePrice,
                     PurchaseRequirements = ParsedConditions.AlwaysTrue,
-                    Object = () => new Hat(hat.Name.FixIdJA())
+                    Object = () => new Hat(hat.Name.FixIdJA("H"))
                 });
             }
 
@@ -740,7 +740,7 @@ namespace JsonAssets
                     PurchaseFrom = weapon.PurchaseFrom,
                     Price = weapon.PurchasePrice,
                     PurchaseRequirements = this.ParseAndValidateRequirements(source, weapon.PurchaseRequirements),
-                    Object = () => new MeleeWeapon(weapon.Name.FixIdJA())
+                    Object = () => new MeleeWeapon(weapon.Name.FixIdJA("W"))
                 });
                 foreach (var entry in weapon.AdditionalPurchaseData)
                 {
@@ -749,7 +749,7 @@ namespace JsonAssets
                         PurchaseFrom = entry.PurchaseFrom,
                         Price = entry.PurchasePrice,
                         PurchaseRequirements = this.ParseAndValidateRequirements(source, entry.PurchaseRequirements),
-                        Object = () => new MeleeWeapon(weapon.Name.FixIdJA())
+                        Object = () => new MeleeWeapon(weapon.Name.FixIdJA("W"))
                     });
                 }
             }
@@ -889,7 +889,7 @@ namespace JsonAssets
                     PurchaseFrom = boots.PurchaseFrom,
                     Price = boots.PurchasePrice,
                     PurchaseRequirements = this.ParseAndValidateRequirements(source, boots.PurchaseRequirements),
-                    Object = () => new Boots(boots.Name.FixIdJA())
+                    Object = () => new Boots(boots.Name.FixIdJA("B"))
                 });
 
                 foreach (var entry in boots.AdditionalPurchaseData)
@@ -899,7 +899,7 @@ namespace JsonAssets
                         PurchaseFrom = entry.PurchaseFrom,
                         Price = entry.PurchasePrice,
                         PurchaseRequirements = this.ParseAndValidateRequirements(source, entry.PurchaseRequirements),
-                        Object = () => new Boots(boots.Name.FixIdJA())
+                        Object = () => new Boots(boots.Name.FixIdJA("B"))
                     });
                 }
             }
@@ -939,7 +939,7 @@ namespace JsonAssets
             fence.CorrespondingObject = new ObjectData
             {
                 Texture = fence.ObjectTexture,
-                Name = fence.Name.FixIdJA(),
+                Name = fence.Name,
                 Description = fence.Description,
                 Category = ObjectCategory.Crafting,
                 Price = fence.Price,
@@ -1812,14 +1812,14 @@ namespace JsonAssets
             {
                 case Hat hat:
                     if (hat.obsolete_which.HasValue && this.OldHatIds.ContainsKey(hat.obsolete_which.Value.ToString()))
-                        hat.ItemId = this.OldHatIds[hat.obsolete_which.Value.ToString()].FixIdJA();
+                        hat.ItemId = this.OldHatIds[hat.obsolete_which.Value.ToString()].FixIdJA("H");
                     break;
 
                 case MeleeWeapon weapon:
                     if (this.OldWeaponIds.ContainsKey(weapon.ItemId))
-                        weapon.ItemId = this.OldWeaponIds[weapon.ItemId].FixIdJA();
+                        weapon.ItemId = this.OldWeaponIds[weapon.ItemId].FixIdJA("W");
                     if (weapon.appearance.Value != null && this.OldWeaponIds.ContainsKey(weapon.appearance.Value))
-                        weapon.appearance.Value = this.OldWeaponIds[weapon.appearance.Value].FixIdJA();
+                        weapon.appearance.Value = this.OldWeaponIds[weapon.appearance.Value].FixIdJA("W");
                     if (this.RemovedWeapons.ContainsKey(weapon.ItemId))
                     {
                         string name = this.RemovedWeapons[weapon.ItemId].ToString();
@@ -1834,7 +1834,7 @@ namespace JsonAssets
 
                 case Ring ring:
                     if (this.OldObjectIds.ContainsKey(ring.ItemId))
-                        ring.ItemId = this.OldObjectIds[ring.ItemId].FixIdJA();
+                        ring.ItemId = this.OldObjectIds[ring.ItemId].FixIdJA("O");
 
                     if (ring is CombinedRing combinedRing)
                     {
@@ -1847,12 +1847,17 @@ namespace JsonAssets
 
                 case Clothing clothing:
                     if (this.OldClothingIds.ContainsKey(clothing.ItemId))
-                        clothing.ItemId = this.OldClothingIds[clothing.ItemId].FixIdJA();
+                    {
+                        if (this.OldClothingIds[clothing.ItemId].FixIdJA("P") != null)
+                            clothing.ItemId = this.OldClothingIds[clothing.ItemId].FixIdJA("P");
+                        if (this.OldClothingIds[clothing.ItemId].FixIdJA("S") != null)
+                            clothing.ItemId = this.OldClothingIds[clothing.ItemId].FixIdJA("S");
+                    }
                     break;
 
                 case Boots boots:
                     if (this.OldBootsIds.ContainsKey(boots.ItemId))
-                        boots.ItemId = this.OldBootsIds[boots.ItemId].FixIdJA();
+                        boots.ItemId = this.OldBootsIds[boots.ItemId].FixIdJA("B");
                     // TODO: what to do about tailored boots...
                     break;
 
@@ -1860,7 +1865,7 @@ namespace JsonAssets
                     if (obj is Chest chest)
                     {
                         if (this.OldBigCraftableIds.ContainsKey(chest.ItemId))
-                            chest.ItemId = this.OldBigCraftableIds[chest.ItemId].FixIdJA();
+                            chest.ItemId = this.OldBigCraftableIds[chest.ItemId].FixIdJA("BC");
                         else
                             chest.startingLidFrame.Value = chest.ParentSheetIndex + 1;
                         this.FixItemList(chest.Items);
@@ -1883,12 +1888,12 @@ namespace JsonAssets
                                 obj.preservedParentSheetIndex.Value = -1;
                             */
                             if (this.OldObjectIds.ContainsKey(obj.ItemId))
-                                obj.ItemId = this.OldObjectIds[obj.ItemId].FixIdJA();
+                                obj.ItemId = this.OldObjectIds[obj.ItemId].FixIdJA("O");
                         }
                         else
                         {
                             if (this.OldBigCraftableIds.ContainsKey(obj.ItemId))
-                                obj.ItemId = this.OldBigCraftableIds[obj.ItemId].FixIdJA();
+                                obj.ItemId = this.OldBigCraftableIds[obj.ItemId].FixIdJA("BC");
                         }
                     }
 
@@ -1957,7 +1962,7 @@ namespace JsonAssets
                     }
 
                     if (pond.fishType.Value != null && this.OldObjectIds.ContainsKey(pond.fishType.Value))
-                        pond.fishType.Value = this.OldObjectIds[pond.fishType.Value].FixIdJA();
+                        pond.fishType.Value = this.OldObjectIds[pond.fishType.Value].FixIdJA("O");
                     pond.sign.Value = FixItem(pond.sign.Value) as SObject;
                     pond.output.Value = FixItem(pond.output.Value);
                     pond.neededItem.Value = FixItem(pond.neededItem.Value) as SObject;
@@ -1974,9 +1979,9 @@ namespace JsonAssets
                 return;
 
             if (this.OldObjectIds.ContainsKey(crop.indexOfHarvest.Value))
-                crop.indexOfHarvest.Value = this.OldObjectIds[crop.indexOfHarvest.Value].FixIdJA();
+                crop.indexOfHarvest.Value = this.OldObjectIds[crop.indexOfHarvest.Value].FixIdJA("O");
             if (crop.netSeedIndex.Value != null && this.OldObjectIds.ContainsKey(crop.netSeedIndex.Value))
-                crop.netSeedIndex.Value = this.OldObjectIds[crop.netSeedIndex.Value].FixIdJA();
+                crop.netSeedIndex.Value = this.OldObjectIds[crop.netSeedIndex.Value].FixIdJA("O");
             if (crop.netSeedIndex.Value == null)
             {
                 foreach (var data in Game1.cropData)
@@ -1991,7 +1996,7 @@ namespace JsonAssets
 
             if (this.OldCropIds.ContainsKey(crop.rowInSpriteSheet.Value.ToString()))
             {
-                crop.overrideTexturePath.Value = "JA/Crop/" + this.OldCropIds[crop.rowInSpriteSheet.Value.ToString()].FixIdJA();
+                crop.overrideTexturePath.Value = "JA/Crop/" + this.OldCropIds[crop.rowInSpriteSheet.Value.ToString()].FixIdJA("Crop");
                 crop.rowInSpriteSheet.Value = 0;
             }
         }
@@ -2025,7 +2030,7 @@ namespace JsonAssets
                                 if (val != null)
                                 {
                                     // Translate the proper tree name to sapling name and set as tree ID
-                                    ftree.treeId.Value = FruitTreeSaplings[val.FixIdJA()];
+                                    ftree.treeId.Value = FruitTreeSaplings[val.FixIdJA("FruitTree")];
                                     // Fix the fruits on the tree
                                     if (ftree.obsolete_fruitsOnTree != null)
                                     {
@@ -2084,7 +2089,7 @@ namespace JsonAssets
                 if (this.OldObjectIds.ContainsKey(entry))
                 {
                     toRemove.Add(entry);
-                    toAdd.TryAdd(this.OldObjectIds[entry].FixIdJA(), dict[entry]);
+                    toAdd.TryAdd(this.OldObjectIds[entry].FixIdJA("O"), dict[entry]);
                 }
             }
             foreach (string entry in toRemove)
@@ -2096,7 +2101,7 @@ namespace JsonAssets
                     Log.Error("Dict already has value for " + entry.Key + "!");
                     foreach (var obj in this.Objects)
                     {
-                        if (obj.Name.FixIdJA() == entry.Key)
+                        if (obj.Name.FixIdJA("O") == entry.Key)
                             Log.Error("\tobj = " + obj.Name);
                     }
                 }
@@ -2113,7 +2118,7 @@ namespace JsonAssets
                 if (this.OldObjectIds.ContainsKey(entry))
                 {
                     toRemove.Add(entry);
-                    toAdd.TryAdd(this.OldObjectIds[entry].FixIdJA(), dict[entry]);
+                    toAdd.TryAdd(this.OldObjectIds[entry].FixIdJA("O"), dict[entry]);
                 }
             }
             foreach (string entry in toRemove)
@@ -2131,12 +2136,12 @@ namespace JsonAssets
                 if (this.OldObjectIds.ContainsValue(entry))
                 {
                     toRemove.Add(entry);
-                    toAdd.TryAdd(entry.FixIdJA(), dict[entry]);
+                    toAdd.TryAdd(entry.FixIdJA("O"), dict[entry]);
                 }
                 else if (this.OldBigCraftableIds.ContainsValue(entry))
                 {
                     toRemove.Add(entry);
-                    toAdd.TryAdd(entry.FixIdJA(), dict[entry]);
+                    toAdd.TryAdd(entry.FixIdJA("O"), dict[entry]);
                 }
             }
             foreach (string entry in toRemove)
@@ -2148,7 +2153,7 @@ namespace JsonAssets
                     Log.Error("Dict already has value for " + entry.Key + "!");
                     foreach (var obj in this.Objects)
                     {
-                        if (obj.Name.FixIdJA() == entry.Key)
+                        if (obj.Name.FixIdJA("O") == entry.Key)
                             Log.Error("\tobj = " + obj.Name);
                     }
                 }

@@ -52,7 +52,7 @@ namespace JsonAssets.Data
         *********/
         internal string GetWeaponInformation()
         {
-            return $"{this.Name}/{this.LocalizedDescription()}/{this.MinimumDamage}/{this.MaximumDamage}/{this.Knockback}/{this.Speed}/{this.Accuracy}/{this.Defense}/{(int)this.Type}/{this.MineDropVar}/{this.MineDropMinimumLevel}/{this.ExtraSwingArea}/{this.CritChance}/{this.CritMultiplier}/{this.LocalizedName()}/0/JA\\Weapon\\{this.Name.FixIdJA()}";
+            return $"{this.Name.FixIdJA("W")}/{this.LocalizedDescription()}/{this.MinimumDamage}/{this.MaximumDamage}/{this.Knockback}/{this.Speed}/{this.Accuracy}/{this.Defense}/{(int)this.Type}/{this.MineDropVar}/{this.MineDropMinimumLevel}/{this.ExtraSwingArea}/{this.CritChance}/{this.CritMultiplier}/{this.LocalizedName()}/0/JA\\Weapon\\{this.Name.FixIdJA("W")}";
         }
 
 
