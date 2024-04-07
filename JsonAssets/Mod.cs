@@ -2141,7 +2141,7 @@ namespace JsonAssets
                 else if (this.OldBigCraftableIds.ContainsValue(entry))
                 {
                     toRemove.Add(entry);
-                    toAdd.TryAdd(entry.FixIdJA("O"), dict[entry]);
+                    toAdd.TryAdd(entry.FixIdJA("BC"), dict[entry]);
                 }
             }
             foreach (string entry in toRemove)

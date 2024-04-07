@@ -33,13 +33,18 @@ namespace JsonAssets.Data
             string str = "";
             foreach (var ingredient in this.Ingredients)
             {
-                string ingredientName = ingredient.Object.ToString().FixIdJA("O");
+                string ingredientName = ingredient.Object.ToString();
                 // If the original object name is an integer, it's a category or an original ID
-                if (int.TryParse(ingredient.Object.ToString(), out int ingredIndex))
+                if (int.TryParse(ingredientName, out int ingredIndex))
                 {
                     ingredientName = ingredIndex.ToString();
                 }
-                // If the object isn't an integer, check if it's the name of an existing item
+                // If the object is a JA object, then just use that
+                else if (ingredient.Object.ToString().FixIdJA("O") != null)
+                {
+                    ingredientName = ingredient.Object.ToString().FixIdJA("O");
+                }
+                // If the object isn't an integer or a JA object, check if it's the name of any existing item and use that
                 else if (ItemRegistry.GetDataOrErrorItem(ingredientName).IsErrorItem)
                 {
                     Item tryGetItem = Utility.fuzzyItemSearch(ingredientName);
