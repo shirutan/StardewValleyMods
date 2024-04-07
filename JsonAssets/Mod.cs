@@ -2077,6 +2077,30 @@ namespace JsonAssets
                 crop.overrideTexturePath.Value = "JA/Crop/" + this.OldCropIds[crop.rowInSpriteSheet.Value.ToString()].FixIdJA("Crop");
                 crop.rowInSpriteSheet.Value = 0;
             }
+
+            // Make it at least retain some record of its name if it's a removed crop
+            if (int.TryParse(crop.indexOfHarvest.Value, out int cropHarvestNum) && this.RemovedObjects.ContainsKey(cropHarvestNum))
+            {
+                Log.Trace($"Attempting to migrate removed crop harvest! ID {crop.indexOfHarvest.Value} and name {this.RemovedObjects[cropHarvestNum]}");
+                string name = this.RemovedObjects[cropHarvestNum].ToString();
+                if (ItemRegistry.GetData("(O)" + name) != null)
+                    crop.indexOfHarvest.Value = ItemRegistry.GetData("(O)" + name).ItemId;
+                else if (ItemRegistry.GetData("(O)" + name.FixIdJA()) != null)
+                    crop.indexOfHarvest.Value = ItemRegistry.GetData("(O)" + name.FixIdJA()).ItemId;
+                else
+                    crop.indexOfHarvest.Value = name.FixIdJA();
+            }
+            if (int.TryParse(crop.netSeedIndex.Value, out int cropSeedNum) && this.RemovedObjects.ContainsKey(cropSeedNum))
+            {
+                Log.Trace($"Attempting to migrate removed crop seed! ID {crop.netSeedIndex.Value} and name {this.RemovedObjects[cropSeedNum]}");
+                string name = this.RemovedObjects[cropSeedNum].ToString();
+                if (ItemRegistry.GetData("(O)" + name) != null)
+                    crop.netSeedIndex.Value = ItemRegistry.GetData("(O)" + name).ItemId;
+                else if (ItemRegistry.GetData("(O)" + name.FixIdJA()) != null)
+                    crop.netSeedIndex.Value = ItemRegistry.GetData("(O)" + name.FixIdJA()).ItemId;
+                else
+                    crop.netSeedIndex.Value = name.FixIdJA();
+            }
         }
 
         /// <summary>Fix item IDs contained by a terrain feature, including the terrain feature itself.</summary>
@@ -2118,7 +2142,19 @@ namespace JsonAssets
                                     }
                                 }
                             }
-                            
+
+                            // Make fruit trees from removed packs at least say their name
+                            if (int.TryParse(ftree.obsolete_treeType, out int treeNum1) && this.RemovedFruitTrees.ContainsKey(treeNum1))
+                            {
+                                Log.Trace($"Attempting to migrate removed fruit tree! ID {ftree.obsolete_treeType} and name {this.RemovedObjects[treeNum1]}");
+                                ftree.treeId.Value = this.RemovedFruitTrees[treeNum1].FixIdJA();
+                                ftree.obsolete_treeType = null;
+                            }
+                            else if (int.TryParse(ftree.treeId.Value, out int treeNum2) && this.RemovedFruitTrees.ContainsKey(treeNum2))
+                            {
+                                Log.Trace($"Attempting to migrate removed fruit tree! ID {ftree.treeId.Value} and name {this.RemovedObjects[treeNum2]}");
+                                ftree.treeId.Value = this.RemovedFruitTrees[treeNum2].FixIdJA();
+                            }
                         }
                         catch (Exception e)
                         {
