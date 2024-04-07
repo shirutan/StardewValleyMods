@@ -22,6 +22,8 @@ namespace JsonAssets.Framework.ContentPatcher
             if (ContentPatcherIntegration.Cp == null)
                 return;
 
+            ContentPatcherIntegration.Ja.IdsAssigned += (s, e) => ContentPatcherIntegration.IdsAssigned = true;
+            ContentPatcherIntegration.Ja.IdsAssigned += (s, e) => ContentPatcherIntegration.IdsAssignedGen++;
             Mod.instance.Helper.Events.GameLoop.ReturnedToTitle += (s, e) => ContentPatcherIntegration.IdsAssigned = false;
 
             ContentPatcherIntegration.Tokens = new List<BaseToken>

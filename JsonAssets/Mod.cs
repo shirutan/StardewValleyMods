@@ -1625,7 +1625,7 @@ namespace JsonAssets
                     }
                 }
 
-                ContentPatcherIntegration.IdsAssigned = true;
+                this.Api.InvokeIdsAssigned();
             }
         }
 

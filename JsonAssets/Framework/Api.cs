@@ -255,6 +255,14 @@ namespace JsonAssets
             Util.InvokeEvent("JsonAssets.Api.AddedItemsToShop", this.AddedItemsToShop.GetInvocationList(), null);
         }
 
+        internal void InvokeIdsAssigned()
+        {
+            Log.Trace("Event: IdsAssigned");
+            if (this.IdsAssigned == null)
+                return;
+            Util.InvokeEvent("JsonAssets.Api.IdsAssigned", this.IdsAssigned.GetInvocationList(), null);
+        }
+
         /// <summary>Get all content of a given type added by a content pack.</summary>
         /// <param name="content">The registered content by content pack ID.</param>
         /// <param name="contentPackId">The content pack ID.</param>

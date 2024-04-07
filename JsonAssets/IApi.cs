@@ -50,5 +50,6 @@ namespace JsonAssets
 
         event EventHandler ItemsRegistered;
         event EventHandler AddedItemsToShop;
+        event EventHandler IdsAssigned;
     }
 }
