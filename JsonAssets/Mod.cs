@@ -164,7 +164,8 @@ namespace JsonAssets
                 new Game1Patcher(),
                 //new GiantCropPatcher(),
                 new HoeDirtPatcher(),
-                new ShopMenuPatcher()
+                new ShopMenuPatcher(),
+                new TexturePatcher()
             );
         }
 

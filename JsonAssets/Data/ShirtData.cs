@@ -73,6 +73,7 @@ namespace JsonAssets.Data
             if (this.Texture == null)
             {
                 Texture2D newTex = new(Game1.graphics.GraphicsDevice, 256, 32);
+                newTex.Name = this.Name.FixIdJA("S");
                 Color[] data = new Color[8 * 32];
                 TextureMale.GetData(0, new Rectangle(0, 0, 8, 32), data, 0, 8 * 32);
                 newTex.SetData(0, 0, new Rectangle(0, 0, 8, 32), data, 0, 8 * 32);

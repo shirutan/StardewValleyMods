@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Newtonsoft.Json;
 using SpaceShared;
+using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Monsters;
 
@@ -76,27 +77,23 @@ namespace JsonAssets.Data
                 return this.Texture;
             }
 
-            if (this.BigTexture == null)
+            // Initialize the bigger texture
+            Texture2D bigTexture = new Texture2D(Game1.graphics.GraphicsDevice, 16 * (this.ExtraTextures.Length + 1), 32);
+            bigTexture.Name = this.Name.FixIdJA("BC");
+            Color[] frame = new Color[16 * 32];
+
+            // Put in the base texture
+            this.Texture.GetData(0, new Rectangle(0, 0, 16, 32), frame, 0, 16 * 32);
+            bigTexture.SetData(0, 0, new Rectangle(0, 0, 16, 32), frame, 0, 16 * 32);
+
+            // Paste every extra frame into the texture
+            for (int i = 0; i < this.ExtraTextures.Length; ++i)
             {
-                // Initialize the bigger texture
-                Texture2D bigTexture = new Texture2D(Game1.graphics.GraphicsDevice, 16 * (this.ExtraTextures.Length + 1), 32);
-                Color[] frame = new Color[16 * 32];
-
-                // Put in the base texture
-                this.Texture.GetData(0, new Rectangle(0, 0, 16, 32), frame, 0, 16 * 32);
-                bigTexture.SetData(0, 0, new Rectangle(0, 0, 16, 32), frame, 0, 16 * 32);
-
-                // Paste every extra frame into the texture
-                for (int i = 0; i < this.ExtraTextures.Length; ++i)
-                {
-                    this.ExtraTextures[i].GetData(0, new Rectangle(0, 0, 16, 32), frame, 0, 16 * 32);
-                    bigTexture.SetData(0, 0, new Rectangle((i + 1) * 16, 0, 16, 32), frame, 0, 16 * 32);
-                }
-
-                this.BigTexture = bigTexture;
+                this.ExtraTextures[i].GetData(0, new Rectangle(0, 0, 16, 32), frame, 0, 16 * 32);
+                bigTexture.SetData(0, 0, new Rectangle((i + 1) * 16, 0, 16, 32), frame, 0, 16 * 32);
             }
 
-            return this.BigTexture;
+            return bigTexture;
         }
 
         /*********
