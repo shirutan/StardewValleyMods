@@ -35,9 +35,8 @@ namespace JsonAssets.Framework.ContentPatcher
                 new IdToken("Hat", ContentPatcherIntegration.Ja.GetAllHatIds),
                 new IdToken("Weapon", ContentPatcherIntegration.Ja.GetAllWeaponIds),
                 new IdToken("Pants", ContentPatcherIntegration.Ja.GetAllPantsIds),
-                new IdToken("Shirt", ContentPatcherIntegration.Ja.GetAllShirtIds),
+                new IdToken("Shirts", ContentPatcherIntegration.Ja.GetAllShirtIds),
                 new IdToken("Boots", ContentPatcherIntegration.Ja.GetAllBootsIds),
-                new IdToken("Clothing", ContentPatcherIntegration.Ja.GetAllClothingIds),
                 new SpriteTilesheetToken("Object", ContentPatcherIntegration.Ja.GetAllObjectIds),
                 new SpriteCoordinateToken("Object", true, ContentPatcherIntegration.Ja.GetAllObjectIds),
                 new SpriteCoordinateToken("Object", false, ContentPatcherIntegration.Ja.GetAllObjectIds),
@@ -55,7 +54,16 @@ namespace JsonAssets.Framework.ContentPatcher
                 new SpriteCoordinateToken("Hat", false, ContentPatcherIntegration.Ja.GetAllHatIds),
                 new SpriteTilesheetToken("Weapon", ContentPatcherIntegration.Ja.GetAllWeaponIds),
                 new SpriteCoordinateToken("Weapon", true, ContentPatcherIntegration.Ja.GetAllWeaponIds),
-                new SpriteCoordinateToken("Weapon", false, ContentPatcherIntegration.Ja.GetAllWeaponIds)
+                new SpriteCoordinateToken("Weapon", false, ContentPatcherIntegration.Ja.GetAllWeaponIds),
+                new SpriteTilesheetToken("Shirts", ContentPatcherIntegration.Ja.GetAllShirtIds),
+                new SpriteCoordinateToken("Shirts", true, ContentPatcherIntegration.Ja.GetAllShirtIds),
+                new SpriteCoordinateToken("Shirts", false, ContentPatcherIntegration.Ja.GetAllShirtIds),
+                new SpriteTilesheetToken("Pants", ContentPatcherIntegration.Ja.GetAllPantsIds),
+                new SpriteCoordinateToken("Pants", true, ContentPatcherIntegration.Ja.GetAllPantsIds),
+                new SpriteCoordinateToken("Pants", false, ContentPatcherIntegration.Ja.GetAllPantsIds),
+                new SpriteTilesheetToken("Boots", ContentPatcherIntegration.Ja.GetAllBootsIds),
+                new SpriteCoordinateToken("Boots", true, ContentPatcherIntegration.Ja.GetAllBootsIds),
+                new SpriteCoordinateToken("Boots", false, ContentPatcherIntegration.Ja.GetAllBootsIds)
             };
             // TODO: Shirt tilesheet
             // TODO: Shirt x
