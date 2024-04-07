@@ -2146,13 +2146,13 @@ namespace JsonAssets
                             // Make fruit trees from removed packs at least say their name
                             if (int.TryParse(ftree.obsolete_treeType, out int treeNum1) && this.RemovedFruitTrees.ContainsKey(treeNum1))
                             {
-                                Log.Trace($"Attempting to migrate removed fruit tree! ID {ftree.obsolete_treeType} and name {this.RemovedObjects[treeNum1]}");
+                                Log.Trace($"Attempting to migrate removed fruit tree! ID {ftree.obsolete_treeType} and name {this.RemovedFruitTrees[treeNum1]}");
                                 ftree.treeId.Value = this.RemovedFruitTrees[treeNum1].FixIdJA();
                                 ftree.obsolete_treeType = null;
                             }
                             else if (int.TryParse(ftree.treeId.Value, out int treeNum2) && this.RemovedFruitTrees.ContainsKey(treeNum2))
                             {
-                                Log.Trace($"Attempting to migrate removed fruit tree! ID {ftree.treeId.Value} and name {this.RemovedObjects[treeNum2]}");
+                                Log.Trace($"Attempting to migrate removed fruit tree! ID {ftree.treeId.Value} and name {this.RemovedFruitTrees[treeNum2]}");
                                 ftree.treeId.Value = this.RemovedFruitTrees[treeNum2].FixIdJA();
                             }
                         }
