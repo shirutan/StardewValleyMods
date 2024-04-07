@@ -31,7 +31,25 @@ namespace JsonAssets.Data
         {
             string str = "";
             foreach (var ingredient in this.Ingredients)
-                str += ingredient.Object.ToString().FixIdJA("O") + " " + ingredient.Count + " ";
+            {
+                string ingredientName = ingredient.Object.ToString().FixIdJA("O");
+                // If the original object name is an integer, it's a category or an original ID
+                if (int.TryParse(ingredient.Object.ToString(), out int ingredIndex))
+                {
+                    ingredientName = ingredIndex.ToString();
+                }
+                // If the object isn't an integer, check if it's the name of an existing item
+                else if (ItemRegistry.GetDataOrErrorItem(ingredientName).IsErrorItem)
+                {
+                    Item tryGetItem = Utility.fuzzyItemSearch(ingredientName);
+                    if (tryGetItem != null)
+                    {
+                        ingredientName = tryGetItem.ItemId;
+                    }
+                }
+                // Otherwise leave name untouched
+                str += ingredientName + " " + ingredient.Count + " ";
+            }
             str = str.Substring(0, str.Length - 1);
             str += $"/what is this for?/{parent.Name.FixIdJA("BC")} {this.ResultCount}/true/";
             if (this.SkillUnlockName?.Length > 0 && this.SkillUnlockLevel > 0)
