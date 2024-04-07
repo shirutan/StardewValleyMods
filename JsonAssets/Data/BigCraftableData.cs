@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 using JsonAssets.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Newtonsoft.Json;
 using SpaceShared;
+using StardewValley;
+using StardewValley.Monsters;
 
 namespace JsonAssets.Data
 {
@@ -18,6 +21,7 @@ namespace JsonAssets.Data
         *********/
         [JsonIgnore]
         public Texture2D[] ExtraTextures { get; set; }
+        public Texture2D BigTexture { get; set; }
 
         public bool ReserveNextIndex { get; set; } = false; // Deprecated
         public int ReserveExtraIndexCount { get; set; } = 0;
@@ -60,11 +64,40 @@ namespace JsonAssets.Data
                 Price = this.Price,
                 Fragility = 0,
                 IsLamp = ProvidesLight,
-                Texture = $"JA\\BigCraftable0\\{Name.FixIdJA("BC")}",
+                Texture = $"JA\\BigCraftable\\{Name.FixIdJA("BC")}",
                 SpriteIndex = 0,
             };
         }
 
+        public Texture2D GetTexture()
+        {
+            if (this.ExtraTextures.Length == 0)
+            {
+                return this.Texture;
+            }
+
+            if (this.BigTexture == null)
+            {
+                // Initialize the bigger texture
+                Texture2D bigTexture = new Texture2D(Game1.graphics.GraphicsDevice, 16 * (this.ExtraTextures.Length + 1), 32);
+                Color[] frame = new Color[16 * 32];
+
+                // Put in the base texture
+                this.Texture.GetData(0, new Rectangle(0, 0, 16, 32), frame, 0, 16 * 32);
+                bigTexture.SetData(0, 0, new Rectangle(0, 0, 16, 32), frame, 0, 16 * 32);
+
+                // Paste every extra frame into the texture
+                for (int i = 0; i < this.ExtraTextures.Length; ++i)
+                {
+                    this.ExtraTextures[i].GetData(0, new Rectangle(0, 0, 16, 32), frame, 0, 16 * 32);
+                    bigTexture.SetData(0, 0, new Rectangle((i + 1) * 16, 0, 16, 32), frame, 0, 16 * 32);
+                }
+
+                this.BigTexture = bigTexture;
+            }
+
+            return this.BigTexture;
+        }
 
         /*********
         ** Private methods

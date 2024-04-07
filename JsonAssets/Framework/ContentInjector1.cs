@@ -83,9 +83,7 @@ namespace JsonAssets.Framework
             {
                 try
                 {
-                    ToLoad.Add("JA/BigCraftable0/" + big.Name.FixIdJA("BC"), big.Texture);
-                    for (int i = 0; i < big.ExtraTextures.Length; ++i)
-                        ToLoad.Add("JA/BigCraftable" + (i + 1) + "/" + big.Name.FixIdJA("BC"), big.ExtraTextures[i]);
+                    ToLoad.Add("JA/BigCraftable/" + big.Name.FixIdJA("BC"), big.GetTexture());
                 }
                 catch (Exception e)
                 {
