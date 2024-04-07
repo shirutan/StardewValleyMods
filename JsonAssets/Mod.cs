@@ -38,8 +38,7 @@ namespace JsonAssets
     {
         // Doing this as an extension method isn't more efficient
         // It just saves me a miniscule amount of time finding/replacing the old code
-
-        private static Regex NameFixer = new("[^a-zA-Z0-9_]", RegexOptions.Compiled);
+        private static Regex NameFixer = new("[/&@#$%*{}\\[\\]\\s\\\\]", RegexOptions.Compiled);
         public static string FixIdJA(this string before, string type = null)
         {
             if (type != null)
@@ -130,7 +129,6 @@ namespace JsonAssets
         public static readonly Dictionary<string, IManifest> DupShirts = new();
         public static readonly Dictionary<string, IManifest> DupPants = new();
         public static readonly Dictionary<string, IManifest> DupBoots = new();
-
         private Dictionary<string, string> FruitTreeSaplings = new();
 
         private readonly Dictionary<string, int> RemovedObjects = new();
@@ -2020,12 +2018,10 @@ namespace JsonAssets
                                 ftree.obsolete_treeType = null;
                             }
                             // Now migrate them from int to string IDs
-                            Log.Info($"Fruit tree ID: {ftree.treeId.Value}");
                             if (ftree.treeId.Value != null)
                             {
                                 // Look up the proper tree name
                                 this.OldFruitTreeIds.TryGetValue(ftree.treeId.Value, out string val);
-                                Log.Info($"Best guess: {val}");
                                 if (val != null)
                                 {
                                     // Translate the proper tree name to sapling name and set as tree ID
