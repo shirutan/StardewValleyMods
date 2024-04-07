@@ -64,15 +64,15 @@ namespace JsonAssets
 
         private List<CustomForgeRecipe> myForgeRecipes = new();
 
-        private readonly Dictionary<string, IManifest> DupObjects = new();
-        private readonly Dictionary<string, IManifest> DupCrops = new();
-        private readonly Dictionary<string, IManifest> DupFruitTrees = new();
-        private readonly Dictionary<string, IManifest> DupBigCraftables = new();
-        private readonly Dictionary<string, IManifest> DupHats = new();
-        private readonly Dictionary<string, IManifest> DupWeapons = new();
-        private readonly Dictionary<string, IManifest> DupShirts = new();
-        private readonly Dictionary<string, IManifest> DupPants = new();
-        private readonly Dictionary<string, IManifest> DupBoots = new();
+        public readonly Dictionary<string, IManifest> DupObjects = new();
+        public readonly Dictionary<string, IManifest> DupCrops = new();
+        public readonly Dictionary<string, IManifest> DupFruitTrees = new();
+        public readonly Dictionary<string, IManifest> DupBigCraftables = new();
+        public readonly Dictionary<string, IManifest> DupHats = new();
+        public readonly Dictionary<string, IManifest> DupWeapons = new();
+        public readonly Dictionary<string, IManifest> DupShirts = new();
+        public readonly Dictionary<string, IManifest> DupPants = new();
+        public readonly Dictionary<string, IManifest> DupBoots = new();
         private Dictionary<string, string> FruitTreeSaplings = new();
         private readonly Regex SeasonLimiter = new("(z(?: spring| summer| fall| winter){2,4})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
