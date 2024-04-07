@@ -43,7 +43,7 @@ namespace JsonAssets
         {
             if (type != null)
             {
-                string name = NameFixer.Replace(before.Trim(), "_");
+                string name = NameFixer.Replace(before, "_").Trim();
                 switch (type)
                 {
                     case "O":
@@ -96,7 +96,7 @@ namespace JsonAssets
                 }
             }
             else
-                return NameFixer.Replace(before.Trim(), "_");
+                return NameFixer.Replace(before, "_").Trim();
         }
     }
 
