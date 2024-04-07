@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -7,6 +8,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Newtonsoft.Json;
 using SpaceShared;
+using StardewValley;
 
 namespace JsonAssets.Data
 {
@@ -55,36 +57,35 @@ namespace JsonAssets.Data
             return this.Seed.Name;
         }
 
-        internal string GetCropInformation()
+        internal StardewValley.GameData.Crops.CropData GetCropInformation()
         {
-            string str = "";
-            //str += GetProductId() + "/";
-            foreach (int phase in this.Phases)
-            {
-                str += phase + " ";
-            }
-            str = str.Substring(0, str.Length - 1) + "/";
+            List<Season> seasons = new();
             foreach (string season in this.Seasons)
+                seasons.Add(Enum.Parse<Season>(season.Substring(0, 1).ToUpper() + season.Substring(1)));
+
+            List<string> colors = new();
+            foreach (var c in this.Colors)
             {
-                str += season + " ";
+                colors.Add("#" + c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2"));
             }
-            str = str.Substring(0, str.Length - 1) + "/";
-            str += $"0/{this.Product}/{this.RegrowthPhase}/";
-            str += (this.HarvestWithScythe ? "1" : "0") + "/";
-            if (this.Bonus != null)
-                str += $"true {this.Bonus.MinimumPerHarvest} {this.Bonus.MaximumPerHarvest} {this.Bonus.MaxIncreasePerFarmLevel} {this.Bonus.ExtraChance}/";
-            else str += "false/";
-            str += (this.TrellisCrop ? "true" : "false") + "/";
-            if (this.Colors.Any())
+
+            var cropData = new StardewValley.GameData.Crops.CropData()
             {
-                str += "true";
-                foreach (var color in this.Colors)
-                    str += $" {color.R} {color.G} {color.B}";
-            }
-            else
-                str += "false";
-            str += $"/JA\\Crop\\{this.Name.FixIdJA("Crop")}";
-            return str;
+                Seasons = seasons,
+                DaysInPhase = new(this.Phases),
+                RegrowDays = this.RegrowthPhase,
+                IsRaised = this.TrellisCrop,
+                IsPaddyCrop = this.CropType == CropType.Paddy,
+                HarvestItemId = "(O)" + this.Product.ToString().FixIdJA("O"),
+                HarvestMinStack = this.Bonus?.MinimumPerHarvest ?? 1,
+                HarvestMaxStack = this.Bonus?.MaximumPerHarvest ?? 1,
+                HarvestMaxIncreasePerFarmingLevel = this.Bonus?.MaxIncreasePerFarmLevel ?? 0,
+                ExtraHarvestChance = this.Bonus?.ExtraChance ?? 0,
+                HarvestMethod = this.HarvestWithScythe ? StardewValley.GameData.Crops.HarvestMethod.Scythe : StardewValley.GameData.Crops.HarvestMethod.Grab,
+                TintColors = colors,
+                Texture = "JA/Crop/" + this.Name.FixIdJA("Crop"),
+            };
+            return cropData;
         }
 
 

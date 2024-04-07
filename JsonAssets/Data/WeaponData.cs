@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 using JsonAssets.Framework;
 using SpaceShared;
+using StardewValley;
 
 namespace JsonAssets.Data
 {
@@ -50,9 +51,29 @@ namespace JsonAssets.Data
         /*********
         ** Public methods
         *********/
-        internal string GetWeaponInformation()
+        internal StardewValley.GameData.Weapons.WeaponData GetWeaponInformation()
         {
-            return $"{this.Name.FixIdJA("W")}/{this.LocalizedDescription()}/{this.MinimumDamage}/{this.MaximumDamage}/{this.Knockback}/{this.Speed}/{this.Accuracy}/{this.Defense}/{(int)this.Type}/{this.MineDropVar}/{this.MineDropMinimumLevel}/{this.ExtraSwingArea}/{this.CritChance}/{this.CritMultiplier}/{this.LocalizedName()}/0/JA\\Weapon\\{this.Name.FixIdJA("W")}";
+            var weapon = new StardewValley.GameData.Weapons.WeaponData()
+            {
+                Name = this.Name.FixIdJA("W"),
+                DisplayName = this.LocalizedName(),
+                Description = this.LocalizedDescription(),
+                MinDamage = this.MinimumDamage,
+                MaxDamage = this.MaximumDamage,
+                Knockback = (float)this.Knockback,
+                Speed = this.Speed,
+                Precision = this.Accuracy,
+                Defense = this.Defense,
+                Type = (int)this.Type,
+                MineBaseLevel = this.MineDropVar,
+                MineMinLevel = this.MineDropMinimumLevel,
+                AreaOfEffect = this.ExtraSwingArea,
+                CritChance = (float)this.CritChance,
+                CritMultiplier = (float)this.CritMultiplier,
+                Texture = $"JA/Weapon/{this.Name.FixIdJA("W")}",
+                SpriteIndex = 0,
+            };
+            return weapon;
         }
 
 

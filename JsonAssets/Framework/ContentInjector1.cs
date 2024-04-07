@@ -214,33 +214,8 @@ namespace JsonAssets.Framework
             {
                 try
                 {
-                    List<Season> seasons = new();
-                    foreach (string season in crop.Seasons)
-                        seasons.Add(Enum.Parse<Season>(season.Substring(0, 1).ToUpper() + season.Substring(1)));
-
-                    List<string> colors = new();
-                    foreach (var c in crop.Colors)
-                    {
-                        colors.Add("#" + c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2"));
-                    }
-
                     Log.Verbose($"Injecting to crops: {crop.GetSeedId()}: {crop.GetCropInformation()}");
-                    data.Add(crop.GetSeedId().FixIdJA("O"), new()
-                    {
-                        Seasons = seasons,
-                        DaysInPhase = new(crop.Phases),
-                        RegrowDays = crop.RegrowthPhase,
-                        IsRaised = crop.TrellisCrop,
-                        IsPaddyCrop = crop.CropType == CropType.Paddy,
-                        HarvestItemId = "(O)" + crop.Product.ToString().FixIdJA("O"),
-                        HarvestMinStack = crop.Bonus?.MinimumPerHarvest ?? 1,
-                        HarvestMaxStack = crop.Bonus?.MaximumPerHarvest ?? 1,
-                        HarvestMaxIncreasePerFarmingLevel = crop.Bonus?.MaxIncreasePerFarmLevel ?? 0,
-                        ExtraHarvestChance = crop.Bonus?.ExtraChance ?? 0,
-                        HarvestMethod = crop.HarvestWithScythe ? StardewValley.GameData.Crops.HarvestMethod.Scythe : StardewValley.GameData.Crops.HarvestMethod.Grab,
-                        TintColors = colors,
-                        Texture = "JA/Crop/" + crop.Name.FixIdJA("Crop"),
-                    });
+                    data.Add(crop.GetSeedId().FixIdJA("O"), crop.GetCropInformation());
                 }
                 catch (Exception e)
                 {
@@ -408,26 +383,7 @@ namespace JsonAssets.Framework
                 try
                 {
                     Log.Verbose($"Injecting to weapons: {weapon.Name}: {weapon.GetWeaponInformation()}");
-                    data.Add(weapon.Name.FixIdJA("W"), new()
-                    {
-                        Name = weapon.Name,
-                        DisplayName = weapon.LocalizedName(),
-                        Description = weapon.LocalizedDescription(),
-                        MinDamage = weapon.MinimumDamage,
-                        MaxDamage = weapon.MaximumDamage,
-                        Knockback = (float)weapon.Knockback,
-                        Speed = weapon.Speed,
-                        Precision = weapon.Accuracy,
-                        Defense = weapon.Defense,
-                        Type = (int)weapon.Type,
-                        MineBaseLevel = weapon.MineDropVar,
-                        MineMinLevel = weapon.MineDropMinimumLevel,
-                        AreaOfEffect = weapon.ExtraSwingArea,
-                        CritChance = ( float ) weapon.CritChance,
-                        CritMultiplier = ( float ) weapon.CritMultiplier,
-                        Texture = $"JA/Weapon/{weapon.Name.FixIdJA("W")}",
-                        SpriteIndex = 0,
-                    }); ;
+                    data.Add(weapon.Name.FixIdJA("W"),weapon.GetWeaponInformation()); ;
                 }
                 catch (Exception e)
                 {
