@@ -192,7 +192,7 @@ namespace JsonAssets.Framework
                 try
                 {
                     Log.Verbose($"Injecting to object extension data: {obj.Name}");
-                    data.Add(obj.Name, new()
+                    data.Add(obj.Name.FixIdJA("O"), new()
                     {
                         CategoryTextOverride = obj.CategoryTextOverride,
                         CategoryColorOverride = obj.CategoryColorOverride,
@@ -202,7 +202,7 @@ namespace JsonAssets.Framework
                 }
                 catch (Exception e)
                 {
-                    Log.Error($"Exception injecting object information for {obj.Name}: {e}");
+                    Log.Error($"Exception injecting object information for {obj.Name.FixIdJA("O")}: {e}");
                 }
             }
         }
