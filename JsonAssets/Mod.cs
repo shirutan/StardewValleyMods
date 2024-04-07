@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
 using JsonAssets.Data;
 using JsonAssets.Framework;
@@ -24,6 +25,7 @@ using StardewValley.Buildings;
 using StardewValley.Characters;
 using StardewValley.Locations;
 using StardewValley.Menus;
+using StardewValley.Monsters;
 using StardewValley.Network;
 using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
@@ -131,14 +133,14 @@ namespace JsonAssets
         public static readonly Dictionary<string, IManifest> DupBoots = new();
         private Dictionary<string, string> FruitTreeSaplings = new();
 
-        private readonly Dictionary<string, int> RemovedObjects = new();
-        private readonly Dictionary<string, int> RemovedCrops = new();
-        private readonly Dictionary<string, int> RemovedFruitTrees = new();
-        private readonly Dictionary<string, int> RemovedBigCraftables = new();
-        private readonly Dictionary<string, int> RemovedHats = new();
-        private readonly Dictionary<string, int> RemovedWeapons = new();
-        private readonly Dictionary<string, int> RemovedClothing = new();
-        private readonly Dictionary<string, int> RemovedBoots = new();
+        private readonly Dictionary<int, string> RemovedObjects = new();
+        private readonly Dictionary<int, string> RemovedCrops = new();
+        private readonly Dictionary<int, string> RemovedFruitTrees = new();
+        private readonly Dictionary<int, string> RemovedBigCraftables = new();
+        private readonly Dictionary<int, string> RemovedHats = new();
+        private readonly Dictionary<int, string> RemovedWeapons = new();
+        private readonly Dictionary<int, string> RemovedClothing = new();
+        private readonly Dictionary<int, string> RemovedBoots = new();
 
         private readonly Regex SeasonLimiter = new("(z(?: spring| summer| fall| winter){2,4})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
@@ -1556,7 +1558,7 @@ namespace JsonAssets
                     if (!DupObjects.ContainsKey(key.FixIdJA()))
                     {
                         OldObjectIds.Remove(objs[key].ToString());
-                        RemovedObjects.Add(key, objs[key]);
+                        RemovedObjects.Add(objs[key], key);
                     }
                 }
                 var crops = LoadDictionary<string, int>("ids-crops.json");
@@ -1565,7 +1567,7 @@ namespace JsonAssets
                     if (!DupCrops.ContainsKey(key.FixIdJA()))
                     {
                         OldCropIds.Remove(crops[key].ToString());
-                        RemovedCrops.Add(key, crops[key]);
+                        RemovedCrops.Add(crops[key], key);
                     }
                 }
                 var ftrees = LoadDictionary<string, int>("ids-fruittrees.json");
@@ -1574,7 +1576,7 @@ namespace JsonAssets
                     if (!DupFruitTrees.ContainsKey(key.FixIdJA()))
                     {
                         OldFruitTreeIds.Remove(ftrees[key].ToString());
-                        RemovedFruitTrees.Add(key, ftrees[key]);
+                        RemovedFruitTrees.Add(ftrees[key], key);
                     }
                 }
                 var bigs = LoadDictionary<string, int>("ids-big-craftables.json");
@@ -1583,7 +1585,7 @@ namespace JsonAssets
                     if (!DupBigCraftables.ContainsKey(key.FixIdJA()))
                     {
                         OldBigCraftableIds.Remove(bigs[key].ToString());
-                        RemovedBigCraftables.Add(key, bigs[key]);
+                        RemovedBigCraftables.Add(bigs[key], key);
                     }
                 }
                 var hats = LoadDictionary<string, int>("ids-hats.json");
@@ -1592,7 +1594,7 @@ namespace JsonAssets
                     if (!DupHats.ContainsKey(key.FixIdJA()))
                     {
                         OldHatIds.Remove(hats[key].ToString());
-                        RemovedHats.Add(key, hats[key]);
+                        RemovedHats.Add(hats[key], key);
                     }
                 }
                 var weapons = LoadDictionary<string, int>("ids-weapons.json");
@@ -1601,7 +1603,7 @@ namespace JsonAssets
                     if (!DupWeapons.ContainsKey(key.FixIdJA()))
                     {
                         OldWeaponIds.Remove(weapons[key].ToString());
-                        RemovedWeapons.Add(key, weapons[key]);
+                        RemovedWeapons.Add(weapons[key], key);
                     }
                 }
                 var clothing = LoadDictionary<string, int>("ids-clothing.json");
@@ -1610,7 +1612,7 @@ namespace JsonAssets
                     if (!DupShirts.ContainsKey(key.FixIdJA()) && !DupPants.ContainsKey(key.FixIdJA()))
                     {
                         OldClothingIds.Remove(clothing[key].ToString());
-                        RemovedClothing.Add(key, clothing[key]);
+                        RemovedClothing.Add(clothing[key], key);
                     }
                 }
                 var boots = LoadDictionary<string, int>("ids-boots.json");
@@ -1619,7 +1621,7 @@ namespace JsonAssets
                     if (!DupBoots.ContainsKey(key.FixIdJA()))
                     {
                         OldBootsIds.Remove(boots[key].ToString());
-                        RemovedBoots.Add(key, boots[key]);
+                        RemovedBoots.Add(boots[key], key);
                     }
                 }
 
@@ -1813,6 +1815,17 @@ namespace JsonAssets
                 case Hat hat:
                     if (hat.obsolete_which.HasValue && this.OldHatIds.ContainsKey(hat.obsolete_which.Value.ToString()))
                         hat.ItemId = this.OldHatIds[hat.obsolete_which.Value.ToString()].FixIdJA("H");
+                    if (int.TryParse(hat.ItemId, out int hatNum) && this.RemovedHats.ContainsKey(hatNum))
+                    {
+                        Log.Trace($"Attempting to migrate removed hat! ID {hat.ItemId} and name {this.RemovedHats[hatNum]}");
+                        string name = this.RemovedHats[hatNum].ToString();
+                        if (ItemRegistry.GetData("(H)" + name) != null)
+                            hat.ItemId = ItemRegistry.GetData("(H)" + name).ItemId;
+                        else if (ItemRegistry.GetData("(H)" + name.FixIdJA()) != null)
+                            hat.ItemId = ItemRegistry.GetData("(H)" + name.FixIdJA()).ItemId;
+                        else
+                            hat.ItemId = name.FixIdJA();
+                    }
                     break;
 
                 case MeleeWeapon weapon:
@@ -1820,9 +1833,10 @@ namespace JsonAssets
                         weapon.ItemId = this.OldWeaponIds[weapon.ItemId].FixIdJA("W");
                     if (weapon.appearance.Value != null && this.OldWeaponIds.ContainsKey(weapon.appearance.Value))
                         weapon.appearance.Value = this.OldWeaponIds[weapon.appearance.Value].FixIdJA("W");
-                    if (this.RemovedWeapons.ContainsKey(weapon.ItemId))
+                    if (int.TryParse(weapon.ItemId, out int weaponNum) && this.RemovedWeapons.ContainsKey(weaponNum))
                     {
-                        string name = this.RemovedWeapons[weapon.ItemId].ToString();
+                        Log.Trace($"Attempting to migrate removed weapon! ID {weapon.ItemId} and name {this.RemovedWeapons[weaponNum]}");
+                        string name = this.RemovedWeapons[weaponNum].ToString();
                         if (ItemRegistry.GetData("(W)" + name) != null)
                             weapon.ItemId = ItemRegistry.GetData("(W)" + name).ItemId;
                         else if (ItemRegistry.GetData("(W)" + name.FixIdJA()) != null)
@@ -1835,6 +1849,18 @@ namespace JsonAssets
                 case Ring ring:
                     if (this.OldObjectIds.ContainsKey(ring.ItemId))
                         ring.ItemId = this.OldObjectIds[ring.ItemId].FixIdJA("O");
+
+                    if (int.TryParse(ring.ItemId, out int ringNum) && this.RemovedObjects.ContainsKey(ringNum))
+                    {
+                        Log.Trace($"Attempting to migrate removed ring! ID {ring.ItemId} and name {this.RemovedObjects[ringNum]}");
+                        string name = this.RemovedObjects[ringNum].ToString();
+                        if (ItemRegistry.GetData("(R)" + name) != null)
+                            ring.ItemId = ItemRegistry.GetData("(R)" + name).ItemId;
+                        else if (ItemRegistry.GetData("(R)" + name.FixIdJA()) != null)
+                            ring.ItemId = ItemRegistry.GetData("(R)" + name.FixIdJA()).ItemId;
+                        else
+                            ring.ItemId = name.FixIdJA();
+                    }
 
                     if (ring is CombinedRing combinedRing)
                     {
@@ -1853,11 +1879,39 @@ namespace JsonAssets
                         if (this.OldClothingIds[clothing.ItemId].FixIdJA("S") != null)
                             clothing.ItemId = this.OldClothingIds[clothing.ItemId].FixIdJA("S");
                     }
+                    if (int.TryParse(clothing.ItemId, out int clothesNum) && this.RemovedClothing.ContainsKey(clothesNum))
+                    {
+                        Log.Trace($"Attempting to migrate removed clothing! ID {clothing.ItemId} and name {this.RemovedClothing[clothesNum]}");
+                        string name = this.RemovedClothing[clothesNum].ToString();
+                        if (ItemRegistry.GetData("(P)" + name) != null)
+                            clothing.ItemId = ItemRegistry.GetData("(P)" + name).ItemId;
+                        else if (ItemRegistry.GetData("(P)" + name.FixIdJA()) != null)
+                            clothing.ItemId = ItemRegistry.GetData("(P)" + name.FixIdJA()).ItemId;
+                        else if (ItemRegistry.GetData("(S)" + name) != null)
+                            clothing.ItemId = ItemRegistry.GetData("(S)" + name).ItemId;
+                        else if (ItemRegistry.GetData("(S)" + name.FixIdJA()) != null)
+                            clothing.ItemId = ItemRegistry.GetData("(S)" + name.FixIdJA()).ItemId;
+                        else
+                            clothing.ItemId = name.FixIdJA();
+                    }
                     break;
 
                 case Boots boots:
                     if (this.OldBootsIds.ContainsKey(boots.ItemId))
                         boots.ItemId = this.OldBootsIds[boots.ItemId].FixIdJA("B");
+
+                    if (int.TryParse(boots.ItemId, out int bootsNum) && this.RemovedBoots.ContainsKey(bootsNum))
+                    {
+                        Log.Trace($"Attempting to migrate removed boots! ID {boots.ItemId} and name {this.RemovedObjects[bootsNum]}");
+                        string name = this.RemovedBoots[bootsNum].ToString();
+                        if (ItemRegistry.GetData("(B)" + name) != null)
+                            boots.ItemId = ItemRegistry.GetData("(B)" + name).ItemId;
+                        else if (ItemRegistry.GetData("(B)" + name.FixIdJA()) != null)
+                            boots.ItemId = ItemRegistry.GetData("(B)" + name.FixIdJA()).ItemId;
+                        else
+                            boots.ItemId = name.FixIdJA();
+                    }
+
                     // TODO: what to do about tailored boots...
                     break;
 
@@ -1889,18 +1943,42 @@ namespace JsonAssets
                             */
                             if (this.OldObjectIds.ContainsKey(obj.ItemId))
                                 obj.ItemId = this.OldObjectIds[obj.ItemId].FixIdJA("O");
+
+                            if (int.TryParse(obj.ItemId, out int objNum) && this.RemovedObjects.ContainsKey(objNum))
+                            {
+                                Log.Trace($"Attempting to migrate removed object! ID {obj.ItemId} and name {this.RemovedObjects[objNum]}");
+                                string name = this.RemovedObjects[objNum].ToString();
+                                if (ItemRegistry.GetData("(O)" + name) != null)
+                                    obj.ItemId = ItemRegistry.GetData("(O)" + name).ItemId;
+                                else if (ItemRegistry.GetData("(O)" + name.FixIdJA()) != null)
+                                    obj.ItemId = ItemRegistry.GetData("(O)" + name.FixIdJA()).ItemId;
+                                else
+                                    obj.ItemId = name.FixIdJA();
+                            }
                         }
                         else
                         {
                             if (this.OldBigCraftableIds.ContainsKey(obj.ItemId))
                                 obj.ItemId = this.OldBigCraftableIds[obj.ItemId].FixIdJA("BC");
+
+                            if (int.TryParse(obj.ItemId, out int objNum) && this.RemovedBigCraftables.ContainsKey(objNum))
+                            {
+                                Log.Trace($"Attempting to migrate removed big craftable! ID {obj.ItemId} and name {this.RemovedBigCraftables[objNum]}");
+                                string name = this.RemovedBigCraftables[objNum].ToString();
+                                if (ItemRegistry.GetData("(BC)" + name) != null)
+                                    obj.ItemId = ItemRegistry.GetData("(BC)" + name).ItemId;
+                                else if (ItemRegistry.GetData("(BC)" + name.FixIdJA()) != null)
+                                    obj.ItemId = ItemRegistry.GetData("(BC)" + name.FixIdJA()).ItemId;
+                                else
+                                    obj.ItemId = name.FixIdJA();
+                            }
                         }
                     }
 
                     if (obj.heldObject.Value != null)
                     {
                         if (this.OldObjectIds.ContainsKey(obj.heldObject.Value.ItemId))
-                            obj.heldObject.Value.ItemId = this.OldObjectIds[obj.heldObject.Value.ItemId].Replace(' ', '_');
+                            obj.heldObject.Value.ItemId = this.OldObjectIds[obj.heldObject.Value.ItemId].FixIdJA("O");
 
                         if (obj.heldObject.Value is Chest innerChest)
                             this.FixItemList(innerChest.Items);
