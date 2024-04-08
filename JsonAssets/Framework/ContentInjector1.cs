@@ -20,7 +20,7 @@ namespace JsonAssets.Framework
     {
         private delegate void Injector(IAssetData asset);
         private readonly Dictionary<string, Injector> Files;
-        private readonly Dictionary<string, object> ToLoad;
+        private readonly Dictionary<string, Texture2D> ToLoad;
         public ContentInjector1()
         {
             //normalize with
@@ -155,7 +155,12 @@ namespace JsonAssets.Framework
         private void Content_AssetRequested(object sender, StardewModdingAPI.Events.AssetRequestedEventArgs e)
         {
             if (ToLoad.ContainsKey(e.NameWithoutLocale.Name.Replace('\\', '/')))
-                e.LoadFrom(() => ToLoad[e.NameWithoutLocale.Name.Replace('\\', '/')], StardewModdingAPI.Events.AssetLoadPriority.Medium);
+                e.LoadFrom(() => {
+                    Texture2D tex = new Texture2D(Game1.graphics.GraphicsDevice, ToLoad[e.NameWithoutLocale.Name.Replace('\\', '/')].Width, ToLoad[e.NameWithoutLocale.Name.Replace('\\', '/')].Height);
+                    tex.CopyFromTexture(ToLoad[e.NameWithoutLocale.Name.Replace('\\', '/')]);
+                    return tex;
+                }
+                , StardewModdingAPI.Events.AssetLoadPriority.Medium);
 
             if (Files.ContainsKey(e.NameWithoutLocale.Name.Replace('/', '\\')))
                 e.Edit((asset) => Files[e.NameWithoutLocale.Name.Replace('/', '\\')](asset));
