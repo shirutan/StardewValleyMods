@@ -39,7 +39,7 @@ namespace JsonAssets.Framework
                 {"Data\\Shirts", this.InjectDataShirts},
                 {"Data\\TailoringRecipes", this.InjectDataTailoringRecipes},
                 {"Data\\Boots", this.InjectDataBoots},
-                {"spacechase0.SpaceCore/ObjectExtensionData", this.InjectDataObjectExtensionData }
+                {"spacechase0.SpaceCore\\ObjectExtensionData", this.InjectDataObjectExtensionData }
             };
 
             this.ToLoad = new();
@@ -234,13 +234,13 @@ namespace JsonAssets.Framework
                 {
                     if (crop.GiantTexture != null)
                     {
-                        Log.Verbose($"Injecting to crops: {crop.GetSeedId()}: {crop.GetCropInformation()}");
+                        Log.Verbose($"Injecting to crops: {crop.GetSeedId()}: {crop.GetGiantCropInformation()}");
                         data.Add(crop.GetSeedId().FixIdJA("O"), crop.GetGiantCropInformation());
                     }
                 }
                 catch (Exception e)
                 {
-                    Log.Error($"Exception injecting crop for {crop.Name.FixIdJA("Crop")}: {e}");
+                    Log.Error($"Exception injecting giant crop for {crop.Name.FixIdJA("Crop")}: {e}");
                 }
             }
         }

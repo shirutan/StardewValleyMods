@@ -92,14 +92,14 @@ namespace JsonAssets.Data
         {
             var giantData = new StardewValley.GameData.GiantCrops.GiantCropData()
             {
-                FromItemId = this.Product.ToString().FixIdJA("O"),
+                FromItemId = "(O)" + this.Product.ToString().FixIdJA("O"),
                 HarvestItems = new List<StardewValley.GameData.GiantCrops.GiantCropHarvestItemData> {
                     new StardewValley.GameData.GiantCrops.GiantCropHarvestItemData () {
                         Chance = 1.0f,
                         ScaledMinStackWhenShaving = 2,
                         ScaledMaxStackWhenShaving = 2,
-                        Id = this.Product.ToString().FixIdJA("O"),
-                        ItemId = this.Product.ToString().FixIdJA("O"),
+                        Id = "(O)" + this.Product.ToString().FixIdJA("O"),
+                        ItemId = "(O)" + this.Product.ToString().FixIdJA("O"),
                         MinStack = 15,
                         MaxStack = 21,
                         QualityModifierMode = StardewValley.GameData.QuantityModifier.QuantityModifierMode.Stack,
