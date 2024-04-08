@@ -1297,15 +1297,15 @@ namespace JsonAssets
                 {
                     if (obj.Recipe != null)
                     {
-                        if (obj.Recipe.IsDefault && !Game1.player.knowsRecipe(obj.Name))
+                        if (obj.Recipe.IsDefault && !Game1.player.knowsRecipe(obj.Name.FixIdJA("O")))
                         {
                             if (obj.Category == ObjectCategory.Cooking)
                             {
-                                Game1.player.cookingRecipes.Add(obj.Name, 0);
+                                Game1.player.cookingRecipes.Add(obj.Name.FixIdJA("O"), 0);
                             }
                             else
                             {
-                                Game1.player.craftingRecipes.Add(obj.Name, 0);
+                                Game1.player.craftingRecipes.Add(obj.Name.FixIdJA("O"), 0);
                             }
                         }
                     }
@@ -1314,8 +1314,8 @@ namespace JsonAssets
                 {
                     if (big.Recipe != null)
                     {
-                        if (big.Recipe.IsDefault && !Game1.player.knowsRecipe(big.Name))
-                            Game1.player.craftingRecipes.Add(big.Name, 0);
+                        if (big.Recipe.IsDefault && !Game1.player.knowsRecipe(big.Name.FixIdJA("BC")))
+                            Game1.player.craftingRecipes.Add(big.Name.FixIdJA("BC"), 0);
                     }
                 }
 
@@ -1454,8 +1454,14 @@ namespace JsonAssets
                     {
                         price = (int)(price * Game1.MasterPlayer.difficultyModifier);
                     }
-                    if (item is SObject { IsRecipe: true } obj2 && Game1.player.knowsRecipe(obj2.Name))
-                        continue;
+                    if (item is SObject { IsRecipe: true } obj2)
+                    {
+                        obj2.Name = obj2.ItemId;
+                        if (!obj2.bigCraftable.Value && Game1.player.knowsRecipe(obj2.Name))
+                            continue;
+                        if (obj2.bigCraftable.Value && Game1.player.knowsRecipe(obj2.Name))
+                            continue;
+                    }
                     item.Stack = 1;
                     forSale.Add(item);
 
