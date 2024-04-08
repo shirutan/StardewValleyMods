@@ -14,7 +14,13 @@ namespace JsonAssets.Data
         ** Accessors
         *********/
         /// <inheritdoc />
-        public string Description { get; set; }
+        public string Description
+        {
+            get => descript;
+            set => descript = value ?? " ";
+        }
+        private string descript = " ";
+
         public string PurchaseFrom { get; set; } = "HatMouse";
         public int PurchasePrice { get; set; }
         public bool ShowHair { get; set; }

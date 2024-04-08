@@ -39,6 +39,7 @@ namespace JsonAssets.Framework
                 {"Data\\Shirts", this.InjectDataShirts},
                 {"Data\\TailoringRecipes", this.InjectDataTailoringRecipes},
                 {"Data\\Boots", this.InjectDataBoots},
+                {"Data\\Fences", this.InjectDataFences },
                 {"spacechase0.SpaceCore\\ObjectExtensionData", this.InjectDataObjectExtensionData }
             };
 
@@ -145,7 +146,17 @@ namespace JsonAssets.Framework
                     Log.Error($"Exception loading boots texture for {boots.Name.FixIdJA("B")}: {e}");
                 }
             }
-            // TODO custom fence when they implement them in vanilla
+            foreach (var fence in Mod.instance.Fences)
+            {
+                try
+                {
+                    ToLoad.Add("JA/Fence/" + fence.Name.FixIdJA("O"), fence.Texture);
+                }
+                catch (Exception e)
+                {
+                    Log.Error($"Exception loading fence texture for {fence.Name.FixIdJA("O")}");
+                }
+            }
 
             Mod.instance.Helper.Events.Content.AssetRequested += this.Content_AssetRequested;
             InvalidateUsed();
@@ -441,6 +452,22 @@ namespace JsonAssets.Framework
                 catch (Exception e)
                 {
                     Log.Error($"Exception injecting boots information for {boots.Name.FixIdJA("B")}: {e}");
+                }
+            }
+        }
+        private void InjectDataFences(IAssetData asset)
+        {
+            var data = asset.AsDictionary<string, StardewValley.GameData.Fences.FenceData>().Data;
+            foreach (var fence in Mod.instance.Fences)
+            {
+                try
+                {
+                    Log.Verbose($"Injecting to fences: {fence.Name}: {fence.GetFenceInformation()}");
+                    data.Add(fence.Name.FixIdJA("O"), fence.GetFenceInformation()); ;
+                }
+                catch (Exception e)
+                {
+                    Log.Error($"Exception injecting weapon information for {fence.Name.FixIdJA("O")}: {e}");
                 }
             }
         }

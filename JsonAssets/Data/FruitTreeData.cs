@@ -11,7 +11,12 @@ namespace JsonAssets.Data
         *********/
         public object Product { get; set; }
         public string SaplingName { get; set; }
-        public string SaplingDescription { get; set; }
+        public string SaplingDescription
+    {
+            get => descript;
+            set => descript = value ?? " ";
+        }
+        private string descript = " ";
 
         public string Season { get; set; }
 

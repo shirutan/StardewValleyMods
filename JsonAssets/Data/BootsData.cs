@@ -22,7 +22,12 @@ namespace JsonAssets.Data
         public Texture2D TextureColor { get; set; }
 
         /// <inheritdoc />
-        public string Description { get; set; }
+        public string Description
+        {
+            get => descript;
+            set => descript = value ?? " ";
+        }
+        private string descript = " ";
 
         public int Price { get; set; }
 

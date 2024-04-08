@@ -23,11 +23,16 @@ namespace JsonAssets.Data
         [JsonIgnore]
         public Texture2D[] ExtraTextures { get; set; }
 
-        public bool ReserveNextIndex { get; set; } = false; // Deprecated
+        public bool ReserveNextIndex { get; set ; } = false; // Deprecated
         public int ReserveExtraIndexCount { get; set; } = 0;
 
         /// <inheritdoc />
-        public string Description { get; set; }
+        public string Description
+        {
+            get => descript;
+            set => descript = value ?? " ";
+        }
+        private string descript = " ";
 
         public int Price { get; set; }
 

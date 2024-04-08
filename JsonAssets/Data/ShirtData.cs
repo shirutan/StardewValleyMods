@@ -33,7 +33,13 @@ namespace JsonAssets.Data
         public Texture2D TextureFemaleColor { get; set; }
 
         /// <inheritdoc />
-        public string Description { get; set; }
+        public string Description
+        {
+            get => descript;
+            set => descript = value ?? " ";
+        }
+        private string descript = " ";
+
         public bool HasFemaleVariant { get; set; } = false;
 
         public int Price { get; set; }

@@ -24,7 +24,12 @@ namespace JsonAssets.Data
 
         public object Product { get; set; }
         public string SeedName { get; set; }
-        public string SeedDescription { get; set; }
+        public string SeedDescription
+        {
+            get => descript;
+            set => descript = value ?? " ";
+        }
+        private string descript = " ";
 
         public CropType CropType { get; set; } = CropType.Normal;
 
