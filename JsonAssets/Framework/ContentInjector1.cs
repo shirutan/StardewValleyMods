@@ -28,6 +28,7 @@ namespace JsonAssets.Framework
             {
                 {"Data\\Objects", this.InjectDataObjectInformation},
                 {"Data\\Crops", this.InjectDataCrops},
+                {"Data\\GiantCrops", this.InjectDataGiantCrops},
                 {"Data\\FruitTrees", this.InjectDataFruitTrees},
                 {"Data\\CookingRecipes", this.InjectDataCookingRecipes},
                 {"Data\\CraftingRecipes", this.InjectDataCraftingRecipes},
@@ -46,9 +47,7 @@ namespace JsonAssets.Framework
             {
                 try
                 {
-                    ToLoad.Add("JA/Object/" + obj.Name.FixIdJA("O"), obj.Texture);
-                    if (obj.TextureColor != null)
-                        ToLoad.Add("JA/ObjectColor/" + obj.Name.FixIdJA("O"), obj.TextureColor);
+                    ToLoad.Add("JA/Object/" + obj.Name.FixIdJA("O"), obj.GetTexture());
                 }
                 catch (Exception e)
                 {
@@ -219,6 +218,25 @@ namespace JsonAssets.Framework
                 {
                     Log.Verbose($"Injecting to crops: {crop.GetSeedId()}: {crop.GetCropInformation()}");
                     data.Add(crop.GetSeedId().FixIdJA("O"), crop.GetCropInformation());
+                }
+                catch (Exception e)
+                {
+                    Log.Error($"Exception injecting crop for {crop.Name.FixIdJA("Crop")}: {e}");
+                }
+            }
+        }
+        private void InjectDataGiantCrops(IAssetData asset)
+        {
+            var data = asset.AsDictionary<string, StardewValley.GameData.GiantCrops.GiantCropData>().Data;
+            foreach (var crop in Mod.instance.Crops)
+            {
+                try
+                {
+                    if (crop.GiantTexture != null)
+                    {
+                        Log.Verbose($"Injecting to crops: {crop.GetSeedId()}: {crop.GetCropInformation()}");
+                        data.Add(crop.GetSeedId().FixIdJA("O"), crop.GetGiantCropInformation());
+                    }
                 }
                 catch (Exception e)
                 {

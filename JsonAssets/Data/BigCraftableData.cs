@@ -22,7 +22,6 @@ namespace JsonAssets.Data
         *********/
         [JsonIgnore]
         public Texture2D[] ExtraTextures { get; set; }
-        public Texture2D BigTexture { get; set; }
 
         public bool ReserveNextIndex { get; set; } = false; // Deprecated
         public int ReserveExtraIndexCount { get; set; } = 0;

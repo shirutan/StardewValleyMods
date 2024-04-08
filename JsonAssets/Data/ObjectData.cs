@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Newtonsoft.Json;
 using SpaceShared;
+using StardewValley;
 using SObject = StardewValley.Object;
 
 namespace JsonAssets.Data
@@ -104,6 +105,28 @@ namespace JsonAssets.Data
             };
 
             return ret;
+        }
+
+        public Texture2D GetTexture()
+        {
+            if (!this.IsColored)
+            {
+                return this.Texture;
+            }
+            else
+            {
+                Texture2D tex = new Texture2D(Game1.graphics.GraphicsDevice, 32, 16);
+                Color[] frame = new Color[16 * 16];
+
+                // Put in the base texture
+                this.Texture.GetData(0, new Rectangle(0, 0, 16, 16), frame, 0, 16 * 16);
+                tex.SetData(0, 0, new Rectangle(0, 0, 16, 16), frame, 0, 16 * 16);
+
+                // Put in the colored texture
+                this.TextureColor.GetData(0, new Rectangle(0, 0, 16, 16), frame, 0, 16 * 16);
+                tex.SetData(0, 0, new Rectangle(16, 0, 16, 16), frame, 0, 16 * 16);
+                return tex;
+            }
         }
 
 
