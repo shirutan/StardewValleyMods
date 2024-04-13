@@ -47,9 +47,22 @@ namespace JsonAssets.Data
             return this.TextureIndex;
         }
 
-        internal string GetClothingInformation()
+        internal StardewValley.GameData.Pants.PantsData GetPantsInformation()
         {
-            return $"{this.Name}/{this.LocalizedName()}/{this.LocalizedDescription()}/0/-1/{this.Price}/{this.DefaultColor.R} {this.DefaultColor.G} {this.DefaultColor.B}/{this.Dyeable}/Pants/{this.Metadata}/JA\\Pants\\{this.Name.FixIdJA()}";
+            var ret = new StardewValley.GameData.Pants.PantsData()
+            {
+                Name = this.Name,
+                DisplayName = this.LocalizedName(),
+                Description = this.LocalizedDescription(),
+                Price = this.Price,
+                Texture = $"JA\\Pants\\{Name.FixIdJA()}",
+                SpriteIndex = 0,
+                DefaultColor = this.DefaultColor.R + " " + this.DefaultColor.G + " " + this.DefaultColor.B,
+                CanBeDyed = this.Dyeable,
+                IsPrismatic = false,
+                CanChooseDuringCharacterCustomization = false
+            };
+            return ret;
         }
 
 
