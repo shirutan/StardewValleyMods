@@ -88,6 +88,7 @@ namespace SpaceCore
         public List<int> GetLocalIndexForMethod(MethodBase meth, string local)
         {
             return SpaceCore.GetLocalIndexForMethod(meth, local);
+        }
 
         public event EventHandler<Action<string, Action>> AdvancedInteractionStarted;
 
