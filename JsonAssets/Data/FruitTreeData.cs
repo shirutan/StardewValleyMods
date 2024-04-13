@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using JsonAssets.Framework;
+using StardewValley;
+using StardewValley.TerrainFeatures;
 
 namespace JsonAssets.Data
 {
@@ -40,7 +43,7 @@ namespace JsonAssets.Data
             return this.Sapling.Name;
         }
 
-        internal string GetFruitTreeInformation()
+        internal StardewValley.GameData.FruitTrees.FruitTreeData GetFruitTreeInformation()
         {
             return $"0/{this.Season}/{this.Product}/what goes here?/0/JA\\FruitTree\\{this.Name.FixIdJA("FruitTree")}";
         }
@@ -61,6 +64,17 @@ namespace JsonAssets.Data
 
             this.SaplingPurchaseRequirements.FilterNulls();
             this.SaplingAdditionalPurchaseData.FilterNulls();
+        }
+
+        private List<Season> GetSeasons()
+        {
+            string[] seasonNames = this.Season.Split(",");
+            List<Season> seasonList = new();
+            foreach (string s in seasonNames)
+            {
+                seasonList.Add(Enum.Parse<Season>(s.Trim().Substring(0, 1).ToUpper() + s.Trim().Substring(1)));
+            }
+            return seasonList;
         }
     }
 }
