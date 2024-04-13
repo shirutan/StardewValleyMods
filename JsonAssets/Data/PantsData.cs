@@ -20,7 +20,12 @@ namespace JsonAssets.Data
         public Texture2D Texture { get; set; }
 
         /// <inheritdoc />
-        public string Description { get; set; }
+        public string Description
+        {
+            get => descript;
+            set => descript = value ?? " ";
+        }
+        private string descript = " ";
 
         public int Price { get; set; }
 
@@ -55,7 +60,7 @@ namespace JsonAssets.Data
                 DisplayName = this.LocalizedName(),
                 Description = this.LocalizedDescription(),
                 Price = this.Price,
-                Texture = $"JA\\Pants\\{Name.FixIdJA()}",
+                Texture = $"JA\\Pants\\{Name.FixIdJA("P")}",
                 SpriteIndex = 0,
                 DefaultColor = this.DefaultColor.R + " " + this.DefaultColor.G + " " + this.DefaultColor.B,
                 CanBeDyed = this.Dyeable,

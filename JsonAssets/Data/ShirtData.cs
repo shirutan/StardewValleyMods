@@ -33,7 +33,13 @@ namespace JsonAssets.Data
         public Texture2D TextureFemaleColor { get; set; }
 
         /// <inheritdoc />
-        public string Description { get; set; }
+        public string Description
+        {
+            get => descript;
+            set => descript = value ?? " ";
+        }
+        private string descript = " ";
+
         public bool HasFemaleVariant { get; set; } = false;
 
         public int Price { get; set; }
@@ -73,6 +79,7 @@ namespace JsonAssets.Data
             if (this.Texture == null)
             {
                 Texture2D newTex = new(Game1.graphics.GraphicsDevice, 256, 32);
+                newTex.Name = this.Name.FixIdJA("S");
                 Color[] data = new Color[8 * 32];
                 TextureMale.GetData(0, new Rectangle(0, 0, 8, 32), data, 0, 8 * 32);
                 newTex.SetData(0, 0, new Rectangle(0, 0, 8, 32), data, 0, 8 * 32);
@@ -108,7 +115,7 @@ namespace JsonAssets.Data
                 DisplayName = this.HasFemaleVariant ? this.LocalizedName() + " (M)": this.LocalizedName(),
                 Description = this.LocalizedDescription(),
                 Price = this.Price,
-                Texture = $"JA\\Shirts\\{Name.FixIdJA()}",
+                Texture = $"JA\\Shirts\\{Name.FixIdJA("S")}",
                 SpriteIndex = 0,
                 DefaultColor = this.DefaultColor.R + " " + this.DefaultColor.G + " " + this.DefaultColor.B,
                 CanBeDyed = this.Dyeable,
@@ -127,7 +134,7 @@ namespace JsonAssets.Data
                 DisplayName = this.HasFemaleVariant ? this.LocalizedName() + " (F)" : this.LocalizedName(),
                 Description = this.LocalizedDescription(),
                 Price = this.Price,
-                Texture = $"JA\\Shirts\\{Name.FixIdJA()}",
+                Texture = $"JA\\Shirts\\{Name.FixIdJA("S")}",
                 SpriteIndex = 1,
                 DefaultColor = this.DefaultColor.R + " " + this.DefaultColor.G + " " + this.DefaultColor.B,
                 CanBeDyed = this.Dyeable,

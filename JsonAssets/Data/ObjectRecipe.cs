@@ -33,13 +33,18 @@ namespace JsonAssets.Data
             string str = "";
             foreach (var ingredient in this.Ingredients)
             {
-                string ingredientName = ingredient.Object.ToString().FixIdJA();
+                string ingredientName = ingredient.Object.ToString();
                 // If the original object name is an integer, it's a category or an original ID
-                if (int.TryParse(ingredient.Object.ToString(), out int ingredIndex))
+                if (int.TryParse(ingredientName, out int ingredIndex))
                 {
                     ingredientName = ingredIndex.ToString();
                 }
-                // If the object isn't an integer, check if it's the name of an existing item
+                // If the object is a JA object, then just use that
+                else if (ingredient.Object.ToString().FixIdJA("O") != null)
+                {
+                    ingredientName = ingredient.Object.ToString().FixIdJA("O");
+                }
+                // If the object isn't an integer or a JA object, check if it's the name of any existing item and use that
                 else if (ItemRegistry.GetDataOrErrorItem(ingredientName).IsErrorItem)
                 {
                     Item tryGetItem = Utility.fuzzyItemSearch(ingredientName);
@@ -56,7 +61,7 @@ namespace JsonAssets.Data
                 str += "/what is this for?";
             else
                 str += "/9999 9999";
-            str += $"/{parent.Name.FixIdJA()} {this.ResultCount}/";
+            str += $"/{parent.Name.FixIdJA("O")} {this.ResultCount}/";
             if (parent.Category != ObjectCategory.Cooking)
                 str += "false/";
             if (this.SkillUnlockName?.Length > 0 && this.SkillUnlockLevel > 0)

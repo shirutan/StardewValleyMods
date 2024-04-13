@@ -14,7 +14,12 @@ namespace JsonAssets.Data
         *********/
         public object Product { get; set; }
         public string SaplingName { get; set; }
-        public string SaplingDescription { get; set; }
+        public string SaplingDescription
+    {
+            get => descript;
+            set => descript = value ?? " ";
+        }
+        private string descript = " ";
 
         public string Season { get; set; }
 
@@ -40,21 +45,7 @@ namespace JsonAssets.Data
 
         internal StardewValley.GameData.FruitTrees.FruitTreeData GetFruitTreeInformation()
         {
-            var ret = new StardewValley.GameData.FruitTrees.FruitTreeData()
-            {
-                DisplayName = this.Name,
-                Seasons = this.GetSeasons(),
-                Fruit = new(new[]
-                {
-                    new StardewValley.GameData.FruitTrees.FruitTreeFruitData()
-                    {
-                        ItemId = "(O)" + this.Product.ToString().FixIdJA(),
-                    }
-                }),
-                Texture = "JA/FruitTree/" + this.Name.FixIdJA(),
-                TextureSpriteRow = 0,
-            };
-            return ret;
+            return $"0/{this.Season}/{this.Product}/what goes here?/0/JA\\FruitTree\\{this.Name.FixIdJA("FruitTree")}";
         }
 
 
