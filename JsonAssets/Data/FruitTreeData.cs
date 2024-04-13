@@ -43,9 +43,9 @@ namespace JsonAssets.Data
             return this.Sapling.Name;
         }
 
-        internal StardewValley.GameData.FruitTrees.FruitTreeData GetFruitTreeInformation()
+        internal string GetFruitTreeInformation()
         {
-            return $"0/{this.Season}/{this.Product}/what goes here?/0/JA\\FruitTree\\{this.Name.FixIdJA("FruitTree")}";
+            return "not really used anymore";// $"0/{this.Season}/{this.Product}/what goes here?/0/JA\\FruitTree\\{this.Name.FixIdJA("FruitTree")}";
         }
 
 
