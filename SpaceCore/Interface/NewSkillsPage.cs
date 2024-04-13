@@ -311,10 +311,14 @@ namespace SpaceCore.Interface
             }
 
             // scrollbar
+
+            /// 0.675 is as close as I can get to having the scroll bar end 2 pixels below the bottom most skill.
+            /// 2 pixels below was chosen since the scroll bar goes 2 pixels above the top most skill.
+            int shrunkHeight = (int)(height * 0.675);
             this.upButton = new ClickableTextureComponent(new Rectangle(this.xPositionOnScreen + width + 16, this.yPositionOnScreen + 64, 44, 48), Game1.mouseCursors, new Rectangle(421, 459, 11, 12), 4f);
-            this.downButton = new ClickableTextureComponent(new Rectangle(this.xPositionOnScreen + width + 16, this.yPositionOnScreen + height - 64, 44, 48), Game1.mouseCursors, new Rectangle(421, 472, 11, 12), 4f);
+            this.downButton = new ClickableTextureComponent(new Rectangle(this.xPositionOnScreen + width + 16, this.yPositionOnScreen + shrunkHeight - 64, 44, 48), Game1.mouseCursors, new Rectangle(421, 472, 11, 12), 4f);
             this.scrollBar = new ClickableTextureComponent(new Rectangle(this.upButton.bounds.X + 12, this.upButton.bounds.Y + this.upButton.bounds.Height + 4, 24, 40), Game1.mouseCursors, new Rectangle(435, 463, 6, 10), 4f);
-            this.scrollBarRunner = new Rectangle(this.scrollBar.bounds.X, this.upButton.bounds.Y + this.upButton.bounds.Height + 4, this.scrollBar.bounds.Width, height - 128 - this.upButton.bounds.Height - 8);
+            this.scrollBarRunner = new Rectangle(this.scrollBar.bounds.X, this.upButton.bounds.Y + this.upButton.bounds.Height + 4, this.scrollBar.bounds.Width, shrunkHeight - 128 - this.upButton.bounds.Height - 8);
 
             // Add/update navigation
             this.populateClickableComponentList();
