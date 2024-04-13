@@ -23,6 +23,7 @@ namespace SpaceCore.VanillaAssetExpansion
         public class YieldData
         {
             public int ExperienceGained { get; set; } = 5;
+            public int RegrowDays { get; set; } = -1; // Takes priority over newphase
             public int NewPhase { get; set; } = -1;
             public List<StardewValley.GameData.GenericSpawnItemData> Drops { get; set; } = new();
             public bool IgnoreDefaultDrops { get; set; } = true;
@@ -40,6 +41,9 @@ namespace SpaceCore.VanillaAssetExpansion
             if (__instance.netSeedIndex.Value == null || !dict.TryGetValue(__instance.netSeedIndex.Value, out var extData))
                 return true;
             if (!extData.YieldOverrides.TryGetValue(__instance.currentPhase.Value, out var yields))
+                return true;
+
+            if (__instance.fullyGrown.Value && __instance.dayOfCurrentPhase.Value > 0)
                 return true;
 
             var data = __instance.GetData();
@@ -256,8 +260,16 @@ namespace SpaceCore.VanillaAssetExpansion
                     Game1.createItemDebris(drop, new Vector2(xTile * 64 + 32, yTile * 64 + 32), -1);
                 }
 
+                if (yields.RegrowDays > -1)
+                {
+                    __instance.fullyGrown.Value = true;
+                    __instance.updateDrawMath(__instance.tilePosition);
+                    __instance.dayOfCurrentPhase.Value = yields.RegrowDays;
 
-                if (yields.NewPhase == -1)
+                    __result = false;
+                    return false;
+                }
+                else if (yields.NewPhase == -1)
                 {
                     __result = true;
                     return false;

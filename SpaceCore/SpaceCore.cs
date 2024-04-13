@@ -98,7 +98,7 @@ namespace SpaceCore
             {
                 var triggers = TriggerActionManager.GetActionsForTrigger("Manual");
                 var trigger = triggers.FirstOrDefault(t => t.Data.Id == args[1]);
-                if (trigger != null)
+                if (trigger != null && GameStateQuery.CheckConditions(trigger.Data.Condition))
                 {
                     foreach (var action in trigger.Actions)
                     {
@@ -117,7 +117,7 @@ namespace SpaceCore
             {
                 var triggers = TriggerActionManager.GetActionsForTrigger("Manual");
                 var trigger = triggers.FirstOrDefault(t => t.Data.Id == args[1]);
-                if (trigger != null)
+                if (trigger != null && GameStateQuery.CheckConditions(trigger.Data.Condition))
                 {
                     foreach (var action in trigger.Actions)
                     {

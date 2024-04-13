@@ -24,6 +24,8 @@ namespace SpaceCore
 
         void RegisterCustomProperty( Type declaringType, string name, Type propType, MethodInfo getter, MethodInfo setter );
 
+        List<int> GetLocalIndexForMethod(MethodBase meth, string local);
+
         public event EventHandler<Action<string, Action>> AdvancedInteractionStarted;
     }
 
@@ -82,6 +84,10 @@ namespace SpaceCore
                 Setter = setter,
             } );
         }
+
+        public List<int> GetLocalIndexForMethod(MethodBase meth, string local)
+        {
+            return SpaceCore.GetLocalIndexForMethod(meth, local);
 
         public event EventHandler<Action<string, Action>> AdvancedInteractionStarted;
 
