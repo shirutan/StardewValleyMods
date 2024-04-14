@@ -1819,8 +1819,13 @@ namespace JsonAssets
             switch (item)
             {
                 case Hat hat:
+                    // Migrate from 1.5.6
                     if (hat.obsolete_which.HasValue && this.OldHatIds.ContainsKey(hat.obsolete_which.Value.ToString()))
                         hat.ItemId = this.OldHatIds[hat.obsolete_which.Value.ToString()].FixIdJA("H");
+                    // Migrate from previous 1.6
+                    if (Mod.DupHats.ContainsKey(hat.ItemId) && hat.ItemId.FixIdJA("H") != null)
+                        hat.ItemId = hat.ItemId.FixIdJA("H");
+                    // Half-migrate removed hat mods
                     if (int.TryParse(hat.ItemId, out int hatNum) && this.RemovedHats.ContainsKey(hatNum))
                     {
                         Log.Trace($"Attempting to migrate removed hat! ID {hat.ItemId} and name {this.RemovedHats[hatNum]}");
@@ -1835,10 +1840,19 @@ namespace JsonAssets
                     break;
 
                 case MeleeWeapon weapon:
+                    // Migrate from 1.5.6
                     if (this.OldWeaponIds.ContainsKey(weapon.ItemId))
                         weapon.ItemId = this.OldWeaponIds[weapon.ItemId].FixIdJA("W");
+                    // Migrate appearance from 1.5.6
                     if (weapon.appearance.Value != null && this.OldWeaponIds.ContainsKey(weapon.appearance.Value))
                         weapon.appearance.Value = this.OldWeaponIds[weapon.appearance.Value].FixIdJA("W");
+                    // Migrate from previous 1.6
+                    if (Mod.DupWeapons.ContainsKey(weapon.ItemId) && weapon.ItemId.FixIdJA("W") != null)
+                        weapon.ItemId = weapon.ItemId.FixIdJA("W");
+                    // Migrate appearance from previous 1.6
+                    if (weapon.appearance.Value != null && Mod.DupWeapons.ContainsKey(weapon.appearance.Value) && weapon.appearance.Value.FixIdJA("W") != null)
+                        weapon.appearance.Value = weapon.appearance.Value.FixIdJA("W");
+                    // Half-migrate removed JA weapons
                     if (int.TryParse(weapon.ItemId, out int weaponNum) && this.RemovedWeapons.ContainsKey(weaponNum))
                     {
                         Log.Trace($"Attempting to migrate removed weapon! ID {weapon.ItemId} and name {this.RemovedWeapons[weaponNum]}");
@@ -1853,9 +1867,13 @@ namespace JsonAssets
                     break;
 
                 case Ring ring:
+                    // Migrate from 1.5.6
                     if (this.OldObjectIds.ContainsKey(ring.ItemId))
                         ring.ItemId = this.OldObjectIds[ring.ItemId].FixIdJA("O");
-
+                    // Migrate from previous 1.6
+                    if (Mod.DupObjects.ContainsKey(ring.ItemId) && ring.ItemId.FixIdJA("O") != null)
+                        ring.ItemId = ring.ItemId.FixIdJA("O");
+                    // Half-migrate removed JA rings
                     if (int.TryParse(ring.ItemId, out int ringNum) && this.RemovedObjects.ContainsKey(ringNum))
                     {
                         Log.Trace($"Attempting to migrate removed ring! ID {ring.ItemId} and name {this.RemovedObjects[ringNum]}");
@@ -1868,6 +1886,7 @@ namespace JsonAssets
                             ring.ItemId = name.FixIdJA();
                     }
 
+                    // Recursively fix combined rings
                     if (ring is CombinedRing combinedRing)
                     {
                         for (int i = combinedRing.combinedRings.Count - 1; i >= 0; i--)
@@ -1878,6 +1897,7 @@ namespace JsonAssets
                     break;
 
                 case Clothing clothing:
+                    // Migrate from 1.5.6
                     if (this.OldClothingIds.ContainsKey(clothing.ItemId))
                     {
                         if (this.OldClothingIds[clothing.ItemId].FixIdJA("P") != null)
@@ -1885,6 +1905,12 @@ namespace JsonAssets
                         if (this.OldClothingIds[clothing.ItemId].FixIdJA("S") != null)
                             clothing.ItemId = this.OldClothingIds[clothing.ItemId].FixIdJA("S");
                     }
+                    // Migrate from previous version in 1.6
+                    if (Mod.DupPants.ContainsKey(clothing.ItemId) && clothing.ItemId.FixIdJA("P") != null)
+                        clothing.ItemId = clothing.ItemId.FixIdJA("P");
+                    if (Mod.DupShirts.ContainsKey(clothing.ItemId) && clothing.ItemId.FixIdJA("S") != null)
+                        clothing.ItemId = clothing.ItemId.FixIdJA("S");
+                    // Half-migrate removed JA clothing
                     if (int.TryParse(clothing.ItemId, out int clothesNum) && this.RemovedClothing.ContainsKey(clothesNum))
                     {
                         Log.Trace($"Attempting to migrate removed clothing! ID {clothing.ItemId} and name {this.RemovedClothing[clothesNum]}");
@@ -1903,9 +1929,13 @@ namespace JsonAssets
                     break;
 
                 case Boots boots:
+                    // Migrate from 1.5.6
                     if (this.OldBootsIds.ContainsKey(boots.ItemId))
                         boots.ItemId = this.OldBootsIds[boots.ItemId].FixIdJA("B");
-
+                    // Migrate from previous 1.6
+                    if (Mod.DupBoots.ContainsKey(boots.ItemId) && boots.ItemId.FixIdJA("B") != null)
+                        boots.ItemId = boots.ItemId.FixIdJA("B");
+                    // Half-migrate removed JA boots
                     if (int.TryParse(boots.ItemId, out int bootsNum) && this.RemovedBoots.ContainsKey(bootsNum))
                     {
                         Log.Trace($"Attempting to migrate removed boots! ID {boots.ItemId} and name {this.RemovedObjects[bootsNum]}");
@@ -1922,14 +1952,21 @@ namespace JsonAssets
                     break;
 
                 case SObject obj:
+                    // Check chests for the items in them
                     if (obj is Chest chest)
                     {
+                        // Migrate chest from 1.5.6
                         if (this.OldBigCraftableIds.ContainsKey(chest.ItemId))
                             chest.ItemId = this.OldBigCraftableIds[chest.ItemId].FixIdJA("BC");
                         else
                             chest.startingLidFrame.Value = chest.ParentSheetIndex + 1;
+                        // Migrate chest from previous 1.6
+                        if (Mod.DupBigCraftables.ContainsKey(chest.ItemId) && chest.ItemId.FixIdJA("BC") != null)
+                            chest.ItemId = chest.ItemId.FixIdJA("BC");
+                        // Fix stuff in the chest
                         this.FixItemList(chest.Items);
                     }
+                    // Check garden pots for the crops in them
                     else if (obj is IndoorPot pot)
                     {
                         if (pot.hoeDirt.Value != null && pot.hoeDirt.Value.crop != null)
@@ -1947,9 +1984,13 @@ namespace JsonAssets
                             if (this.FixId(this.OldObjectIds, this.ObjectIds, obj.preservedParentSheetIndex, this.VanillaObjectIds))
                                 obj.preservedParentSheetIndex.Value = -1;
                             */
+                            // Migrate from 1.5.6
                             if (this.OldObjectIds.ContainsKey(obj.ItemId))
                                 obj.ItemId = this.OldObjectIds[obj.ItemId].FixIdJA("O");
-
+                            // Migrate objects from previous 1.6
+                            if (Mod.DupObjects.ContainsKey(obj.ItemId) && obj.ItemId.FixIdJA("O") != null)
+                                obj.ItemId = obj.ItemId.FixIdJA("O");
+                            // Half-migrate removed objects
                             if (int.TryParse(obj.ItemId, out int objNum) && this.RemovedObjects.ContainsKey(objNum))
                             {
                                 Log.Trace($"Attempting to migrate removed object! ID {obj.ItemId} and name {this.RemovedObjects[objNum]}");
@@ -1964,9 +2005,13 @@ namespace JsonAssets
                         }
                         else
                         {
+                            // Migrate from 1.5.6
                             if (this.OldBigCraftableIds.ContainsKey(obj.ItemId))
                                 obj.ItemId = this.OldBigCraftableIds[obj.ItemId].FixIdJA("BC");
-
+                            // Migrate big craftable from previous 1.6
+                            if (Mod.DupBigCraftables.ContainsKey(obj.ItemId) && obj.ItemId.FixIdJA("BC") != null)
+                                obj.ItemId = obj.ItemId.FixIdJA("BC");
+                            // Half-migrate removed JA big craftables
                             if (int.TryParse(obj.ItemId, out int objNum) && this.RemovedBigCraftables.ContainsKey(objNum))
                             {
                                 Log.Trace($"Attempting to migrate removed big craftable! ID {obj.ItemId} and name {this.RemovedBigCraftables[objNum]}");
@@ -1980,12 +2025,29 @@ namespace JsonAssets
                             }
                         }
                     }
-
+                    // Migrate held objects
                     if (obj.heldObject.Value != null)
                     {
+                        // Migrate from 1.5.6
                         if (this.OldObjectIds.ContainsKey(obj.heldObject.Value.ItemId))
                             obj.heldObject.Value.ItemId = this.OldObjectIds[obj.heldObject.Value.ItemId].FixIdJA("O");
+                        // Migrate objects from previous 1.6
+                        if (Mod.DupObjects.ContainsKey(obj.heldObject.Value.ItemId) && obj.heldObject.Value.ItemId.FixIdJA("O") != null)
+                            obj.heldObject.Value.ItemId = obj.heldObject.Value.ItemId.FixIdJA("O");
+                        // Half-migrate removed objects
+                        if (int.TryParse(obj.heldObject.Value.ItemId, out int objNum) && this.RemovedObjects.ContainsKey(objNum))
+                        {
+                            Log.Trace($"Attempting to migrate removed object! ID {obj.heldObject.Value.ItemId} and name {this.RemovedObjects[objNum]}");
+                            string name = this.RemovedObjects[objNum].ToString();
+                            if (ItemRegistry.GetData("(O)" + name) != null)
+                                obj.heldObject.Value.ItemId = ItemRegistry.GetData("(O)" + name).ItemId;
+                            else if (ItemRegistry.GetData("(O)" + name.FixIdJA()) != null)
+                                obj.heldObject.Value.ItemId = ItemRegistry.GetData("(O)" + name.FixIdJA()).ItemId;
+                            else
+                                obj.heldObject.Value.ItemId = name.FixIdJA();
+                        }
 
+                        // Migrate stuff inside inner chest
                         if (obj.heldObject.Value is Chest innerChest)
                             this.FixItemList(innerChest.Items);
                     }
@@ -2045,8 +2107,27 @@ namespace JsonAssets
                         break;
                     }
 
+                    // Migrate the fish from 1.5.6
                     if (pond.fishType.Value != null && this.OldObjectIds.ContainsKey(pond.fishType.Value))
                         pond.fishType.Value = this.OldObjectIds[pond.fishType.Value].FixIdJA("O");
+
+                    // Migrate fish from previous 1.6
+                    if (Mod.DupObjects.ContainsKey(pond.fishType.Value) && pond.fishType.Value.FixIdJA("O") != null)
+                        pond.fishType.Value = pond.fishType.Value.FixIdJA("O");
+
+                    // Half-migrate removed JA fish
+                    if (int.TryParse(pond.fishType.Value, out int objNum) && this.RemovedObjects.ContainsKey(objNum))
+                    {
+                        Log.Trace($"Attempting to migrate removed object! ID {pond.fishType.Value} and name {this.RemovedObjects[objNum]}");
+                        string name = this.RemovedObjects[objNum].ToString();
+                        if (ItemRegistry.GetData("(O)" + name) != null)
+                            pond.fishType.Value = ItemRegistry.GetData("(O)" + name).ItemId;
+                        else if (ItemRegistry.GetData("(O)" + name.FixIdJA()) != null)
+                            pond.fishType.Value = ItemRegistry.GetData("(O)" + name.FixIdJA()).ItemId;
+                        else
+                            pond.fishType.Value = name.FixIdJA();
+                    }
+
                     pond.sign.Value = FixItem(pond.sign.Value) as SObject;
                     pond.output.Value = FixItem(pond.output.Value);
                     pond.neededItem.Value = FixItem(pond.neededItem.Value) as SObject;
@@ -2062,10 +2143,19 @@ namespace JsonAssets
             if (crop is null || crop.indexOfHarvest.Value == null)
                 return;
 
+            // Fix the index of harvest for 1.5.6
             if (this.OldObjectIds.ContainsKey(crop.indexOfHarvest.Value))
                 crop.indexOfHarvest.Value = this.OldObjectIds[crop.indexOfHarvest.Value].FixIdJA("O");
+            // Migrate the index of harvest for 1.6
+            if (Mod.DupObjects.ContainsKey(crop.indexOfHarvest.Value) && crop.indexOfHarvest.Value.FixIdJA("O") != null)
+                crop.indexOfHarvest.Value = crop.indexOfHarvest.Value.FixIdJA("O");
+            // Fix the seed index for 1.5.6
             if (crop.netSeedIndex.Value != null && this.OldObjectIds.ContainsKey(crop.netSeedIndex.Value))
                 crop.netSeedIndex.Value = this.OldObjectIds[crop.netSeedIndex.Value].FixIdJA("O");
+            // Migrate the seed index for 1.6
+            if (crop.netSeedIndex.Value != null && Mod.DupObjects.ContainsKey(crop.netSeedIndex.Value) && crop.netSeedIndex.Value.FixIdJA("O") != null)
+                crop.netSeedIndex.Value = crop.netSeedIndex.Value.FixIdJA("O");
+            // Re-get the seed index if it's null
             if (crop.netSeedIndex.Value == null)
             {
                 foreach (var data in Game1.cropData)
@@ -2078,6 +2168,7 @@ namespace JsonAssets
                 }
             }
 
+            // Set the override texture path for old crops
             if (this.OldCropIds.ContainsKey(crop.rowInSpriteSheet.Value.ToString()))
             {
                 crop.overrideTexturePath.Value = "JA/Crop/" + this.OldCropIds[crop.rowInSpriteSheet.Value.ToString()].FixIdJA("Crop");
@@ -2149,6 +2240,10 @@ namespace JsonAssets
                                 }
                             }
 
+                            // Migrate from previous 1.6
+                            if (Mod.DupObjects.ContainsKey(ftree.treeId.Value) && ftree.treeId.Value.FixIdJA("O") != null)
+                                ftree.treeId.Value = ftree.treeId.Value.FixIdJA("O");
+
                             // Make fruit trees from removed packs at least say their name
                             if (int.TryParse(ftree.obsolete_treeType, out int treeNum1) && this.RemovedFruitTrees.ContainsKey(treeNum1))
                             {
@@ -2206,10 +2301,17 @@ namespace JsonAssets
             var toAdd = new Dictionary<string, int>();
             foreach (string entry in dict.Keys)
             {
+                // Migrate object IDs from 1.5.6
                 if (this.OldObjectIds.ContainsKey(entry))
                 {
                     toRemove.Add(entry);
                     toAdd.TryAdd(this.OldObjectIds[entry].FixIdJA("O"), dict[entry]);
+                }
+                // Migrate from previous 1.6
+                else if (Mod.DupObjects.ContainsKey(entry) && entry.FixIdJA("O") != null)
+                {
+                    toRemove.Add(entry);
+                    toAdd.TryAdd(entry.FixIdJA("O"), dict[entry]);
                 }
             }
             foreach (string entry in toRemove)
@@ -2235,10 +2337,17 @@ namespace JsonAssets
             var toAdd = new Dictionary<string, int[]>();
             foreach (string entry in dict.Keys)
             {
+                // Migrate object IDs from 1.5.6
                 if (this.OldObjectIds.ContainsKey(entry))
                 {
                     toRemove.Add(entry);
                     toAdd.TryAdd(this.OldObjectIds[entry].FixIdJA("O"), dict[entry]);
+                }
+                // Migrate from previous 1.6
+                else if (Mod.DupObjects.ContainsKey(entry) && entry.FixIdJA("O") != null)
+                {
+                    toRemove.Add(entry);
+                    toAdd.TryAdd(entry.FixIdJA("O"), dict[entry]);
                 }
             }
             foreach (string entry in toRemove)
@@ -2259,6 +2368,16 @@ namespace JsonAssets
                     toAdd.TryAdd(entry.FixIdJA("O"), dict[entry]);
                 }
                 else if (this.OldBigCraftableIds.ContainsValue(entry))
+                {
+                    toRemove.Add(entry);
+                    toAdd.TryAdd(entry.FixIdJA("BC"), dict[entry]);
+                }
+                else if (Mod.DupObjects.ContainsKey(entry) && entry.FixIdJA("O") != null)
+                {
+                    toRemove.Add(entry);
+                    toAdd.TryAdd(entry.FixIdJA("O"), dict[entry]);
+                }
+                else if (Mod.DupBigCraftables.ContainsKey(entry) && entry.FixIdJA("BC") != null)
                 {
                     toRemove.Add(entry);
                     toAdd.TryAdd(entry.FixIdJA("BC"), dict[entry]);
