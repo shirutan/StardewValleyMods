@@ -1283,7 +1283,7 @@ namespace JsonAssets
         [EventPriority(EventPriority.High)]
         private void OnLoadStageChanged(object sender, LoadStageChangedEventArgs e)
         {
-            if (e.NewStage == StardewModdingAPI.Enums.LoadStage.SaveParsed || e.NewStage == StardewModdingAPI.Enums.LoadStage.CreatedSaveFile)
+            if (e.NewStage == StardewModdingAPI.Enums.LoadStage.SaveParsed)
             {
                 //Log.debug("Loading stuff early (loading)");
                 this.InitStuff(loadIdFiles: true);
@@ -1516,6 +1516,8 @@ namespace JsonAssets
                 return;
             this.DidInit = true;
 
+            this.Api.InvokeIdsAssigned();
+
             // load object ID mappings from save folder
             // If loadIdFiles is "maybe" (null), check the current save path
             if (loadIdFiles)
@@ -1634,7 +1636,6 @@ namespace JsonAssets
                     }
                 }
 
-                this.Api.InvokeIdsAssigned();
             }
         }
 
