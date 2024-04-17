@@ -1283,7 +1283,7 @@ namespace JsonAssets
         [EventPriority(EventPriority.High)]
         private void OnLoadStageChanged(object sender, LoadStageChangedEventArgs e)
         {
-            if (e.NewStage == StardewModdingAPI.Enums.LoadStage.SaveParsed)
+            if (e.NewStage == StardewModdingAPI.Enums.LoadStage.SaveParsed || e.NewStage == StardewModdingAPI.Enums.LoadStage.CreatedSaveFile)
             {
                 //Log.debug("Loading stuff early (loading)");
                 this.InitStuff(loadIdFiles: true);
