@@ -196,6 +196,9 @@ The rest of the features assume you understand C# and the game code a little bit
     * `string GetSkillPageHoverText(int level)` - optional, extra text to show when hovering on the skills page
     * `void DoLevelPerk(int level)` - optional, apply a some code immediately upon leveling
     * `bool ShouldShowOnSkillsPage`
+    * Custom buffs for your skill you can have by adding ` "spacechase.SpaceCore.SkillBuff.<skill_ID_here>": "<value>"` as a custom field to the buff for food or drink.
+    * Your custom skill can have level up crafting and cooking recipes by just adding your skill ID to where the vanilla skill ID would be.
+    * By adding the skill id to the context tags of a book object, players can read the book to gain exp in the custom skill.
 * Custom crafting recipes, for when you want more flexibility (like using non-Object item types).
     * You subclass `CustomCraftingRecipe` and register it by doing `CustomCraftingRecipe.CraftingRecipes.Add( key, new MyCustomCraftingRecipeSubclass() )`.
         * If it is a cooking recipe, you use `CustomCraftingRecipe.CookingRecipes` instead.
