@@ -325,7 +325,8 @@ namespace SpaceCore
 
             ///Taken From Vanilla
             ///Mastery Exp is added before exp to the skill is added
-            ///First, we check to see if the skill we are gaining exp in is 10. If they are not 10 or greater than 10 (if a mod has a prestige system), then don't add mastery exp
+            ///First, we check to see if the skill we are gaining exp in is >=10.
+            ///If they are not 10 or greater than 10 (if a mod has a prestige system), then don't add mastery exp
             ///Next, we check to see of the Core skills (vanilla skills) of the farmer equal 25. If so that means they are maxed out on them.
             int level = (farmer.farmingLevel.Value + farmer.fishingLevel.Value + farmer.foragingLevel.Value + farmer.combatLevel.Value + farmer.miningLevel.Value) / 2;
             if (prevLevel >= 10 && level >= 25)
