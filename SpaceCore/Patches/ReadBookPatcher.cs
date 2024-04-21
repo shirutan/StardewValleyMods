@@ -30,14 +30,20 @@ namespace SpaceCore.Patches
             //Here is a universal patch for players to add EXP books
             //For it to work, players will have to add a tag to their exp book that has their skill ID
 
+            //Make a variable to see if we have found a custom book and have it be false for now.
             bool customSkillbook = false;
+
+
 
             //First, we check to see if the book being used is the book of stars.
             if (__instance.Name == "Book Of Stars")
             {
                 //If it is, the book of stars is meant to give every skill 250 exp. So we look through all the skills here and grant it exp.
                 //We don't want to cancel the normal behavior of the book of stars, so we don't set custom book = true.
-                foreach (string skill in Skills.GetSkillList())
+
+                //We only want to apply exp from the book of stars if the skill is visible to the player.
+                string[] VisibleSkills = Skills.GetSkillList().Where(s => Skills.GetSkill(s).ShouldShowOnSkillsPage).ToArray();
+                foreach (string skill in VisibleSkills)
                 {
                     Skills.AddExperience(Game1.player, skill, 250);
                 }
