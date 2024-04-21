@@ -2400,7 +2400,10 @@ namespace JsonAssets
                             Log.Error("\tobj = " + obj.Name);
                     }
                 }
-                dict.Add(entry.Key, entry.Value);
+                else
+                {
+                    dict.Add(entry.Key, entry.Value);
+                }
             }
         }
     }
