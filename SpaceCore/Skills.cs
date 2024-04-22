@@ -258,6 +258,16 @@ namespace SpaceCore
             return forFarmer;
         }
 
+        public static Texture2D GetSkillPageIcon(string skillName)
+        {
+            return Skills.GetSkill(skillName).SkillsPageIcon;
+        }
+
+        public static Texture2D GetSkillIcon(string skillName)
+        {
+            return Skills.GetSkill(skillName).Icon;
+        }
+
         public static int GetExperienceFor(Farmer farmer, string skillName)
         {
             if (!Skills.SkillsByName.ContainsKey(skillName))
