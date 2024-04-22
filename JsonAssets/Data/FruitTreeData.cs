@@ -45,7 +45,22 @@ namespace JsonAssets.Data
 
         internal string GetFruitTreeInformation()
         {
-            return "not really used anymore";// $"0/{this.Season}/{this.Product}/what goes here?/0/JA\\FruitTree\\{this.Name.FixIdJA("FruitTree")}";
+            StardewValley.GameData.FruitTrees.FruitTreeData ftree = new()
+            {
+                DisplayName = this.Name,
+                Seasons = this.GetSeasons(),
+                Fruit = new(new[]
+                        {
+                            new StardewValley.GameData.FruitTrees.FruitTreeFruitData()
+                            {
+                                ItemId = "(O)" + this.Product.ToString().FixIdJA("O"),
+                            }
+                        }),
+                Texture = "JA/FruitTree/" + this.Name.FixIdJA("FruitTree"),
+                TextureSpriteRow = 0,
+
+            };
+            return ftree;
         }
 
 

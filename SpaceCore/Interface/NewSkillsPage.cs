@@ -719,8 +719,10 @@ namespace SpaceCore.Interface
                     if (levelIndex == 0)
                         skillTitle = skill.GetName();
                     skillLevel = Game1.player.GetCustomBuffedSkillLevel(skill);
-                    // TODO: Detect skill buffs? Is that even possible?
-                    addedSkill = false; // (int)((NetFieldBase<int, NetInt>)Game1.player.addedFarmingLevel) > 0;
+                    int Skillbuff = Game1.player.GetCustomSkillBuffAmount(skill);
+                    if (Skillbuff != 0) {
+                        addedSkill = true;
+                    }
                     if (skillTitle.Length > 0)
                     {
                         b.DrawString(Game1.smallFont, skillTitle, position: new Vector2((float)(x - Game1.smallFont.MeasureString(skillTitle).X + 4.0 - 64.0), (y + 4 + (indexWithLuckSkill * 56))), Game1.textColor);
