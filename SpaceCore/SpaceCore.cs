@@ -554,7 +554,7 @@ namespace SpaceCore
                 {
                     Log.Warn("Could not parse asRoommate as boolean");
                 }
-                else if (!int.TryParse(args[2], out int weddingOffset) || weddingOffset < 1)
+                else if (!int.TryParse(args[3], out int weddingOffset) || weddingOffset < 1)
                 {
                     Log.Warn("Could not parse weddingOffset as positive integer");
                 }

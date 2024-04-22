@@ -43,7 +43,7 @@ namespace JsonAssets.Data
             return this.Sapling.Name;
         }
 
-        internal string GetFruitTreeInformation()
+        internal StardewValley.GameData.FruitTrees.FruitTreeData GetFruitTreeInformation()
         {
             StardewValley.GameData.FruitTrees.FruitTreeData ftree = new()
             {
