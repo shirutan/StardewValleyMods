@@ -76,15 +76,11 @@ namespace SpaceCore
 
             public Color ExperienceBarColor { get; set; }
 
-            public virtual IDictionary<int, IList<string>> GetSkillLevelUpCraftingRecipes(int level)
-            {
-                return new Dictionary<int, IList<string>>();
-            }
-
-            public virtual IDictionary<int, IList<string>> GetSkillLevelUpCookingRecipes(int level)
-            {
-                return new Dictionary<int, IList<string>>();
-            }
+            /// 
+            /// Got Rid of the level up Dictionaries.
+            /// Now when the player levels up, custom skills will search all the recipes for recipes with thier ID and level
+            /// So now it's easier for people to add new recipies to skills through like content patcher
+            /// 
 
 
             public virtual List<string> GetExtraLevelUpInfo(int level)

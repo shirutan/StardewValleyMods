@@ -264,6 +264,7 @@ namespace SpaceCore
                 new LoadGameMenuPatcher(serializerManager),
                 new MultiplayerPatcher(),
                 new NpcPatcher(),
+                new ReadBookPatcher(),
                 new SaveGamePatcher(serializerManager),
                 new SerializationPatcher(),
                 new UtilityPatcher(),
