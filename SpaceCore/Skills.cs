@@ -197,6 +197,7 @@ namespace SpaceCore
             events.GameLoop.SaveLoaded += Skills.OnSaveLoaded;
             events.GameLoop.Saving += Skills.OnSaving;
             events.GameLoop.Saved += Skills.OnSaved;
+            events.GameLoop.DayStarted += Skills.DayStarted;
             events.Display.MenuChanged += Skills.OnMenuChanged;
             SpaceEvents.ShowNightEndMenus += Skills.ShowLevelMenu;
             SpaceEvents.ServerGotClient += Skills.ClientJoined;
@@ -210,6 +211,80 @@ namespace SpaceCore
             BarsApi = SpaceCore.Instance.Helper.ModRegistry.GetApi<IExperienceBarsApi>("spacechase0.ExperienceBars");
             if (BarsApi is not null)
                 events.Display.RenderedHud += Skills.OnRenderedHud;
+        }
+
+        private static void DayStarted(object sender, DayStartedEventArgs e)
+        {
+            foreach(string Id in Skills.GetSkillList())
+            {
+                int skillLevel = Game1.player.GetCustomSkillLevel(Id);
+                if (skillLevel == 0)
+                {
+                    return;
+                }
+                Skill test = GetSkill(Id);
+                if (skillLevel >= 5 && !(Game1.player.HasCustomProfession(test.Professions[0]) ||
+                                         Game1.player.HasCustomProfession(test.Professions[1])))
+                {
+                    Game1.endOfNightMenus.Push(new SkillLevelUpMenu(Id, 5));
+                }
+
+                if (skillLevel >= 10 && !(Game1.player.HasCustomProfession(test.Professions[2]) ||
+                                          Game1.player.HasCustomProfession(test.Professions[3]) ||
+                                          Game1.player.HasCustomProfession(test.Professions[4]) ||
+                                          Game1.player.HasCustomProfession(test.Professions[5])))
+                {
+                    Game1.endOfNightMenus.Push(new SkillLevelUpMenu(Id, 10));
+                }
+
+                foreach (KeyValuePair<string, string> recipePair in DataLoader.CraftingRecipes(Game1.content))
+                {
+                    string conditions = ArgUtility.Get(recipePair.Value.Split('/'), 4, "");
+                    if (!conditions.Contains(Id))
+                    {
+                        continue;
+                    }
+                    if (conditions.Split(" ").Length < 2)
+                    {
+                        continue;
+                    }
+
+                    int level = int.Parse(conditions.Split(" ")[1]);
+
+                    if (skillLevel < level)
+                    {
+                        continue;
+                    }
+
+                    Game1.player.craftingRecipes.TryAdd(recipePair.Key, 0);
+                }
+
+                foreach (KeyValuePair<string, string> recipePair in DataLoader.CookingRecipes(Game1.content))
+                {
+                    string conditions = ArgUtility.Get(recipePair.Value.Split('/'), 3, "");
+                    if (!conditions.Contains(Id))
+                    {
+                        continue;
+                    }
+                    if (conditions.Split(" ").Length < 2)
+                    {
+                        continue;
+                    }
+
+                    int level = int.Parse(conditions.Split(" ")[1]);
+
+                    if (skillLevel < level)
+                    {
+                        continue;
+                    }
+
+                    if (Game1.player.cookingRecipes.TryAdd(recipePair.Key, 0) &&
+                        !Game1.player.hasOrWillReceiveMail("robinKitchenLetter"))
+                    {
+                        Game1.mailbox.Add("robinKitchenLetter");
+                    }
+                }
+            }
         }
 
         public static void RegisterSkill(Skill skill)
