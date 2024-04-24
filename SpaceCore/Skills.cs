@@ -215,20 +215,31 @@ namespace SpaceCore
 
         private static void DayStarted(object sender, DayStartedEventArgs e)
         {
+            //Get all currently loaded skills
             foreach(string Id in Skills.GetSkillList())
             {
+                //Get the skill level for the player
                 int skillLevel = Game1.player.GetCustomSkillLevel(Id);
+                //If the skill level is 0, we have nothing to do
                 if (skillLevel == 0)
                 {
                     return;
                 }
+                //Get the skill id
                 Skill test = GetSkill(Id);
+
+                //If the player is greater than 5 and does not have the level 5 professions, add them.
+                //I would then remove any level 5 professions the player might have if they are under 5...
+                // but that would break the skill prestige type mods for a co-op bandaid
                 if (skillLevel >= 5 && !(Game1.player.HasCustomProfession(test.Professions[0]) ||
                                          Game1.player.HasCustomProfession(test.Professions[1])))
                 {
                     Game1.endOfNightMenus.Push(new SkillLevelUpMenu(Id, 5));
                 }
 
+                //If the player is greater than or equal to 10 and does not have the level 10 professions, add them.
+                //I would then remove any level 10 professions the player might have if they are under 10...
+                // but that would break the skill prestige type mods for a co-op bandaid
                 if (skillLevel >= 10 && !(Game1.player.HasCustomProfession(test.Professions[2]) ||
                                           Game1.player.HasCustomProfession(test.Professions[3]) ||
                                           Game1.player.HasCustomProfession(test.Professions[4]) ||
@@ -237,9 +248,12 @@ namespace SpaceCore
                     Game1.endOfNightMenus.Push(new SkillLevelUpMenu(Id, 10));
                 }
 
+                //Go through all the crafting recipes in the game.
                 foreach (KeyValuePair<string, string> recipePair in DataLoader.CraftingRecipes(Game1.content))
                 {
+                    //Get the conditions from the level obtain bracket
                     string conditions = ArgUtility.Get(recipePair.Value.Split('/'), 4, "");
+                    //If it doesn't contain an ID that matches the current skill we are on, continue
                     if (!conditions.Contains(Id))
                     {
                         continue;
@@ -251,11 +265,19 @@ namespace SpaceCore
 
                     int level = int.Parse(conditions.Split(" ")[1]);
 
-                    if (skillLevel < level)
+                    //Check to see if the skill level is below the level for the recipe
+                    if (skillLevel <= level)
                     {
+                        //if it is, check to see if the player has the crafting recipe
+                        // and if they do, remove the crafting recipe from them.
+                        if (Game1.player.craftingRecipes.ContainsKey(recipePair.Key))
+                        {
+                            Game1.player.craftingRecipes.Remove(recipePair.Key);
+                        }
+                        //continue to the next recipe
                         continue;
                     }
-
+                    //Add the recipe to the player if their skill level is above the level for the recipe
                     Game1.player.craftingRecipes.TryAdd(recipePair.Key, 0);
                 }
 
@@ -273,8 +295,15 @@ namespace SpaceCore
 
                     int level = int.Parse(conditions.Split(" ")[1]);
 
-                    if (skillLevel < level)
+                    if (skillLevel <= level)
                     {
+                        //if it is, check to see if the player has the crafting recipe
+                        // and if they do, remove the crafting recipe from them.
+                        if (Game1.player.craftingRecipes.ContainsKey(recipePair.Key))
+                        {
+                            Game1.player.craftingRecipes.Remove(recipePair.Key);
+                        }
+                        //continue to the next recipe
                         continue;
                     }
 
