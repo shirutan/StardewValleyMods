@@ -565,6 +565,7 @@ namespace SpaceCore
                     while (!Game1.canHaveWeddingOnDay(weddingDate.DayOfMonth, weddingDate.Season))
                         ++weddingDate.TotalDays;
 
+                    Game1.player.spouse = args[1];
                     f.Status = FriendshipStatus.Engaged;
                     f.RoommateMarriage = asRoomate;
                     f.WeddingDate = weddingDate;
