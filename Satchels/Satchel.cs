@@ -126,6 +126,7 @@ namespace Satchels
 
         public override string getDescription()
         {
+            Description = loadDescription() + "^^" + I18n.Satchel_Description();
             return Game1.parseText(Description.Replace('^', '\n'), Game1.smallFont, getDescriptionWidth());
         }
 

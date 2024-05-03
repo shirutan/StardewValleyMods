@@ -41,14 +41,18 @@ namespace SpaceCore
 
         public class ObjectIngredientMatcher : IngredientMatcher
         {
-            private readonly StardewValley.Object dummyObj;
+            private readonly Item dummyObj;
             private readonly string objectIndex;
             private readonly int qty;
 
             public ObjectIngredientMatcher( string index, int quantity )
             {
-                this.dummyObj = new StardewValley.Object(index, quantity);
-                this.objectIndex = index;
+                string origIndex = index;
+                if (!index.StartsWith("("))
+                    index = $"(O){index}";
+
+                this.dummyObj = ItemRegistry.Create(index, quantity);
+                this.objectIndex = origIndex;
                 this.qty = quantity;
             }
 
@@ -70,12 +74,7 @@ namespace SpaceCore
                             _ => "???",
                         };
                     }
-                    string retString = Game1.content.LoadString("Strings\\StringsFromCSFiles:CraftingRecipe.cs.575");
-                    if (Game1.objectData.ContainsKey(this.objectIndex))
-                    {
-                        retString = Game1.objectData[this.objectIndex].DisplayName;
-                    }
-                    return retString;
+                    return dummyObj.DisplayName;
                 }
             }
 
@@ -83,7 +82,7 @@ namespace SpaceCore
 
             public override Rectangle? IconSubrect => ItemRegistry.GetDataOrErrorItem(dummyObj.QualifiedItemId).GetSourceRect(0, dummyObj.ParentSheetIndex);
 
-            public override int Quantity => this.Quantity;
+            public override int Quantity => qty;
 
             public override int GetAmountInList(IList<Item> items)
             {
@@ -150,7 +149,14 @@ namespace SpaceCore
 
             private bool ItemMatches(Item item)
             {
-                return item is StardewValley.Object obj && !obj.bigCraftable.Value && (obj.ItemId == this.objectIndex || obj.Category.ToString() == this.objectIndex);
+                if (item == null)
+                    return false;
+
+                if (item is StardewValley.Object obj2 && objectIndex.StartsWith("-"))
+                {
+                    return obj2.Category == int.Parse(objectIndex);
+                }
+                return item.canStackWith(dummyObj);
             }
         }
 

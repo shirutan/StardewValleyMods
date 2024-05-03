@@ -6,10 +6,9 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
-using SpaceCore.Events;
 using SpaceShared;
 using StardewValley;
+using StardewValley.Locations;
 using StardewValley.Menus;
 
 namespace SpaceCore.Interface
@@ -22,29 +21,10 @@ namespace SpaceCore.Interface
         public Texture2D texture;
         public List<ClickableTextureComponent> skillBars = new();
         public List<ClickableTextureComponent> skillAreas = new();
-        public List<ClickableTextureComponent> specialItems = new();
-        public List<ClickableTextureComponent> specialItemComponents = new();
-        public ClickableTextureComponent walletUpArrow;
-        public ClickableTextureComponent walletDownArrow;
         public ClickableComponent playerPanel;
-        private Rectangle walletArea;
-        private Rectangle walletIconArea;
-        private readonly Rectangle walletIconAreaSource = new(293, 360, 24, 24);
-        private readonly Rectangle walletIconSource = new(0, 0, 12, 12);
         private readonly Rectangle skillsTabSource = new(16, 368, 16, 16);
         private int SkillTabRegionId => Game1.activeClickableMenu is GameMenu ? GameMenu.region_skillsTab : -1;
-        private bool IsWalletRightSide => SpaceCore.Instance.Config.WalletOnRightOfSkillPage
-            && !SpaceCore.Instance.Helper.ModRegistry.IsLoaded("alphablackwolf.skillPrestige"); // Skill prestige places icons in right-side wallet area
-        private bool IsLegacyWallet => SpaceCore.Instance.Config.WalletLegacyStyle;
-        private int walletSelectionOffset;
-        private int WalletSelectionOffset
-        {
-            get => this.walletSelectionOffset;
-            set => this.walletSelectionOffset = value < 0 ? ((this.specialItemComponents.Count - 1) * 2) - 1 : value % ((this.specialItemComponents.Count - 1) * 2);
-        }
-        private bool CanScrollWalletItems => !this.IsLegacyWallet && this.specialItems.Count > this.specialItemComponents.Count;
 
-        private bool CanNavigateToWallet => this.specialItems.Any() && (!this.IsLegacyWallet || this.specialItemComponents.First().bounds.Y > 0);
         private string hoverText = "";
         private string hoverTitle = "";
         private int professionImage = -1;
@@ -59,10 +39,6 @@ namespace SpaceCore.Interface
         public const int SkillRegionStartId = 0;
         public const int SkillIdIncrement = 1;
         public const int SkillProfessionIncrement = 100;
-        public const int WalletRegionStartId = 10250;
-        public const int WalletIdIncrement = 1;
-        public const int WalletUpArrowRegionId = 10201;
-        public const int WalletDownArrowRegionId = 10202;
         public const int PlayerPanelRegionId = 10275;
         private int playerPanelIndex;
         private int playerPanelTimer;
@@ -78,19 +54,23 @@ namespace SpaceCore.Interface
 
         private ClickableComponent lastSnappedComponent = null;
 
+        private int timesClickedJunimo;
+
         private int GameSkillCount
         {
             [MethodImpl(MethodImplOptions.NoInlining)] // allowing mods to patch this getter if needed (alternative luck skill implementations?)
             get => SpaceCore.Instance.Helper.ModRegistry.IsLoaded("spacechase0.LuckSkill") ? 6 : 5;
         }
 
+        private string[] VisibleSkills { get; }
+
         private int AllSkillCount
-            => this.GameSkillCount + Skills.GetSkillList().Length;
+            => this.GameSkillCount + VisibleSkills.Length;
 
         private int MaxSkillCountOnScreen
         {
             [MethodImpl(MethodImplOptions.NoInlining)] // allowing mods to patch this getter if needed
-            get => 9;
+            get => 5;
         }
 
         private int LastVisibleSkillIndex
@@ -109,130 +89,14 @@ namespace SpaceCore.Interface
             {
                 myID = NewSkillsPage.PlayerPanelRegionId
             };
-            // navigation is handled in receiveKeyPress to avoid confusing the navigation logic
-
-            // Wallet area
-            {
-                int padInner = this.IsWalletRightSide ? -8 : -64;
-                int iconAreaWidth = this.walletIconAreaSource.Width * Game1.pixelZoom;
-                int iconAreaHeight = this.walletIconAreaSource.Height * Game1.pixelZoom;
-                int walletX = this.IsWalletRightSide ? this.xPositionOnScreen + this.width + padInner : this.xPositionOnScreen - iconAreaWidth + padInner;
-                this.walletArea = this.IsLegacyWallet
-                    ? new Rectangle(this.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder + 32, this.yPositionOnScreen + IClickableMenu.spaceToClearTopBorder + (int)(this.height / 2.0) - 48 - 600, this.width - 64 - (IClickableMenu.spaceToClearSideBorder * 2), (this.height / 4) + 64)
-                    : new Rectangle(walletX, this.yPositionOnScreen, 72 + iconAreaHeight, this.height);
-                this.walletIconArea = new Rectangle(this.walletArea.X + ((this.walletArea.Width - iconAreaWidth) / 2), this.walletArea.Y + (iconAreaHeight / 2) - 8, iconAreaWidth, iconAreaHeight);
-            }
-
-            int iconWidth = 16;
-
-            // Wallet contents
-            {
-                // Special item names and whether they've been unlocked
-                List<KeyValuePair<string, bool>> specialFlags = new List<KeyValuePair<string, bool>>
-                {
-                    new("StringsFromCSFiles:SkillsPage.cs.11587", Game1.player.canUnderstandDwarves),
-                    new("StringsFromCSFiles:SkillsPage.cs.11588", Game1.player.hasRustyKey),
-                    new("StringsFromCSFiles:SkillsPage.cs.11589", Game1.player.hasClubCard),
-                    new("StringsFromCSFiles:SkillsPage.cs.11590", Game1.player.hasSpecialCharm),
-                    new("StringsFromCSFiles:SkillsPage.cs.11591", Game1.player.hasSkullKey),
-                    new("StringsFromCSFiles:SkillsPage.cs.magnifyingglass", Game1.player.hasMagnifyingGlass),
-                    new("Objects:DarkTalisman", Game1.player.hasDarkTalisman),
-                    new("Objects:MagicInk", Game1.player.hasMagicInk),
-                    new("Objects:BearPaw", Game1.player.eventsSeen.Contains("2120303")),
-                    new("Objects:SpringOnionBugs", Game1.player.eventsSeen.Contains("3910979"))
-                };
-
-                const int padTop = 16;
-
-                // Actual wallet special items
-                {
-                    int iconDestWidth = iconWidth * Game1.pixelZoom;
-                    int offsetIndex = specialFlags.FindIndex(pair => pair.Key.EndsWith("MagicInk"));
-                    for (int i = 0; i < specialFlags.Count; ++i)
-                    {
-                        if (!specialFlags[i].Value)
-                            continue;
-
-                        ClickableTextureComponent textureComponent = new ClickableTextureComponent(
-                            name: "", bounds: new Rectangle(-1, -1, iconDestWidth, iconDestWidth),
-                            label: null, hoverText: Game1.content.LoadString($"Strings\\{specialFlags[i].Key}"),
-                            texture: Game1.mouseCursors, sourceRect: new Rectangle(128 + (i <= offsetIndex ? i * iconWidth : (iconWidth * 4) + (iconWidth * (i - offsetIndex - 1))), i <= offsetIndex ? 320 : 320 + iconWidth, iconWidth, iconWidth), scale: 4f, drawShadow: true);
-
-                        this.specialItems.Add(textureComponent);
-                    }
-                    if (Game1.player.HasTownKey)
-                    {
-                        this.specialItems.Add(new ClickableTextureComponent(
-                            name: "", bounds: new Rectangle(-1, -1, iconDestWidth, iconDestWidth),
-                            label: null, hoverText: Game1.content.LoadString("Strings\\StringsFromCSFiles:KeyToTheTown"),
-                            texture: Game1.objectSpriteSheet, sourceRect: Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, 912, iconWidth, iconWidth), scale: 4f, drawShadow: true));
-                    }
-
-                    SpaceEvents.InvokeAddWalletItems( this );
-                }
-
-                // Wallet navigation arrows
-                iconWidth = 32;
-                this.walletUpArrow = new ClickableTextureComponent(
-                    name: "", bounds: new Rectangle(this.walletArea.X + ((this.walletArea.Width - iconWidth) / 2), this.walletArea.Y + 148, iconWidth, iconWidth),
-                    label: null, hoverText: null,
-                    texture: Game1.mouseCursors, sourceRect: new Rectangle(442, 96, iconWidth, iconWidth), scale: 1f, drawShadow: false);
-                this.walletDownArrow = new ClickableTextureComponent(
-                    name: "", bounds: new Rectangle(this.walletUpArrow.bounds.X, this.walletUpArrow.bounds.Y + this.walletArea.Height - 224, this.walletUpArrow.bounds.Width, this.walletUpArrow.bounds.Height),
-                    label: null, hoverText: null,
-                    texture: this.walletUpArrow.texture, sourceRect: this.walletUpArrow.sourceRect, scale: this.walletUpArrow.scale, drawShadow: this.walletUpArrow.drawShadow);
-
-                // Wallet item icons for navigation
-                const int padRight = 4;
-                iconWidth = 16;
-                int iconCount = this.IsLegacyWallet ? 10 : (this.walletDownArrow.bounds.Y - this.walletUpArrow.bounds.Y - (padTop * 2)) / iconWidth / Game1.pixelZoom;
-                bool shouldNavButtonsBeShown = !this.IsLegacyWallet && this.specialItems.Count > iconCount;
-                for (int index = 0; index < iconCount; ++index)
-                {
-                    int iconDestWidth = iconWidth * Game1.pixelZoom;
-                    int x2 = this.IsLegacyWallet ? this.walletArea.X + 48 + ((iconDestWidth + padRight) * index) : this.walletUpArrow.bounds.X + (this.walletUpArrow.bounds.Width / 2) - (iconDestWidth / 2);
-                    int y2 = this.IsLegacyWallet ? this.walletArea.Y + 120 : this.walletUpArrow.bounds.Y + (this.specialItems.Count > iconCount ? this.walletUpArrow.bounds.Height : 0) + padTop + (index * iconDestWidth);
-                    ClickableTextureComponent textureComponent = new ClickableTextureComponent(
-                        name: "",
-                        bounds: new Rectangle(x2, y2, iconDestWidth, iconDestWidth),
-                        label: "",
-                        hoverText: "",
-                        texture: Game1.mouseCursors, sourceRect: new Rectangle(-1, -1, iconWidth, iconWidth),
-                        scale: Game1.pixelZoom, drawShadow: true
-                    )
-                    {
-                        myID = NewSkillsPage.WalletRegionStartId + this.specialItemComponents.Count
-                    };
-                    if (this.IsLegacyWallet)
-                    {
-                        textureComponent.leftNeighborID = index == 0 ? -1 : textureComponent.myID - NewSkillsPage.WalletIdIncrement;
-                        textureComponent.rightNeighborID = index < this.specialItems.Count - 1 ? index == iconCount - 1 ? -1 : textureComponent.myID + NewSkillsPage.WalletIdIncrement : -1;
-                    }
-                    else
-                    {
-                        // left/right neighbour IDs are omitted here, navigating to SkillRegionStartId confuses the snapping logic
-                        textureComponent.upNeighborID = index == 0 ? shouldNavButtonsBeShown ? NewSkillsPage.WalletUpArrowRegionId : -1 : textureComponent.myID - NewSkillsPage.WalletIdIncrement;
-                        textureComponent.downNeighborID = index < this.specialItems.Count - 1 ? index == iconCount - 1 ? shouldNavButtonsBeShown ? NewSkillsPage.WalletDownArrowRegionId : -1 : textureComponent.myID + NewSkillsPage.WalletIdIncrement : -1;
-                    }
-                    this.specialItemComponents.Add(textureComponent);
-                }
-            }
-
-            // Wallet nav arrow navigation
-            this.walletUpArrow.myID = NewSkillsPage.WalletUpArrowRegionId;
-            this.walletDownArrow.myID = NewSkillsPage.WalletDownArrowRegionId;
-            this.walletUpArrow.downNeighborID = this.specialItemComponents.First().myID;
-            this.walletDownArrow.upNeighborID = this.specialItemComponents.Last().myID;
 
             // Professions
-            string[] skills = Skills.GetSkillList();
+            VisibleSkills = Skills.GetSkillList().Where(s => Skills.GetSkill(s).ShouldShowOnSkillsPage).ToArray();
             int drawX = 0;
             int addedX = LocalizedContentManager.CurrentLanguageCode == LocalizedContentManager.LanguageCode.ru ? this.xPositionOnScreen + width - 448 - 48 + 4 : this.xPositionOnScreen + IClickableMenu.borderWidth + IClickableMenu.spaceToClearTopBorder + 256 - 4;
             int drawY = this.yPositionOnScreen + IClickableMenu.spaceToClearTopBorder + IClickableMenu.borderWidth - 12;
             int gameSkillCount = this.GameSkillCount;
-            int walletSnapId = this.specialItems.Any() ? NewSkillsPage.WalletRegionStartId : -1;
             int leftSnapId = this.playerPanel.myID;
-            int rightSnapId = this.IsLegacyWallet || !this.IsWalletRightSide ? -1 : walletSnapId;
 
             // Professions for game skills
             for (int professionIndex = 1; professionIndex < 3; ++professionIndex)
@@ -292,8 +156,7 @@ namespace SpaceCore.Interface
                             myID = NewSkillsPage.SkillRegionStartId + (skillIndex * NewSkillsPage.SkillIdIncrement) + (professionIndex * NewSkillsPage.SkillProfessionIncrement)
                         };
                         textureComponent.leftNeighborID = textureComponent.myID - NewSkillsPage.SkillProfessionIncrement;
-                        textureComponent.rightNeighborID = professionIndex == 2 ? rightSnapId : textureComponent.myID + NewSkillsPage.SkillProfessionIncrement;
-                        textureComponent.downNeighborID = skillIndex == gameSkillCount - 1 && skills.Length == 0 ? walletSnapId : textureComponent.myID + NewSkillsPage.SkillIdIncrement;
+                        textureComponent.downNeighborID = skillIndex == gameSkillCount - 1 && VisibleSkills.Length == 0 ? -1 : textureComponent.myID + NewSkillsPage.SkillIdIncrement;
                         this.skillBars.Add(textureComponent);
                         this.skillBarSkillIndexes[textureComponent.myID] = skillIndex;
                     }
@@ -305,11 +168,11 @@ namespace SpaceCore.Interface
             drawX = 0;
             for (int professionIndex = 1; professionIndex < 3; ++professionIndex)
             {
-                for (int skillIndex = 0; skillIndex < skills.Length; ++skillIndex)
+                for (int skillIndex = 0; skillIndex < VisibleSkills.Length; ++skillIndex)
                 {
                     int totalSkillIndex = gameSkillCount + skillIndex;
                     int professionLevel = professionIndex - 1 + (professionIndex * 4);
-                    Skills.Skill skill = Skills.GetSkill(skills[skillIndex]);
+                    Skills.Skill skill = Skills.GetSkill(VisibleSkills[skillIndex]);
                     Skills.Skill.Profession profession = Skills.GetProfessionFor(skill, professionLevel + 1);// Game1.player.getProfessionForSkill(0, num4 + 1);
                     bool drawRed = Game1.player.GetCustomBuffedSkillLevel(skill) > professionLevel;
                     List<string> professionLines = new List<string>();
@@ -336,8 +199,8 @@ namespace SpaceCore.Interface
                             myID = (totalSkillIndex * NewSkillsPage.SkillIdIncrement) + (professionIndex * NewSkillsPage.SkillProfessionIncrement)
                         };
                         textureComponent.leftNeighborID = textureComponent.myID - NewSkillsPage.SkillProfessionIncrement;
-                        textureComponent.rightNeighborID = professionIndex == 2 ? rightSnapId : textureComponent.myID + NewSkillsPage.SkillProfessionIncrement;
-                        textureComponent.downNeighborID = skillIndex == skills.Length - 1 ? walletSnapId : textureComponent.myID + NewSkillsPage.SkillIdIncrement;
+                        textureComponent.rightNeighborID = professionIndex == 2 ? -1 : textureComponent.myID + NewSkillsPage.SkillProfessionIncrement;
+                        textureComponent.downNeighborID = skillIndex == VisibleSkills.Length - 1 ? -1 : textureComponent.myID + NewSkillsPage.SkillIdIncrement;
                         skillBars.Add(textureComponent);
                         this.skillBarSkillIndexes[textureComponent.myID] = totalSkillIndex;
                     }
@@ -375,35 +238,30 @@ namespace SpaceCore.Interface
                         if (Game1.player.FarmingLevel > 0)
                         {
                             hoverText = Game1.content.LoadString("Strings\\StringsFromCSFiles:SkillsPage.cs.11592", Game1.player.FarmingLevel) + Environment.NewLine + Game1.content.LoadString("Strings\\StringsFromCSFiles:SkillsPage.cs.11594", Game1.player.FarmingLevel);
-                            break;
                         }
                         break;
                     case 1:
                         if (Game1.player.FishingLevel > 0)
                         {
                             hoverText = Game1.content.LoadString("Strings\\StringsFromCSFiles:SkillsPage.cs.11598", Game1.player.FishingLevel);
-                            break;
                         }
                         break;
                     case 2:
                         if (Game1.player.ForagingLevel > 0)
                         {
                             hoverText = Game1.content.LoadString("Strings\\StringsFromCSFiles:SkillsPage.cs.11596", Game1.player.ForagingLevel);
-                            break;
                         }
                         break;
                     case 3:
                         if (Game1.player.MiningLevel > 0)
                         {
                             hoverText = Game1.content.LoadString("Strings\\StringsFromCSFiles:SkillsPage.cs.11600", Game1.player.MiningLevel);
-                            break;
                         }
                         break;
                     case 4:
                         if (Game1.player.CombatLevel > 0)
                         {
                             hoverText = Game1.content.LoadString("Strings\\StringsFromCSFiles:SkillsPage.cs.11602", Game1.player.CombatLevel * 5);
-                            break;
                         }
                         break;
                 }
@@ -419,35 +277,17 @@ namespace SpaceCore.Interface
                 };
                 textureComponent.rightNeighborID = textureComponent.myID + NewSkillsPage.SkillProfessionIncrement;
                 textureComponent.leftNeighborID = leftSnapId;
-                textureComponent.downNeighborID = skillIndex == gameSkillCount - 1 && skills.Length == 0 ? walletSnapId : textureComponent.myID + NewSkillsPage.SkillIdIncrement;
+                textureComponent.downNeighborID = skillIndex == gameSkillCount - 1 && VisibleSkills.Length == 0 ? -1 : textureComponent.myID + NewSkillsPage.SkillIdIncrement;
                 textureComponent.upNeighborID = skillIndex > 0 ? textureComponent.myID - NewSkillsPage.SkillProfessionIncrement : this.SkillTabRegionId;
-
-                if (this.IsWalletRightSide)
-                {
-                    int level = Game1.player.GetSkillLevel(actualSkillIndex);
-                    if (level < 10)
-                    {
-                        // allow the player to navigate to the wallet without having profession 2 unlocked for a skill
-                        for (int professionIndex = 2; professionIndex >= 0; --professionIndex)
-                        {
-                            int snapTo = textureComponent.myID + (professionIndex * NewSkillsPage.SkillProfessionIncrement);
-                            var clickable = (ClickableComponent)this.skillBars.FirstOrDefault(c => c.myID == snapTo);
-                            if (clickable != null)
-                                clickable.rightNeighborID = rightSnapId;
-                            else
-                                textureComponent.rightNeighborID = rightSnapId;
-                        }
-                    }
-                }
 
                 this.skillAreas.Add(textureComponent);
                 this.skillAreaSkillIndexes[textureComponent.myID] = skillIndex;
             }
 
             // Icons for custom skills
-            for (int skillIndex = 0; skillIndex < skills.Length; ++skillIndex)
+            for (int skillIndex = 0; skillIndex < VisibleSkills.Length; ++skillIndex)
             {
-                Skills.Skill skill = Skills.GetSkill(skills[skillIndex]);
+                Skills.Skill skill = Skills.GetSkill(VisibleSkills[skillIndex]);
                 int actualSkillIndex = gameSkillCount + skillIndex;
                 string hoverText = "";
                 if (Game1.player.GetCustomBuffedSkillLevel(skill) > 0)
@@ -463,36 +303,22 @@ namespace SpaceCore.Interface
                 };
                 textureComponent.rightNeighborID = textureComponent.myID + NewSkillsPage.SkillProfessionIncrement;
                 textureComponent.leftNeighborID = leftSnapId;
-                textureComponent.downNeighborID = skillIndex == skills.Length - 1 ? -1 : textureComponent.myID + NewSkillsPage.SkillIdIncrement;
+                textureComponent.downNeighborID = skillIndex == VisibleSkills.Length - 1 ? -1 : textureComponent.myID + NewSkillsPage.SkillIdIncrement;
                 textureComponent.upNeighborID = textureComponent.myID - NewSkillsPage.SkillIdIncrement;
-
-                if (this.IsWalletRightSide && !this.IsLegacyWallet)
-                {
-                    int level = Game1.player.GetSkillLevel(actualSkillIndex);
-                    if (level < 10)
-                    {
-                        // allow the player to navigate to the wallet without having profession 2 unlocked for a skill
-                        for (int professionIndex = 2; professionIndex >= 0; --professionIndex)
-                        {
-                            int snapTo = textureComponent.myID + (professionIndex * NewSkillsPage.SkillProfessionIncrement);
-                            var clickable = (ClickableComponent)this.skillBars.FirstOrDefault(c => c.myID == snapTo);
-                            if (clickable != null)
-                                clickable.rightNeighborID = rightSnapId;
-                            else
-                                textureComponent.rightNeighborID = rightSnapId;
-                        }
-                    }
-                }
 
                 this.skillAreas.Add(textureComponent);
                 this.skillAreaSkillIndexes[textureComponent.myID] = actualSkillIndex;
             }
 
             // scrollbar
+
+            /// 0.675 is as close as I can get to having the scroll bar end 2 pixels below the bottom most skill.
+            /// 2 pixels below was chosen since the scroll bar goes 2 pixels above the top most skill.
+            int shrunkHeight = (int)(height * 0.675);
             this.upButton = new ClickableTextureComponent(new Rectangle(this.xPositionOnScreen + width + 16, this.yPositionOnScreen + 64, 44, 48), Game1.mouseCursors, new Rectangle(421, 459, 11, 12), 4f);
-            this.downButton = new ClickableTextureComponent(new Rectangle(this.xPositionOnScreen + width + 16, this.yPositionOnScreen + height - 64, 44, 48), Game1.mouseCursors, new Rectangle(421, 472, 11, 12), 4f);
+            this.downButton = new ClickableTextureComponent(new Rectangle(this.xPositionOnScreen + width + 16, this.yPositionOnScreen + shrunkHeight - 64, 44, 48), Game1.mouseCursors, new Rectangle(421, 472, 11, 12), 4f);
             this.scrollBar = new ClickableTextureComponent(new Rectangle(this.upButton.bounds.X + 12, this.upButton.bounds.Y + this.upButton.bounds.Height + 4, 24, 40), Game1.mouseCursors, new Rectangle(435, 463, 6, 10), 4f);
-            this.scrollBarRunner = new Rectangle(this.scrollBar.bounds.X, this.upButton.bounds.Y + this.upButton.bounds.Height + 4, this.scrollBar.bounds.Width, height - 128 - this.upButton.bounds.Height - 8);
+            this.scrollBarRunner = new Rectangle(this.scrollBar.bounds.X, this.upButton.bounds.Y + this.upButton.bounds.Height + 4, this.scrollBar.bounds.Width, shrunkHeight - 128 - this.upButton.bounds.Height - 8);
 
             // Add/update navigation
             this.populateClickableComponentList();
@@ -558,20 +384,19 @@ namespace SpaceCore.Interface
 
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
-            // Wallet up-down arrows scroll list of items if there are more than can be shown in walletArea
-            if (this.CanScrollWalletItems)
+            // 1.6
+            if (x > base.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder * 2 && x < base.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder * 2 + 200 && y > base.yPositionOnScreen + IClickableMenu.spaceToClearTopBorder + (int)((float)base.height / 2f) + 21 && y < base.yPositionOnScreen + base.height && Game1.MasterPlayer.hasCompletedCommunityCenter() && !Game1.MasterPlayer.hasOrWillReceiveMail("JojaMember") && !Game1.player.mailReceived.Contains("activatedJungleJunimo"))
             {
-                if (this.walletUpArrow.containsPoint(x, y))
+                this.timesClickedJunimo++;
+                if (this.timesClickedJunimo > 6)
                 {
-                    --this.WalletSelectionOffset;
-                    if (playSound)
-                        Game1.playSound("Cowboy_gunshot");
+                    Game1.playSound("discoverMineral");
+                    Game1.playSound("leafrustle");
+                    Game1.player.mailReceived.Add("activatedJungleJunimo");
                 }
-                else if (this.walletDownArrow.containsPoint(x, y))
+                else
                 {
-                    ++this.WalletSelectionOffset;
-                    if (playSound)
-                        Game1.playSound("Cowboy_gunshot");
+                    Game1.playSound("hammer");
                 }
             }
 
@@ -632,89 +457,6 @@ namespace SpaceCore.Interface
         {
         }
 
-        public override void receiveKeyPress(Keys key)
-        {
-            // Left-right navigation from wallet items redirects to the skills page/player panel
-            // Page navigation is corrupted when skills page is used as a neighbour for these components, so we handle it here
-            if (Game1.options.SnappyMenus && this.currentlySnappedComponent != null)
-            {
-                // wallet navigation
-                if (this.currentlySnappedComponent.myID is NewSkillsPage.WalletUpArrowRegionId or NewSkillsPage.WalletDownArrowRegionId || (this.currentlySnappedComponent.myID >= NewSkillsPage.WalletRegionStartId && this.currentlySnappedComponent.myID < NewSkillsPage.WalletRegionStartId + (this.IsLegacyWallet ? this.specialItemComponents.Count : this.specialItems.Count)))
-                {
-                    // navigating left with a right-side non-legacy wallet will move to the skills page
-                    if (Game1.options.doesInputListContain(Game1.options.moveLeftButton, key) && this.IsWalletRightSide && !this.IsLegacyWallet)
-                    {
-                        this.setCurrentlySnappedComponentTo(NewSkillsPage.SkillRegionStartId);
-                        return;
-                    }
-                    // navigating right with a left-side non-legacy wallet will move to the player panel
-                    else if (Game1.options.doesInputListContain(Game1.options.moveRightButton, key) && !this.IsWalletRightSide && !this.IsLegacyWallet)
-                    {
-                        this.setCurrentlySnappedComponentTo(NewSkillsPage.PlayerPanelRegionId);
-                        return;
-                    }
-                    // navigating down with a legacy wallet will move to the skill tab
-                    else if (Game1.options.doesInputListContain(Game1.options.moveDownButton, key) && this.IsLegacyWallet)
-                    {
-                        this.setCurrentlySnappedComponentTo(this.SkillTabRegionId);
-                        return;
-                    }
-                }
-                // player panel navigation
-                else if (this.currentlySnappedComponent.myID == NewSkillsPage.PlayerPanelRegionId)
-                {
-                    // moving left with a left-side non-legacy wallet will move to the wallet
-                    if (Game1.options.doesInputListContain(Game1.options.moveLeftButton, key) && !this.IsWalletRightSide && !this.IsLegacyWallet)
-                    {
-                        this.setCurrentlySnappedComponentTo(NewSkillsPage.WalletRegionStartId);
-                        return;
-                    }
-                    // moving right will move to the skills page
-                    else if (Game1.options.doesInputListContain(Game1.options.moveRightButton, key))
-                    {
-                        this.setCurrentlySnappedComponentTo(NewSkillsPage.SkillRegionStartId);
-                        return;
-                    }
-                    // moving up will move to the skill tab
-                    else if (Game1.options.doesInputListContain(Game1.options.moveUpButton, key))
-                    {
-                        this.setCurrentlySnappedComponentTo(this.SkillTabRegionId);
-                        return;
-                    }
-                }
-                // skill tab navigation
-                else if (this.currentlySnappedComponent.myID == this.SkillTabRegionId)
-                {
-                    // navigating up with a legacy wallet will move to the wallet if on-screen
-                    if (Game1.options.doesInputListContain(Game1.options.moveUpButton, key) && this.CanNavigateToWallet)
-                    {
-                        this.setCurrentlySnappedComponentTo(NewSkillsPage.WalletRegionStartId);
-                        return;
-                    }
-                }
-            }
-            base.receiveKeyPress(key);
-        }
-
-        public override void receiveGamePadButton(Buttons b)
-        {
-            // Shoulder buttons navigate between skills and wallet
-            if (b is Buttons.LeftShoulder or Buttons.RightShoulder)
-            {
-                if (this.currentlySnappedComponent?.myID < NewSkillsPage.WalletRegionStartId && this.CanNavigateToWallet)
-                {
-                    this.setCurrentlySnappedComponentTo(NewSkillsPage.WalletRegionStartId);
-                }
-                else
-                {
-                    this.setCurrentlySnappedComponentTo(0);
-                }
-                Game1.playSound("smallSelect");
-            }
-
-            base.receiveGamePadButton(b);
-        }
-
         public override void receiveScrollWheelAction(int direction)
         {
             base.receiveScrollWheelAction(direction);
@@ -745,14 +487,6 @@ namespace SpaceCore.Interface
                     this.setCurrentlySnappedComponentTo(snapTo);
                 }
             }
-            // Wallet area scrolls list of items without moving cursor
-            else if (this.CanScrollWalletItems && this.walletArea.Contains(Game1.getOldMouseX(), Game1.getOldMouseY()))
-            {
-                if (direction < 0)
-                    ++this.WalletSelectionOffset;
-                else
-                    --this.WalletSelectionOffset;
-            }
         }
 
         public override void performHoverAction(int x, int y)
@@ -763,16 +497,6 @@ namespace SpaceCore.Interface
             this.upButton.tryHover(x, y);
             this.downButton.tryHover(x, y);
 
-            if (this.walletIconArea.Contains(x, y))
-                this.hoverText = Game1.content.LoadString("Strings\\StringsFromCSFiles:SkillsPage.cs.11610");
-
-            for (int index = 0; index < this.specialItemComponents.Count && this.hoverText.Length == 0; ++index)
-            {
-                if (this.specialItemComponents[index].containsPoint(x, y))
-                {
-                    this.hoverText = (index < this.specialItems.Count || this.CanScrollWalletItems) ? this.specialItems[(index + this.walletSelectionOffset) % this.specialItems.Count].hoverText : "";
-                }
-            }
             foreach (ClickableTextureComponent skillBar in this.skillBars)
             {
                 if (this.skillBarSkillIndexes.TryGetValue(skillBar.myID, out int skillIndex) && (skillIndex < this.skillScrollOffset || skillIndex > this.LastVisibleSkillIndex))
@@ -974,7 +698,7 @@ namespace SpaceCore.Interface
             }
 
             // Custom skills
-            foreach (string skillName in Skills.GetSkillList())
+            foreach (string skillName in VisibleSkills)
             {
                 if (indexWithLuckSkill < this.skillScrollOffset || indexWithLuckSkill > this.LastVisibleSkillIndex)
                 {
@@ -995,8 +719,10 @@ namespace SpaceCore.Interface
                     if (levelIndex == 0)
                         skillTitle = skill.GetName();
                     skillLevel = Game1.player.GetCustomBuffedSkillLevel(skill);
-                    // TODO: Detect skill buffs? Is that even possible?
-                    addedSkill = false; // (int)((NetFieldBase<int, NetInt>)Game1.player.addedFarmingLevel) > 0;
+                    int Skillbuff = Game1.player.GetCustomSkillBuffAmount(skill);
+                    if (Skillbuff != 0) {
+                        addedSkill = true;
+                    }
                     if (skillTitle.Length > 0)
                     {
                         b.DrawString(Game1.smallFont, skillTitle, position: new Vector2((float)(x - Game1.smallFont.MeasureString(skillTitle).X + 4.0 - 64.0), (y + 4 + (indexWithLuckSkill * 56))), Game1.textColor);
@@ -1115,63 +841,161 @@ namespace SpaceCore.Interface
                 }
             }
 
-            // Wallet
-            if (this.IsLegacyWallet)
-            {
-                Game1.drawDialogueBox(this.walletArea.X, this.walletArea.Y, this.walletArea.Width, this.walletArea.Height, speaker: false, drawOnlyBox: true);
-                this.drawBorderLabel(b, text: Game1.content.LoadString("Strings\\StringsFromCSFiles:SkillsPage.cs.11610"), Game1.smallFont, this.walletArea.X + 64, this.walletArea.Y);
-                for (int index = 0; index < this.specialItems.Count; ++index)
-                {
-                    b.Draw(texture: Game1.mouseCursors,
-                        destinationRectangle: this.specialItemComponents[index].bounds,
-                        sourceRectangle: this.specialItems[index].sourceRect,
-                        Color.White, rotation: 0f, origin: Vector2.Zero, SpriteEffects.None, layerDepth: 1f);
-                }
-            }
-            else if (this.specialItems.Count > 0)
-            {
-                // container
-                Game1.drawDialogueBox(this.walletArea.X, this.walletArea.Y, this.walletArea.Width, this.walletArea.Height, speaker: false, drawOnlyBox: true);
-                // wallet label container
-                b.Draw(texture: Game1.mouseCursors,
-                    destinationRectangle: this.walletIconArea,
-                    sourceRectangle: this.walletIconAreaSource,
-                    Color.White, rotation: 0f, origin: Vector2.Zero, SpriteEffects.None, 1f);
-                // wallet label icon
-                b.Draw(this.texture,
-                    destinationRectangle: new Rectangle(this.walletIconArea.X + ((24 - this.walletIconSource.Width) * Game1.pixelZoom / 2), this.walletIconArea.Y + ((24 - this.walletIconSource.Height) * Game1.pixelZoom / 2), this.walletIconSource.Width * Game1.pixelZoom, this.walletIconSource.Height * Game1.pixelZoom),
-                    sourceRectangle: this.walletIconSource,
-                    Color.White, rotation: 0f, origin: Vector2.Zero, SpriteEffects.None, 1f);
-                // wallet label item count
-                Utility.drawTinyDigits(toDraw: this.specialItems.Count, b,
-                    position: new Vector2(this.walletIconArea.X + (28 * Game1.pixelZoom / 2), this.walletIconArea.Y + (15 * Game1.pixelZoom)),
-                    scale: 3f, layerDepth: 0.87f, Color.AntiqueWhite);
-                // wallet item scroll arrows
-                if (this.CanScrollWalletItems)
-                {
-                    // rotate arrows 270 and 90 degrees around their centre, and correct the draw position from doing this
-                    b.Draw(texture: Game1.mouseCursors,
-                        destinationRectangle: new Rectangle(this.walletUpArrow.bounds.X + (this.walletUpArrow.bounds.Width / 2), this.walletUpArrow.bounds.Y + (this.walletUpArrow.bounds.Height / 2), this.walletUpArrow.bounds.Width, this.walletUpArrow.bounds.Height),
-                        sourceRectangle: this.walletUpArrow.sourceRect,
-                        Color.White, rotation: (float)(Math.PI / 180 * 270), origin: new Vector2(this.walletUpArrow.bounds.Width / 2), SpriteEffects.None, layerDepth: 1f);
-                    b.Draw(texture: Game1.mouseCursors,
-                        destinationRectangle: new Rectangle(this.walletDownArrow.bounds.X + (this.walletDownArrow.bounds.Width / 2), this.walletDownArrow.bounds.Y + (this.walletDownArrow.bounds.Height / 2), this.walletDownArrow.bounds.Width, this.walletDownArrow.bounds.Height),
-                        sourceRectangle: this.walletDownArrow.sourceRect,
-                        Color.White, rotation: (float)(Math.PI / 180 * 90), origin: new Vector2(this.walletDownArrow.bounds.Width / 2), SpriteEffects.None, layerDepth: 1f);
-                }
-                // wallet items
-                for (int iconIndex = 0; iconIndex < this.specialItemComponents.Count; ++iconIndex)
-                {
-                    int itemIndex = (iconIndex + this.WalletSelectionOffset) % this.specialItems.Count;
-                    if (iconIndex < this.specialItems.Count)
-                    {
-                        b.Draw(texture: this.specialItems[itemIndex].texture,
-                            destinationRectangle: this.specialItemComponents[iconIndex % this.specialItemComponents.Count].bounds,
-                            sourceRectangle: this.specialItems[itemIndex].sourceRect,
-                            Color.White, rotation: 0f, origin: Vector2.Zero, SpriteEffects.None, layerDepth: 1f);
-                    }
-                }
-            }
+            // 1.6 stuff
+            y = base.yPositionOnScreen + IClickableMenu.spaceToClearTopBorder + (int)((float)base.height / 2f) + 21;
+		    x = base.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder * 2;
+		    bool isJoja = Game1.MasterPlayer.mailReceived.Contains("JojaMember");
+		    x += 80;
+		    y += 16;
+		    if (isJoja || Game1.MasterPlayer.hasOrWillReceiveMail("canReadJunimoText") || Game1.player.hasOrWillReceiveMail("canReadJunimoText"))
+		    {
+			    if (!isJoja)
+			    {
+				    b.Draw(Game1.mouseCursors_1_6, new Vector2(x, y), new Rectangle(Game1.MasterPlayer.hasOrWillReceiveMail("ccBulletin") ? 374 : 363, 298 + (isJoja ? 11 : 0), 11, 11), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
+			    }
+			    else
+			    {
+				    b.Draw(Game1.mouseCursors_1_6, new Vector2(x - 80, y - 16), new Rectangle(363, 250, 51, 48), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
+			    }
+			    b.Draw(Game1.mouseCursors_1_6, new Vector2(x + 60, y + 28), new Rectangle(Game1.MasterPlayer.hasOrWillReceiveMail("ccBoilerRoom") ? 374 : 363, 298 + (isJoja ? 11 : 0), 11, 11), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
+			    b.Draw(Game1.mouseCursors_1_6, new Vector2(x + 60, y + 88), new Rectangle(Game1.MasterPlayer.hasOrWillReceiveMail("ccVault") ? 374 : 363, 298 + (isJoja ? 11 : 0), 11, 11), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
+			    b.Draw(Game1.mouseCursors_1_6, new Vector2(x - 60, y + 28), new Rectangle(Game1.MasterPlayer.hasOrWillReceiveMail("ccCraftsRoom") ? 374 : 363, 298 + (isJoja ? 11 : 0), 11, 11), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
+			    b.Draw(Game1.mouseCursors_1_6, new Vector2(x - 60, y + 88), new Rectangle(Game1.MasterPlayer.hasOrWillReceiveMail("ccFishTank") ? 374 : 363, 298 + (isJoja ? 11 : 0), 11, 11), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
+			    b.Draw(Game1.mouseCursors_1_6, new Vector2(x, y + 120), new Rectangle(Game1.MasterPlayer.hasOrWillReceiveMail("ccPantry") ? 374 : 363, 298 + (isJoja ? 11 : 0), 11, 11), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
+			    if (!Utility.hasFinishedJojaRoute() && Game1.MasterPlayer.hasCompletedCommunityCenter())
+			    {
+				    b.Draw(Game1.mouseCursors_1_6, new Vector2((float)(x - 4) + 30f, (float)(y + 52) + 30f), new Rectangle(386, 299, 13, 15), Color.White, 0f, new Vector2(7.5f), 4f + (float)this.timesClickedJunimo * 0.2f, SpriteEffects.None, 0.7f);
+				    if (Game1.player.mailReceived.Contains("activatedJungleJunimo"))
+				    {
+					    b.Draw(Game1.mouseCursors_1_6, new Vector2(x - 80, y - 16), new Rectangle(311, 251, 51, 48), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
+				    }
+			    }
+		    }
+		    else
+		    {
+			    b.Draw(Game1.mouseCursors_1_6, new Vector2(x - 80, y - 16), new Rectangle(414, 250, 52, 47), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
+		    }
+		    x += 124;
+		    //b.Draw(Game1.staminaRect, new Rectangle(x, y - 16, 4, (int)((float)base.height / 3f) - 32 - 4), new Color(214, 143, 84));
+		    int xHouseOffset = 0;
+		    if (Game1.smallFont.MeasureString(Game1.content.LoadString("Strings\\UI:Inventory_PortraitHover_Level", (int)Game1.player.houseUpgradeLevel + 1)).X > 120f)
+		    {
+			    xHouseOffset -= 20;
+		    }
+		    y += 108;
+		    x += 28;
+		    b.Draw(Game1.mouseCursors, new Vector2(x + xHouseOffset + 20, y - 4), new Rectangle(653, 880, 10, 10), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
+		    Utility.drawTextWithShadow(b, Game1.content.LoadString("Strings\\UI:Inventory_PortraitHover_Level", (int)Game1.player.houseUpgradeLevel + 1), Game1.smallFont, new Vector2(x + xHouseOffset + 72, y), Game1.textColor);
+		    if ((int)Game1.player.houseUpgradeLevel >= 3)
+		    {
+			    int interval = 709;
+			    b.Draw(Game1.mouseCursors, new Vector2((float)(x + xHouseOffset) + 50f, (float)y - 4f) + new Vector2(0f, (float)((0.0 - Game1.currentGameTime.TotalGameTime.TotalMilliseconds) % 2000.0) * 0.01f), new Rectangle(372, 1956, 10, 10), new Color(80, 80, 80) * 1f * 0.53f * (1f - (float)(Game1.currentGameTime.TotalGameTime.TotalMilliseconds % 2000.0) / 2000f), (float)((0.0 - Game1.currentGameTime.TotalGameTime.TotalMilliseconds) % 2000.0) * 0.001f, new Vector2(3f, 3f), 0.5f + (float)(Game1.currentGameTime.TotalGameTime.TotalMilliseconds % 2000.0) / 1000f, SpriteEffects.None, 0.7f);
+			    b.Draw(Game1.mouseCursors, new Vector2((float)(x + xHouseOffset) + 50f, (float)y - 4f) + new Vector2(0f, (float)((0.0 - (Game1.currentGameTime.TotalGameTime.TotalMilliseconds + (double)interval)) % 2000.0) * 0.01f), new Rectangle(372, 1956, 10, 10), new Color(80, 80, 80) * 1f * 0.53f * (1f - (float)((Game1.currentGameTime.TotalGameTime.TotalMilliseconds + (double)interval) % 2000.0) / 2000f), (float)((0.0 - (Game1.currentGameTime.TotalGameTime.TotalMilliseconds + (double)interval)) % 2000.0) * 0.001f, new Vector2(5f, 5f), 0.5f + (float)((Game1.currentGameTime.TotalGameTime.TotalMilliseconds + (double)interval) % 2000.0) / 1000f, SpriteEffects.None, 0.7f);
+			    b.Draw(Game1.mouseCursors, new Vector2((float)(x + xHouseOffset) + 50f, (float)y - 4f) + new Vector2(0f, (float)((0.0 - (Game1.currentGameTime.TotalGameTime.TotalMilliseconds + (double)(interval * 2))) % 2000.0) * 0.01f), new Rectangle(372, 1956, 10, 10), new Color(80, 80, 80) * 1f * 0.53f * (1f - (float)((Game1.currentGameTime.TotalGameTime.TotalMilliseconds + (double)(interval * 2)) % 2000.0) / 2000f), (float)((0.0 - (Game1.currentGameTime.TotalGameTime.TotalMilliseconds + (double)(interval * 2))) % 2000.0) * 0.001f, new Vector2(4f, 4f), 0.5f + (float)((Game1.currentGameTime.TotalGameTime.TotalMilliseconds + (double)(interval * 2)) % 2000.0) / 1000f, SpriteEffects.None, 0.7f);
+		    }
+		    x += 180;
+		    y -= 8;
+		    bool drawSkull = false;
+		    int lowestLevel = MineShaft.lowestLevelReached;
+		    if (lowestLevel > 120)
+		    {
+			    lowestLevel -= 120;
+			    drawSkull = true;
+		    }
+		    b.Draw(Game1.mouseCursors_1_6, new Vector2(x + 8, y), new Rectangle((lowestLevel == 0) ? 434 : 385, 315, 13, 13), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
+		    if (lowestLevel != 0)
+		    {
+			    Utility.drawTextWithShadow(b, lowestLevel.ToString() ?? "", Game1.smallFont, new Vector2(x + 72 + (drawSkull ? 8 : 0), y + 8), Game1.textColor);
+		    }
+		    if (drawSkull)
+		    {
+			    b.Draw(Game1.mouseCursors_1_6, new Vector2(x + 40, y + 24), new Rectangle(412, 319, 8, 9), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
+		    }
+		    x += 120;
+		    int numStardrops = Utility.numStardropsFound();
+		    if (numStardrops > 0)
+		    {
+			    b.Draw(Game1.mouseCursors_1_6, new Vector2(x + 32, y - 4), new Rectangle(399, 314, 12, 14), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
+			    Utility.drawTextWithShadow(b, "x " + numStardrops, Game1.smallFont, new Vector2(x + 88, y + 8), (numStardrops >= 7) ? new Color(160, 30, 235) : Game1.textColor);
+		    }
+		    else
+		    {
+			    b.Draw(Game1.mouseCursors_1_6, new Vector2(x + 32, y - 4), new Rectangle(421, 314, 12, 14), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
+		    }
+		    if (Game1.stats.Get("MasteryExp") != 0)
+		    {
+			    int masteryLevel = MasteryTrackerMenu.getCurrentMasteryLevel();
+			    string masteryText = Game1.content.LoadString("Strings\\1_6_Strings:Mastery");
+			    masteryText = masteryText.TrimEnd(':');
+			    float masteryStringWidth = Game1.smallFont.MeasureString(masteryText).X;
+			    xOffset = (int)masteryStringWidth - 64;
+			    int yOffset = 84;
+			    b.DrawString(Game1.smallFont, masteryText, new Vector2(base.xPositionOnScreen + 256, yOffset + base.yPositionOnScreen + 408), Game1.textColor);
+			    Utility.drawWithShadow(b, Game1.mouseCursors_1_6, new Vector2(xOffset + base.xPositionOnScreen + 332, yOffset + base.yPositionOnScreen + 400), new Rectangle(457, 298, 11, 11), Color.White, 0f, Vector2.Zero);
+			    float width = 0.64f;
+			    width -= (masteryStringWidth - 100f) / 800f;
+			    if (Game1.content.GetCurrentLanguage() == LocalizedContentManager.LanguageCode.ru)
+			    {
+				    width += 0.1f;
+			    }
+			    b.Draw(Game1.staminaRect, new Rectangle(xOffset + base.xPositionOnScreen + 380 - 1, yOffset + base.yPositionOnScreen + 408, (int)(584f * width) + 4, 40), Color.Black * 0.35f);
+			    b.Draw(Game1.staminaRect, new Rectangle(xOffset + base.xPositionOnScreen + 384, yOffset + base.yPositionOnScreen + 404, (int)((float)(((masteryLevel >= 5) ? 144 : 146) * 4) * width) + 4, 40), new Color(60, 60, 25));
+			    b.Draw(Game1.staminaRect, new Rectangle(xOffset + base.xPositionOnScreen + 388, yOffset + base.yPositionOnScreen + 408, (int)(576f * width), 32), new Color(173, 129, 79));
+			    MasteryTrackerMenu.drawBar(b, new Vector2(xOffset + base.xPositionOnScreen + 276, yOffset + base.yPositionOnScreen + 264), width);
+			    NumberSprite.draw(masteryLevel, b, new Vector2(xOffset + base.xPositionOnScreen + 408 + (int)(584f * width), yOffset + base.yPositionOnScreen + 428), Color.Black * 0.35f, 1f, 0.85f, 1f, 0);
+			    NumberSprite.draw(masteryLevel, b, new Vector2(xOffset + base.xPositionOnScreen + 412 + (int)(584f * width), yOffset + base.yPositionOnScreen + 424), Color.SandyBrown * ((masteryLevel == 0) ? 0.75f : 1f), 1f, 0.87f, 1f, 0);
+		    }
+		    else
+		    {
+			    b.Draw(Game1.mouseCursors_1_6, new Vector2(x - 304, y - 88), new Rectangle(366, 236, 142, 12), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
+		    }
+		    Rectangle doodleSource = new Rectangle(394, 120 + Game1.seasonIndex * 23, 33, 23);
+		    if (Game1.isGreenRain)
+		    {
+			    doodleSource = new Rectangle(427, 143, 33, 23);
+		    }
+		    else if (Game1.player.activeDialogueEvents.ContainsKey("married"))
+		    {
+			    doodleSource = new Rectangle(427, 97, 33, 23);
+		    }
+		    else if (Game1.IsSpring && Game1.dayOfMonth == 13)
+		    {
+			    doodleSource.X += 33;
+		    }
+		    else if (Game1.IsSummer && Game1.dayOfMonth == 11)
+		    {
+			    doodleSource.X += 66;
+		    }
+		    else if (Game1.IsFall && Game1.dayOfMonth == 27)
+		    {
+			    doodleSource.X += 33;
+		    }
+		    else if (Game1.IsWinter && Game1.dayOfMonth == 25)
+		    {
+			    doodleSource.X += 33;
+		    }
+		    b.Draw(Game1.mouseCursors_1_6, new Vector2(x + 144, y - 20), doodleSource, Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
+		    if (Game1.IsWinter && Game1.player.mailReceived.Contains("sawSecretSanta" + Game1.year) && ((Game1.dayOfMonth >= 18 && Game1.dayOfMonth < 25) || (Game1.dayOfMonth == 25 && Game1.timeOfDay < 1500)))
+		    {
+			    NPC k = Utility.GetRandomWinterStarParticipant();
+			    Texture2D character_texture;
+			    try
+			    {
+				    character_texture = Game1.content.Load<Texture2D>("Characters\\" + k.Name + "_Winter");
+			    }
+			    catch
+			    {
+				    character_texture = k.Sprite.Texture;
+			    }
+			    Rectangle src = k.getMugShotSourceRect();
+			    src.Height -= 5;
+			    b.Draw(character_texture, new Vector2(x + 180, y), src, Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
+			    b.Draw(Game1.mouseCursors, new Vector2(x + 244, y + 40), new Rectangle(147, 412, 10, 11), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
+		    }
+		    if (this.hoverText.Length > 0)
+		    {
+			    IClickableMenu.drawHoverText(b, this.hoverText, Game1.smallFont, 0, 0, -1, (this.hoverTitle.Length > 0) ? this.hoverTitle : null);
+		    }
 
             // scrollbar
             if (!this.ShowsAllSkillsAtOnce)

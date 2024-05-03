@@ -72,10 +72,12 @@ namespace SpaceCore.Patches
         {
             // TODO: Learn how to use ILGenerator
 
+            FieldInfo farmingLevel = typeof(Farmer).GetField("farmingLevel");
+
             var newInsns = new List<CodeInstruction>();
             foreach (var insn in insns)
             {
-                if (insn.opcode == OpCodes.Ldstr && (string)insn.operand == "newRecord")
+                if (insn.LoadsField(farmingLevel))
                 {
                     newInsns.Insert(newInsns.Count - 2, new CodeInstruction(OpCodes.Call, PatchHelper.RequireMethod<Game1Patcher>(nameof(ShowEndOfNightStuffLogic))));
                 }

@@ -143,7 +143,7 @@ namespace Satchels
                     for (int i = Farmer.hotbarSize; i < Game1.player.Items.Count; ++i)
                     {
                         var item = Game1.player.Items[i];
-                        if (item != null)
+                        if (item != null && item != satchel && (item is not Satchel s2 || s2.hasEnchantmentOfType<SatchelInceptionEnchantment>()))
                         {
                             Game1.player.Items[i] = satchel.Inventory.DepositItem(item);
                         }
