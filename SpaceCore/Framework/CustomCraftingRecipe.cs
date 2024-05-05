@@ -18,7 +18,7 @@ namespace SpaceCore.Framework
             if (this.recipe.Name != null)
                 this.DisplayName = this.recipe.Name;
 
-            if (this.recipe.Description.Length > 0)
+            if (this.recipe.Description == null || this.recipe.Description.Length > 0)
                 this.description = this.recipe.Description;
         }
 
@@ -63,7 +63,7 @@ namespace SpaceCore.Framework
                 required_count -= bag_count;
                 if (additional_crafting_items != null)
                 {
-                    containers_count = ingred.GetAmountInList(Game1.player.Items);
+                    containers_count = ingred.GetAmountInList(additional_crafting_items);
                     if (required_count > 0)
                     {
                         required_count -= containers_count;
