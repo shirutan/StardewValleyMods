@@ -39,9 +39,15 @@ namespace SpaceCore.VanillaAssetExpansion
         public static void Postfix(Farm __instance)
         {
             var dict = Game1.content.Load<Dictionary<string, FarmExtensionData>>("spacechase0.SpaceCore/FarmExtensionData");
-            if (!dict.ContainsKey(Game1.whichModFarm?.Id ?? ""))
+            string keyToCheck = Game1.whichModFarm?.Id;
+            if(string.IsNullOrEmpty(keyToCheck))
+            {
+                //same values as CP's {{FarmType}} token for ease of use
+                keyToCheck = new[] { "Standard", "Beach", "FourCorners", "Forest", "HillTop", "Riverland", "Wilderness" }[Game1.whichFarm];
+            }
+            if (!dict.ContainsKey(keyToCheck))
                 return;
-            var fdata = dict[Game1.whichModFarm.Id];
+            var fdata = dict[keyToCheck];
 
             foreach (var bfdata in fdata.Buildings)
             {
@@ -65,9 +71,14 @@ namespace SpaceCore.VanillaAssetExpansion
             {
                 for (int ix = fence.Area.X; ix < fence.Area.X + fence.Area.Width; ++ix)
                 {
-                    for (int iy = fence.Area.X; iy < fence.Area.Y + fence.Area.Height; ++iy)
+                    for (int iy = fence.Area.Y; iy < fence.Area.Y + fence.Area.Height; ++iy)
                     {
-                        __instance.objects.Add(new Vector2(ix, iy), new Fence(new(ix, iy), fence.FenceId, fence.IsGate));
+                        Vector2 pos = new Vector2(ix, iy);
+                        if (__instance.objects.ContainsKey(pos))
+                        {
+                            __instance.objects.Remove(pos);
+                        }
+                        __instance.objects.Add(pos, new Fence(new(ix, iy), fence.FenceId, fence.IsGate));
                     }
                 }
             }
