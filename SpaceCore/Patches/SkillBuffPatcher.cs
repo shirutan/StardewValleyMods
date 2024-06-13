@@ -38,8 +38,7 @@ internal class SkillBuffPatcher : BasePatcher
         // If there is no custom data, return normal buffs.
         if (!Game1.objectData.TryGetValue(__instance.ItemId, out ObjectData data) ||
             data.Buffs is null ||
-            data.Buffs.All(b => b.CustomFields is null) ||
-            data.Buffs.All(b =>b.CustomFields.Count == 0))
+            data.Buffs.All(b => b.CustomFields is null || b.CustomFields.Count == 0))
         {
             foreach (Buff buff in values)
             {
@@ -50,7 +49,7 @@ internal class SkillBuffPatcher : BasePatcher
         // If there is custom data, find the matching buff to wrap.
         foreach ( var buffData in data.Buffs )
         {
-            if (buffData.CustomFields.Any( b => b.Key.StartsWith("spacechase.SpaceCore.SkillBuff.")))
+            if (buffData.CustomFields?.Any( b => b.Key.StartsWith("spacechase.SpaceCore.SkillBuff.")) ?? false)
             {
 
                 Log.Warn("Custom Skill buffs am I being read?");
@@ -174,8 +173,7 @@ internal class SkillBuffPatcher : BasePatcher
         if (hoveredItem is null ||
             !Game1.objectData.TryGetValue(hoveredItem.ItemId, out ObjectData data) ||
             data.Buffs is null ||
-            data.Buffs.All(b => b.CustomFields is null) ||
-            data.Buffs.All(b => b.CustomFields.Count == 0))
+            data.Buffs.All(b => b.CustomFields is null || b.CustomFields.Count == 0))
         {
             return height;
         }
@@ -183,6 +181,8 @@ internal class SkillBuffPatcher : BasePatcher
         bool addedAny = false;
         foreach (var buffData in data.Buffs)
         {
+            if (buffData.CustomFields is null)
+                continue;
             foreach (var entry in Skills.SkillBuff.ParseCustomFields(buffData.CustomFields))
             {
                 addedAny = true;
@@ -203,14 +203,15 @@ internal class SkillBuffPatcher : BasePatcher
         if (hoveredItem is null ||
             !Game1.objectData.TryGetValue(hoveredItem.ItemId, out ObjectData data) ||
             data.Buffs is null ||
-            data.Buffs.All(b => b.CustomFields is null) ||
-            data.Buffs.All(b => b.CustomFields.Count == 0))
+            data.Buffs.All(b => b.CustomFields is null || b.CustomFields.Count == 0))
         {
             return width;
         }
 
         foreach ( var buffData in data.Buffs )
         {
+            if (buffData.CustomFields is null)
+                continue;
             foreach (var entry in Skills.SkillBuff.ParseCustomFields(buffData.CustomFields))
             {
                 Skills.Skill skill = Skills.GetSkill(entry.Key);
@@ -232,14 +233,15 @@ internal class SkillBuffPatcher : BasePatcher
         if (hoveredItem is null ||
             !Game1.objectData.TryGetValue(hoveredItem.ItemId, out ObjectData data) ||
             data.Buffs is null ||
-            data.Buffs.All(b => b.CustomFields is null) ||
-            data.Buffs.All(b => b.CustomFields.Count == 0))
+            data.Buffs.All(b => b.CustomFields is null || b.CustomFields.Count == 0))
         {
             return y;
         }
 
         foreach (var buffData in data.Buffs)
         {
+            if (buffData.CustomFields is null)
+                continue;
             foreach (var entry in Skills.SkillBuff.ParseCustomFields(buffData.CustomFields))
             {
                 Skills.Skill skill = Skills.GetSkill(entry.Key);
