@@ -107,7 +107,8 @@ namespace SpaceCore
         {
             public Dictionary<string, int> SkillLevelIncreases { get; set; } = new Dictionary<string, int>();
 
-            private const string SkillBuffField = "spacechase.SpaceCore.SkillBuff.";
+            private const string SkillBuffFieldLegacy = "spacechase.SpaceCore.SkillBuff.";
+            private const string SkillBuffField = "spacechase0.SpaceCore.SkillBuff.";
 
             public SkillBuff(Buff buff, string id, Dictionary<string, string> customFields) : base(id, buff.source, buff.displaySource, buff.millisecondsDuration, buff.iconTexture, buff.iconSheetIndex, buff.effects, false, buff.displayName, buff.description)
             {
@@ -121,12 +122,12 @@ namespace SpaceCore
             {
                 foreach (KeyValuePair<string, string> entry in customFields)
                 {
-                    if (!entry.Key.StartsWith(SkillBuffField))
+                    if (!entry.Key.StartsWith(SkillBuffField) && !entry.Key.StartsWith(SkillBuffFieldLegacy))
                     {
                         continue;
                     }
 
-                    string skillId = entry.Key.Substring(SkillBuffField.Length);
+                    string skillId = entry.Key.StartsWith(SkillBuffField) ? entry.Key.Substring(SkillBuffField.Length) : entry.Key.Substring(SkillBuffFieldLegacy.Length);
                     if (!int.TryParse(entry.Value, out int level))
                     {
                         Log.Error($"Could not parse int {entry.Value} from buff custom field {entry.Key}");
