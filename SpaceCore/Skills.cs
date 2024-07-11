@@ -267,15 +267,8 @@ namespace SpaceCore
                     int level = int.Parse(conditions.Split(" ")[1]);
 
                     //Check to see if the skill level is below the level for the recipe
-                    if (skillLevel <= level)
+                    if (skillLevel < level)
                     {
-                        //if it is, check to see if the player has the crafting recipe
-                        // and if they do, remove the crafting recipe from them.
-                        if (Game1.player.craftingRecipes.ContainsKey(recipePair.Key))
-                        {
-                            Game1.player.craftingRecipes.Remove(recipePair.Key);
-                        }
-                        //continue to the next recipe
                         continue;
                     }
                     //Add the recipe to the player if their skill level is above the level for the recipe
@@ -296,15 +289,8 @@ namespace SpaceCore
 
                     int level = int.Parse(conditions.Split(" ")[1]);
 
-                    if (skillLevel <= level)
+                    if (skillLevel < level)
                     {
-                        //if it is, check to see if the player has the crafting recipe
-                        // and if they do, remove the crafting recipe from them.
-                        if (Game1.player.craftingRecipes.ContainsKey(recipePair.Key))
-                        {
-                            Game1.player.craftingRecipes.Remove(recipePair.Key);
-                        }
-                        //continue to the next recipe
                         continue;
                     }
 
