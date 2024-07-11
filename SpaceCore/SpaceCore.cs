@@ -270,7 +270,8 @@ namespace SpaceCore
                 new UtilityPatcher(),
                 new HoeDirtPatcher(),
                 new SkillBuffPatcher(),
-                new SpriteBatchPatcher()
+                new SpriteBatchPatcher(),
+                new ToolDataDefinitionPatcher()
             );
         }
 
