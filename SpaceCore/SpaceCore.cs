@@ -225,7 +225,7 @@ namespace SpaceCore
 
                         if (!ctx.Location.terrainFeatures.TryGetValue(tile + new Vector2(ix, iy), out var tf) || tf is not HoeDirt hd || hd.crop == null)
                             continue;
-                        hd.crop.growCompletely();
+                        
                         if (hd.crop.netSeedIndex.Value == cropSeedId && hd.crop.currentPhase.Value == hd.crop.phaseDays.Count - 1)
                             return true;
                     }
