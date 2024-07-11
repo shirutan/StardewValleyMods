@@ -17,6 +17,9 @@ namespace SpaceCore.Framework
             this.recipe = recipeOverride;
             if (this.recipe.Name != null)
                 this.DisplayName = this.recipe.Name;
+
+            if (this.recipe.Description == null || this.recipe.Description.Length > 0)
+                this.description = this.recipe.Description;
         }
 
         public override Item createItem()
@@ -60,7 +63,7 @@ namespace SpaceCore.Framework
                 required_count -= bag_count;
                 if (additional_crafting_items != null)
                 {
-                    containers_count = ingred.GetAmountInList(Game1.player.Items);
+                    containers_count = ingred.GetAmountInList(additional_crafting_items);
                     if (required_count > 0)
                     {
                         required_count -= containers_count;
@@ -80,7 +83,7 @@ namespace SpaceCore.Framework
                 }
             }
             b.Draw(Game1.staminaRect, new Rectangle((int)position.X + 8, (int)position.Y + lineExpansion + 64 + 4 + this.recipe.Ingredients.Length * 36, width - 32, 2), Game1.textColor * 0.35f);
-            Utility.drawTextWithShadow(b, Game1.parseText(this.recipe.Description, Game1.smallFont, width - 8), Game1.smallFont, position + new Vector2(0f, 76 + this.recipe.Ingredients.Length * 36 + lineExpansion), Game1.textColor * 0.75f);
+            Utility.drawTextWithShadow(b, Game1.parseText(this.description, Game1.smallFont, width - 8), Game1.smallFont, position + new Vector2(0f, 76 + this.recipe.Ingredients.Length * 36 + lineExpansion), Game1.textColor * 0.75f);
         }
 
         public override int getCraftableCount(IList<Chest> additional_material_chests)
