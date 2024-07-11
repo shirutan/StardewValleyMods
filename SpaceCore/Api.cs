@@ -67,6 +67,13 @@ namespace SpaceCore
         void AddExperienceForCustomSkill(Farmer farmer, string skill, int amt);
 
         /// <summary>
+        /// Gets the display name of the skill
+        /// </summary>
+        /// <param name="skill"> The ID of the skill you want to get</param>
+        /// <returns>Texture2D</returns>
+        string GetDisplayNameOfCustomSkill(string skill);
+
+        /// <summary>
         /// Gets the 10x10 icon of the skill that shows up on the skill page
         /// </summary>
         /// <param name="skill"> The ID of the skill you want to get</param>
@@ -133,6 +140,11 @@ namespace SpaceCore
         public void AddExperienceForCustomSkill(Farmer farmer, string skill, int amt)
         {
             farmer.AddCustomSkillExperience(skill, amt);
+        }
+
+        public string GetDisplayNameOfCustomSkill(string skill)
+        {
+            return Skills.GetSkill(skill).GetName();
         }
 
         public Texture2D GetSkillPageIconForCustomSkill(string skill)
