@@ -294,7 +294,7 @@ namespace SpaceShared.Content
                 (SourceElement se, start) = BuildArray(tokens, start);
                 return new(se, start + (tokens[start].IsEndStatement() ? 1 : 0));
             }
-            else if (tok.IsNull())
+            else if (tok.IsNull() || tok.IsEndStatement())
             {
                 return new(tok, start + 1);
             }

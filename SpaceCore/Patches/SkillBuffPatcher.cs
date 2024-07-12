@@ -49,7 +49,7 @@ internal class SkillBuffPatcher : BasePatcher
         // If there is custom data, find the matching buff to wrap.
         foreach ( var buffData in data.Buffs )
         {
-            if (buffData.CustomFields?.Any( b => b.Key.StartsWith("spacechase.SpaceCore.SkillBuff.")) ?? false)
+            if (buffData.CustomFields.Any( b => b.Key.StartsWith("spacechase.SpaceCore.SkillBuff.") || b.Key.StartsWith("spacechase0.SpaceCore.SkillBuff.")))
             {
 
                 Log.Warn("Custom Skill buffs am I being read?");

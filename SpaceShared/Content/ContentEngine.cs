@@ -7,6 +7,8 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework.Input;
+using SpaceShared;
+using SpaceShared.APIs;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
@@ -20,17 +22,30 @@ namespace SpaceShared.Content
 
     public static class ContentExtensions
     {
-        public static Token SimplifyToToken(this SourceElement se, ContentEngine ce)
+        private class CPTokenHolder
+        {
+            public string LastString { get; set; }
+            public IManagedTokenString LastTokenString { get; set; }
+        }
+
+        private static ConditionalWeakTable<SourceElement, CPTokenHolder> elementTokens = new();
+
+        public static Token SimplifyToToken(this SourceElement se, ContentEngine ce, bool allowNotReady = false)
         {
             Token tok = se as Token;
             if (se is Statement statement)
-                tok = statement.FuncCall.Simplify(ce) as Token;
+            {
+                var simplified = statement.FuncCall.Simplify(ce, allowNotReady);
+                if (allowNotReady && simplified == null)
+                    return null;
+                tok = simplified as Token;
+            }
             if (tok == null)
                 throw new ArgumentException($"Source element must simplify to string at {se.FilePath}:{se.Line}:{se.Column}");
             return tok;
         }
 
-        public static SourceElement Simplify(this FuncCall fcall, ContentEngine ce)
+        public static SourceElement Simplify(this FuncCall fcall, ContentEngine ce, bool allowNotReady = false)
         {
             if (fcall.Function == "^")
             {
@@ -161,6 +176,39 @@ namespace SpaceShared.Content
                     Context = fcall.Context,
                 };
             }
+            else if (allowNotReady && fcall.Function == "CP" && ce is PatchContentEngine pce && pce.cp != null)
+            {
+                if (pce.cp == null)
+                    throw new ArgumentException("Content Patcher API missing?");
+                if (fcall.Parameters.Count != 1)
+                    throw new ArgumentException($"CP function must have only 1 parameter, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+
+                var arg = fcall.Parameters[0];
+                string argStr = arg.SimplifyToToken(ce).Value;
+                var managedTok = elementTokens.GetOrCreateValue(arg);
+                if (managedTok.LastString != argStr)
+                {
+                    managedTok.LastString = argStr;
+                    managedTok.LastTokenString = pce.cp.ParseTokenString(pce.Manifest, argStr, pce.cpVersion);
+                }
+                managedTok.LastTokenString.UpdateContext();
+
+                if (!managedTok.LastTokenString.IsValid)
+                    throw new ArgumentException($"Invalid CP token string at {fcall.FilePath}:{fcall.Line}:{fcall.Column}: {managedTok.LastTokenString.ValidationError}");
+                if (!managedTok.LastTokenString.IsReady)
+                {
+                    return null;
+                }
+
+                return new Token()
+                {
+                    FilePath = fcall.FilePath,
+                    Line = fcall.Line,
+                    Column = fcall.Column,
+                    Value = managedTok.LastTokenString.Value,
+                    Context = fcall.Context,
+                };
+            }
 
             return fcall;
         }
@@ -168,7 +216,7 @@ namespace SpaceShared.Content
 
     public class ContentEngine
     {
-        protected IManifest Manifest { get; }
+        protected internal IManifest Manifest { get; }
         protected internal IModHelper Helper { get; }
 
         public string ContentRootFolder { get; private set; }
@@ -187,8 +235,6 @@ namespace SpaceShared.Content
             ContentRootFolderActual = Path.Combine(Helper.DirectoryPath, ContentRootFolder);
             ContentRootFile = contentRootFile;
             Parser = new(Manifest, Helper, ContentRootFolder);
-
-            Reload();
         }
 
         public void OnReloadMonitorInstead(string pathModifier, [CallerFilePath] string path = "" )

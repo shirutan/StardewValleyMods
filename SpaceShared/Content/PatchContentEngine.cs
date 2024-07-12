@@ -10,6 +10,8 @@ using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework.Graphics;
+using SpaceShared;
+using SpaceShared.APIs;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -81,16 +83,36 @@ namespace SpaceShared.Content
             }
         }
 
-        public void CheckConditions()
+        public bool CheckConditions()
         {
-            Token condition = Condition.SimplifyToToken(Engine);
+            bool oldConditionsMet = ConditionsMet;
 
-            if (condition.Value.Equals("true", StringComparison.InvariantCultureIgnoreCase))
+            Token condition = Condition.SimplifyToToken(Engine, allowNotReady: true);
+            Token path = Condition.SimplifyToToken(Engine, allowNotReady: true);
+
+            if (condition == null || path == null)
+                ConditionsMet = false;
+            else if (condition.Value.Equals("true", StringComparison.InvariantCultureIgnoreCase))
                 ConditionsMet = true;
             else if (condition.Value.Equals("false", StringComparison.InvariantCultureIgnoreCase))
                 ConditionsMet = false;
             else
                 ConditionsMet = GameStateQuery.CheckConditions(condition.Value);
+
+            if (ConditionsMet && !ValidateData())
+                ConditionsMet = false;
+
+            if (ConditionsMet != oldConditionsMet)
+            {
+                Log.Debug("Condition status changed: " + File + " " + path?.Value);
+            }
+
+            return ConditionsMet != oldConditionsMet;
+        }
+
+        protected virtual bool ValidateData()
+        {
+            return true;
         }
 
         public void Process(AssetRequestedEventArgs e)
@@ -103,6 +125,7 @@ namespace SpaceShared.Content
 
         protected void Populate(object obj, Block block)
         {
+            Dictionary<MemberInfo, Tuple<Token, object>> data = new();
             foreach (var entry in block.Contents.Keys)
             {
                 string key = entry.Value;
@@ -112,16 +135,27 @@ namespace SpaceShared.Content
                 {
                     if (member is PropertyInfo prop)
                     {
-                        object val = CreateFromSourceElement(prop.PropertyType, block.Contents[entry]);
-                        prop.SetValue(obj, val);
+                        data.Add(member, new(entry, CreateFromSourceElement(prop.PropertyType, block.Contents[entry])));
                         break;
                     }
                     else if (member is FieldInfo field)
                     {
-                        object val = CreateFromSourceElement(field.FieldType, block.Contents[entry]);
-                        field.SetValue(obj, val);
+                        data.Add(member, new(entry, CreateFromSourceElement(field.FieldType, block.Contents[entry])));
                         break;
                     }
+                }
+            }
+            foreach (var kvp in data)
+            {
+                MemberInfo member = kvp.Key;
+                object val = kvp.Value.Item2;
+                if (member is PropertyInfo prop)
+                {
+                    prop.SetValue(obj, val);
+                }
+                else if (member is FieldInfo field)
+                {
+                    field.SetValue(obj, val);
                 }
             }
         }
@@ -130,12 +164,12 @@ namespace SpaceShared.Content
         {
             if (type.IsPrimitive)
             {
-                string str = se.SimplifyToToken(Engine).Value;
+                string str = se.SimplifyToToken(Engine, allowNotReady: true).Value;
                 return Convert.ChangeType(str, type);
             }
             else if (type == typeof(string))
             {
-                return se.SimplifyToToken(Engine).Value;
+                return se.SimplifyToToken(Engine, allowNotReady: true).Value;
             }
             else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>))
             {
@@ -188,7 +222,7 @@ namespace SpaceShared.Content
                     // Terrible way to do this but I'm getting tired
                     try
                     {
-                        var t = statement.SimplifyToToken(Engine);
+                        var t = statement.SimplifyToToken(Engine, allowNotReady: true);
                         if (t.IsNull())
                             return null;
                     }
@@ -200,7 +234,7 @@ namespace SpaceShared.Content
             }
             else if (type.IsEnum)
             {
-                return Enum.Parse(type, se.SimplifyToToken(Engine).Value);
+                return Enum.Parse(type, se.SimplifyToToken(Engine, allowNotReady: true).Value);
             }
             else
             {
@@ -246,11 +280,41 @@ namespace SpaceShared.Content
             Data = block;
         }
 
+        protected override bool ValidateData()
+        {
+            return ValidateData(Data);
+        }
+        private bool ValidateData(SourceElement se)
+        {
+            if (se is Block block)
+            {
+                foreach (var val in block.Contents.Values)
+                {
+                    if (!ValidateData(val))
+                        return false;
+                }
+            }
+            else if (se is Array array)
+            {
+                foreach (var val in array.Contents)
+                {
+                    if (!ValidateData(val))
+                        return false;
+                }
+            }
+            else if (se is Statement statement)
+            {
+                if (statement.SimplifyToToken(Engine, allowNotReady: true) == null)
+                    return false;
+            }
+            return true;
+        }
+
         public override void ProcessImpl(AssetRequestedEventArgs e)
         {
             e.Edit((asset) =>
             {
-                Queue<string> parts = new Queue<string>(Path.SimplifyToToken(Engine).Value.Split('/'));
+                Queue<string> parts = new Queue<string>(Path.SimplifyToToken(Engine, allowNotReady: true).Value.Split('/'));
 
                 object target = FindTarget(asset.Data, parts);
                 if (parts.Count == 1)
@@ -369,7 +433,7 @@ namespace SpaceShared.Content
                 loadFromModFile = e.GetType().GetMethod(nameof(AssetRequestedEventArgs.LoadFromModFile)).MakeGenericMethod(e.DataType);
 
             if ( e.DataType == typeof(Texture2D) )
-                loadFromModFile.Invoke(e, new object[] { Path.SimplifyToToken(Engine).Value, (AssetLoadPriority)Priority } );
+                loadFromModFile.Invoke(e, new object[] { Path.SimplifyToToken(Engine, allowNotReady: true).Value, (AssetLoadPriority)Priority } );
             else
             {
                 e.LoadFrom(() =>
@@ -382,6 +446,9 @@ namespace SpaceShared.Content
 
     public class PatchContentEngine : ContentEngine
     {
+        internal IContentPatcherApi cp;
+        internal readonly ISemanticVersion cpVersion;
+
         public List<ContentEntry> Entries { get; } = new();
         public Dictionary<string, List<ContentEntry>> EntriesById { get; } = new();
         private Dictionary<string, List<ContentEntry>> EntriesByEditedFile { get; } = new();
@@ -389,10 +456,12 @@ namespace SpaceShared.Content
         public PatchContentEngine(IManifest manifest, IModHelper helper, string contentRootFile)
         :   base( manifest, helper, contentRootFile )
         {
-            Execute();
+            cpVersion = manifest.Dependencies.FirstOrDefault(md => md.UniqueID == "Pathoschild.ContentPatcher")?.MinimumVersion;
+            cp = Helper.ModRegistry.GetApi<IContentPatcherApi>("Pathoschild.ContentPatcher");
 
-            Helper.Events.GameLoop.DayStarted += this.GameLoop_DayStarted;
             Helper.Events.Content.AssetRequested += this.Content_AssetRequested;
+            Helper.Events.GameLoop.DayStarted += this.GameLoop_DayStarted;
+            Helper.Events.GameLoop.ReturnedToTitle += this.GameLoop_ReturnedToTitle;
         }
 
         protected override void PostReload()
@@ -448,11 +517,29 @@ namespace SpaceShared.Content
 
         private void GameLoop_DayStarted(object sender, DayStartedEventArgs e)
         {
-            foreach (var entry in Entries)
-                entry.CheckConditions();
+            RecheckPatches();
         }
 
-        private void InvalidateUsedAssets()
+        private void GameLoop_ReturnedToTitle(object sender, ReturnedToTitleEventArgs e)
+        {
+            RecheckPatches();
+        }
+
+        private void RecheckPatches()
+        {
+            HashSet<string> changedFiles = new();
+            foreach (var entry in Entries)
+            {
+                if (entry.CheckConditions())
+                {
+                    changedFiles.Add(entry.File);
+                }
+            }
+
+            Helper.GameContent.InvalidateCache(a => changedFiles.Contains(a.Name.BaseName.Replace('\\', '/')));
+        }
+
+            private void InvalidateUsedAssets()
         {
             Helper.GameContent.InvalidateCache(a => EntriesByEditedFile.Keys.Contains(a.Name.BaseName.Replace('\\', '/')));
         }

@@ -1,13 +1,11 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+
 using StardewValley;
 using StardewValley.Inventories;
-using StardewValley.Objects;
 
 namespace SpaceCore.VanillaAssetExpansion
 {
@@ -36,7 +34,7 @@ namespace SpaceCore.VanillaAssetExpansion
     }
 
 
-    internal class VAECustomCraftingIngredientMatcher : CustomCraftingRecipe.IngredientMatcher
+    public class VAECustomCraftingIngredientMatcher : CustomCraftingRecipe.IngredientMatcher
     {
         private readonly VAECraftingRecipe.IngredientData data;
 
@@ -44,6 +42,8 @@ namespace SpaceCore.VanillaAssetExpansion
         {
             this.data = data;
         }
+
+        public VAECraftingRecipe.IngredientData Data => data;
 
         public override string DispayName => data.OverrideText ?? ItemRegistry.GetDataOrErrorItem(data.Value).DisplayName;
 
@@ -78,7 +78,7 @@ namespace SpaceCore.VanillaAssetExpansion
                 foreach (var chest in additionalIngredients)
                 {
                     bool removed = false;
-                    for (int i = chest.Count - 1; i >= 0; --i )
+                    for (int i = chest.Count - 1; i >= 0; --i)
                     {
                         var item = chest[i];
                         if (Matches(item))
@@ -125,7 +125,7 @@ namespace SpaceCore.VanillaAssetExpansion
         }
     }
 
-    internal class VAECustomCraftingRecipe : CustomCraftingRecipe
+    public class VAECustomCraftingRecipe : CustomCraftingRecipe
     {
         private readonly bool cooking;
         private readonly string id;
@@ -139,6 +139,8 @@ namespace SpaceCore.VanillaAssetExpansion
             this.data = data;
             this.ingreds = data.Ingredients.Select(i => new VAECustomCraftingIngredientMatcher(i)).ToArray();
         }
+
+        public VAECraftingRecipe Data => data;
 
         public override string Description => (cooking ? CraftingRecipe.cookingRecipes : CraftingRecipe.craftingRecipes)[id].Split('/')[cooking ? CraftingRecipe.index_cookingDisplayName : CraftingRecipe.index_craftingDisplayName];
 

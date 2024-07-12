@@ -36,6 +36,7 @@ namespace SpaceCore.VanillaAssetExpansion
         public TotemWarpData TotemWarp { get; set; }
 
         public bool UseForTriggerAction { get; set; } = false;
+        public bool ConsumeForTriggerAction { get; set; } = false;
 
         public string GiftedToNotOnAllowListMessage { get; set; }
         public Dictionary<string, bool> GiftableToNpcAllowList { get; set; }
@@ -172,8 +173,8 @@ namespace SpaceCore.VanillaAssetExpansion
                 }
                 TriggerActionManager.Raise("spacechase0.SpaceCore_OnItemUsed", location: Game1.player.currentLocation, player: Game1.player, inputItem: __instance);
 
-                __result = true;
-                return true;
+                __result = dict[__instance.ItemId].ConsumeForTriggerAction;
+                return false;
             }
             if (dict.ContainsKey(__instance.ItemId) && dict[__instance.ItemId].TotemWarp != null)
             {

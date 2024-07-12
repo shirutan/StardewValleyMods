@@ -58,6 +58,7 @@ Provided functionality for content pack authors:
             * `Position` - Vector2, the tile to warp to - ex. `"25, 15"`
             * `Color` - Color, the color the screen should flash - ex. `{ "R": 0, "G": 0, "B": 255, "A": 255 }`
         * `UseForTriggerAction` - True to run a trigger action upon use, false otherwise. Default false.
+        * `ConsumeForTriggerAction` - If the above field is true, this will control if the item is consumed on use. Default false for backwards compatibility.
         * `GiftableToNpcDisallowList` - A dictionary of NPC names to messages that should show when you try to gift the item to them, instead of them receiving the gift.
         * `GiftableToNpcAllowList` - A dictionary of NPC names to `true` for if you want that NPC allowed. If set, any NPCs not listed here will not be able to receive the gift, and instead will show the message from the following field.
         * `GiftedToNotOnAllowListMessage` - The message to show for when the item is gifted to someone not on the allow list. Required if `GiftableToNpcAllowList` is set. (The disallow list is checked first, so you can still allow specific responses by certain NPCs.)
@@ -200,7 +201,7 @@ The rest of the features assume you understand C# and the game code a little bit
     * `string GetSkillPageHoverText(int level)` - optional, extra text to show when hovering on the skills page
     * `void DoLevelPerk(int level)` - optional, apply a some code immediately upon leveling
     * `bool ShouldShowOnSkillsPage`
-    * Custom buffs for your skill you can have by adding ` "spacechase.SpaceCore.SkillBuff.<skill_ID_here>": "<value>"` as a custom field to the buff for food or drink.
+    * Custom buffs for your skill you can have by adding `"spacechase0.SpaceCore.SkillBuff.<skill_ID_here>": "<value>"` as a custom field to the buff for food or drink.
     * Your custom skill can have level up crafting and cooking recipes by just adding your skill ID to where the vanilla skill ID would be.
     * By adding the skill id to the context tags of a book object, players can read the book to gain exp in the custom skill.
 * Custom crafting recipes, for when you want more flexibility (like using non-Object item types).

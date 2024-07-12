@@ -225,7 +225,7 @@ namespace SpaceCore
 
                         if (!ctx.Location.terrainFeatures.TryGetValue(tile + new Vector2(ix, iy), out var tf) || tf is not HoeDirt hd || hd.crop == null)
                             continue;
-                        hd.crop.growCompletely();
+                        
                         if (hd.crop.netSeedIndex.Value == cropSeedId && hd.crop.currentPhase.Value == hd.crop.phaseDays.Count - 1)
                             return true;
                     }
@@ -270,7 +270,8 @@ namespace SpaceCore
                 new UtilityPatcher(),
                 new HoeDirtPatcher(),
                 new SkillBuffPatcher(),
-                new SpriteBatchPatcher()
+                new SpriteBatchPatcher(),
+                new ToolDataDefinitionPatcher()
             );
         }
 
@@ -565,6 +566,7 @@ namespace SpaceCore
                     while (!Game1.canHaveWeddingOnDay(weddingDate.DayOfMonth, weddingDate.Season))
                         ++weddingDate.TotalDays;
 
+                    Game1.player.spouse = args[1];
                     f.Status = FriendshipStatus.Engaged;
                     f.RoommateMarriage = asRoomate;
                     f.WeddingDate = weddingDate;
