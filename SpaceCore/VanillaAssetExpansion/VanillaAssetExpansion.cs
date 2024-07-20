@@ -1,27 +1,52 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security;
 using System.Text;
 using System.Threading.Tasks;
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Netcode;
 using SpaceCore.Events;
 using SpaceCore.Interface;
 using SpaceCore.Patches;
+using SpaceShared;
+using SpaceShared.APIs;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.Delegates;
 using StardewValley.Extensions;
 using StardewValley.Menus;
+using StardewValley.Network;
+using StardewValley.Objects;
 using StardewValley.Triggers;
+using static System.Collections.Specialized.BitVector32;
 using static SpaceCore.SpaceCore;
 
 namespace SpaceCore.VanillaAssetExpansion
 {
+    public class WearableData
+    {
+        public string BuffIdToApply { get; set; }
+    }
+
+    public class TriggerActionExtensionData
+    {
+        public List<int> Times { get; set; }
+    }
+
     internal class VanillaAssetExpansion
     {
         private static Dictionary<string, TextureOverridePackData> texs = new();
         private static Dictionary<string, CustomCraftingRecipe> craftingRecipes = new();
         private static Dictionary<string, CustomCraftingRecipe> cookingRecipes = new();
+        internal static Dictionary<string, VirtualCurrencyData> virtualCurrencies = new();
+        private static Dictionary<string, WearableData> wearables = new();
+
+        private static bool manualTriggerActionsDirty = true;
+        internal static Dictionary<string, CachedTriggerAction> manualTriggerActionsById = new();
+        private static Dictionary<int, List<string>> timeTriggerActions = new();
 
         public static void Init()
         {
@@ -29,6 +54,9 @@ namespace SpaceCore.VanillaAssetExpansion
             SpaceCore.Instance.Helper.Events.Content.AssetsInvalidated += Content_AssetInvalidated;
             SpaceCore.Instance.Helper.Events.GameLoop.UpdateTicking += GameLoop_UpdateTicking;
             SpaceCore.Instance.Helper.Events.GameLoop.GameLaunched += GameLoop_GameLaunched;
+            SpaceCore.Instance.Helper.Events.GameLoop.Saving += GameLoop_Saving;
+            SpaceCore.Instance.Helper.Events.GameLoop.SaveLoaded += GameLoop_SaveLoaded;
+            SpaceCore.Instance.Helper.Events.GameLoop.TimeChanged += GameLoop_TimeChanged;
 
             SpaceEvents.BeforeGiftGiven += SpaceEvents_BeforeGiftGiven;
             SpaceEvents.AfterGiftGiven += SpaceEvents_AfterGiftGiven;
@@ -36,6 +64,94 @@ namespace SpaceCore.VanillaAssetExpansion
 
             TriggerActionManager.RegisterTrigger("spacechase0.SpaceCore_OnItemUsed");
             TriggerActionManager.RegisterTrigger("spacechase0.SpaceCore_OnItemEaten");
+
+            SpaceCore.Instance.Helper.ConsoleCommands.Add("player_addvirtualcurrency", "...", (cmd, args) =>
+            {
+                var data = Game1.content.Load<Dictionary<string, VirtualCurrencyData>>("spacechase0.SpaceCore/VirtualCurrencyData");
+                if (args.Length != 2 || !data.ContainsKey(args[0]) || !int.TryParse(args[1], out int amt))
+                {
+                    Log.Info("Invalid arguments");
+                    return;
+                }
+
+                if (data[args[0]].TeamWide)
+                {
+                    Game1.player.team.AddVirtualCurrencyAmount(args[0], amt);
+                }
+                else
+                {
+                    Game1.player.AddVirtualCurrencyAmount(args[0], amt);
+                }
+            });
+
+            SpaceCore.Instance.Helper.ConsoleCommands.Add("spacecore_getcurrencyid", "...", (cmd, args) =>
+            {
+                var data = Game1.content.Load<Dictionary<string, VirtualCurrencyData>>("spacechase0.SpaceCore/VirtualCurrencyData");
+                if (args.Length != 1 || !data.ContainsKey(args[0]))
+                {
+                    Log.Info("Invalid argument");
+                    return;
+                }
+
+                // We OR 0xFF to make sure vanilla always has room for future expansion, and we never accidentally use those
+                Log.Info($"Use this for your shop currency ID: {args[0].GetDeterministicHashCode()}");
+            });
+        }
+
+        private static void GameLoop_TimeChanged(object sender, TimeChangedEventArgs e)
+        {
+            if (timeTriggerActions.TryGetValue(e.NewTime, out var triggerActions))
+            {
+                var manualContext = new TriggerActionContext("Manual", Array.Empty<object>(), null);
+                foreach (string triggerId in triggerActions)
+                {
+                    if (!manualTriggerActionsById.TryGetValue(triggerId, out var trigger))
+                    {
+                        Log.Error($"Failed to find trigger action \"{triggerId}\" with \"Manual\" trigger type");
+                        continue;
+                    }
+
+                    if (GameStateQuery.CheckConditions(trigger.Data.Condition) && (!trigger.Data.HostOnly || Game1.IsMasterGame))
+                    {
+                        foreach (var action in trigger.Actions)
+                        {
+                            if (!TriggerActionManager.TryRunAction(action, manualContext, out string error, out Exception e2))
+                            {
+                                Log.Error($"Trigger action {trigger.Data.Id} failed: {error} {e2}");
+                            }
+                        }
+
+                        if (trigger.Data.MarkActionApplied)
+                            Game1.player.triggerActionsRun.Add(trigger.Data.Id);
+                    }
+                }
+            }
+        }
+
+        private static void GameLoop_Saving(object sender, SavingEventArgs e)
+        {
+            if (!Game1.IsMasterGame) return;
+
+            foreach (var currency in virtualCurrencies)
+            {
+                if (currency.Value.TeamWide)
+                    SpaceCore.Instance.Helper.Data.WriteSaveData($"spacechase0.SpaceCore.VirtualCurrency.{currency.Key}", new Holder<int>() { Value = Game1.player.team.GetVirtualCurrencyAmount(currency.Key) } );
+            }
+        }
+
+        private static void GameLoop_SaveLoaded(object sender, SaveLoadedEventArgs e)
+        {
+            if (!Game1.IsMasterGame) return;
+
+            foreach (var currency in virtualCurrencies)
+            {
+                if (currency.Value.TeamWide)
+                {
+                    var data = SpaceCore.Instance.Helper.Data.ReadSaveData<Holder<int>>($"spacechase0.SpaceCore.VirtualCurrency.{currency.Key}");
+                    if (data != null)
+                        VirtualCurrencyExtensions.TeamCurrencies.GetOrCreateValue(Game1.player.team).Add(currency.Key, data.Value);
+                }
+            }
         }
 
         private static void SpaceEvents_BeforeGiftGiven(object sender, EventArgsBeforeReceiveObject e)
@@ -70,13 +186,25 @@ namespace SpaceCore.VanillaAssetExpansion
 
         private static void GameLoop_GameLaunched(object sender, GameLaunchedEventArgs e)
         {
+            SetupTriggerActionCache();
             SetupTextureOverrides();
             SetupRecipes();
+            virtualCurrencies = Game1.content.Load<Dictionary<string, VirtualCurrencyData>>("spacechase0.SpaceCore/VirtualCurrencyData");
+            wearables = Game1.content.Load<Dictionary<string, WearableData>>("spacechase0.SpaceCore/WearableData");
+            SetupTimedTriggerActions();
+
+            var sc = SpaceCore.Instance.Helper.ModRegistry.GetApi<ISpaceCoreApi>("spacechase0.SpaceCore");
+            sc.RegisterCustomProperty(typeof(Farmer), "SpaceCore_PersonalCurrencies", typeof(NetStringDictionary<int, NetIntDelta>), AccessTools.Method(typeof(VirtualCurrencyExtensions), nameof(VirtualCurrencyExtensions.get_PersonalCurrencies)), AccessTools.Method(typeof(VirtualCurrencyExtensions), nameof(VirtualCurrencyExtensions.set_PersonalCurrencies)));
         }
 
         private static void Content_AssetInvalidated(object sender, AssetsInvalidatedEventArgs e)
         {
             //Console.WriteLine("meow:" + string.Concat(e.NamesWithoutLocale.Select(an => an.ToString())));
+            if (e.NamesWithoutLocale.Any(an => an.IsEquivalentTo("Data/TriggerActions")))
+            {
+                manualTriggerActionsDirty = true;
+            }
+
             if (e.NamesWithoutLocale.Any(an => an.IsEquivalentTo("spacechase0.SpaceCore/TextureOverrides")))
             {
                 //Console.WriteLine("meow! 1");
@@ -87,6 +215,31 @@ namespace SpaceCore.VanillaAssetExpansion
             {
                 //Console.WriteLine("meow! 2");
                 SetupRecipes();
+            }
+            if (e.NamesWithoutLocale.Any(an => an.IsEquivalentTo("spacechase0.SpaceCore/VirtualCurrencyData")))
+            {
+                virtualCurrencies = Game1.content.Load<Dictionary<string, VirtualCurrencyData>>("spacechase0.SpaceCore/VirtualCurrencyData" );
+            }
+            if (e.NamesWithoutLocale.Any(an => an.IsEquivalentTo("spacechase0.SpaceCore/WearableData")))
+            {
+                wearables = Game1.content.Load<Dictionary<string, WearableData>>("spacechase0.SpaceCore/WearableData");
+            }
+            if (e.NamesWithoutLocale.Any(an => an.IsEquivalentTo("spacechase0.SpaceCore/TriggerActionExtensionData")))
+            {
+                SetupTimedTriggerActions();
+            }
+        }
+
+        private static void SetupTriggerActionCache()
+        {
+            manualTriggerActionsDirty = false;
+            manualTriggerActionsById.Clear();
+
+            AccessTools.Method(typeof(TriggerActionManager), "InitializeIfNeeded").Invoke(null, []);
+            var manual = TriggerActionManager.GetActionsForTrigger("Manual");
+            foreach (var entry in manual)
+            {
+                manualTriggerActionsById.Add(entry.Data.Id, entry);
             }
         }
 
@@ -160,8 +313,30 @@ namespace SpaceCore.VanillaAssetExpansion
             }
         }
 
+        private static void SetupTimedTriggerActions()
+        {
+            var data = Game1.content.Load<Dictionary<string, TriggerActionExtensionData>>("spacechase0.SpaceCore/TriggerActionExtensionData");
+
+            timeTriggerActions.Clear();
+
+            foreach (var entry in data)
+            {
+                foreach (int time in entry.Value.Times)
+                {
+                    if (!timeTriggerActions.TryGetValue(time, out var triggerActions))
+                        timeTriggerActions.Add(time, triggerActions = new());
+                    triggerActions.Add(entry.Key);
+                }
+            }
+        }
+
         private static void GameLoop_UpdateTicking(object sender, UpdateTickingEventArgs e)
         {
+            if (manualTriggerActionsDirty)
+            {
+                SetupTriggerActionCache();
+            }
+
             foreach (var kvp in texs)
             {
                 var texOverride = kvp.Value;
@@ -181,6 +356,75 @@ namespace SpaceCore.VanillaAssetExpansion
 
                     kvp.Value.sourceTex = sourceTex;
                     kvp.Value.sourceRectCache = new Rectangle(x, y, kvp.Value.TargetRect.Width, kvp.Value.TargetRect.Height);
+                }
+            }
+
+            if (Game1.shouldTimePass())
+            {
+                List<string> worn = new();
+                if(Game1.player.hat.Value != null )
+                    worn.Add(Game1.player.hat.Value.QualifiedItemId);
+                if (Game1.player.shirtItem.Value != null)
+                    worn.Add(Game1.player.shirtItem.Value.QualifiedItemId);
+                if (Game1.player.pantsItem.Value != null)
+                    worn.Add(Game1.player.pantsItem.Value.QualifiedItemId);
+                if (Game1.player.boots.Value != null)
+                    worn.Add(Game1.player.boots.Value.QualifiedItemId);
+                foreach (var trinket in Game1.player.trinketItems)
+                {
+                    worn.Add(trinket.QualifiedItemId);
+                }
+
+                Queue<Ring> rings = new();
+                rings.Enqueue(Game1.player.leftRing.Value);
+                rings.Enqueue(Game1.player.rightRing.Value);
+                while (rings.Count > 0)
+                {
+                    Ring r = rings.Dequeue();
+                    if (r == null)
+                        continue;
+
+                    if (r is CombinedRing cr)
+                    {
+                        cr.combinedRings.ToList().ForEach(r2 => rings.Enqueue(r2));
+                    }
+                    else
+                    {
+                        worn.Add(r.QualifiedItemId);
+                    }
+                }
+
+                Dictionary<string, List<Buff>> buffsBySource = new();
+                foreach (var buff in Game1.player.buffs.AppliedBuffs)
+                {
+                    if (buff.Value.source == null)
+                        continue;
+
+                    if (!buffsBySource.ContainsKey(buff.Value.source))
+                        buffsBySource.Add(buff.Value.source, new());
+                    buffsBySource[buff.Value.source].Add(buff.Value);
+                }
+
+                List<Buff> buffsToUpdate = new();
+                foreach (string wornId in worn)
+                {
+                    if (!wearables.ContainsKey(wornId))
+                        continue;
+
+                    string sourceId = $"wearable_{wornId}";
+                    if (!buffsBySource.ContainsKey(sourceId))
+                    {
+                        Buff b = new Buff(wearables[wornId].BuffIdToApply, source: sourceId, displaySource: ItemRegistry.GetDataOrErrorItem(wornId).DisplayName, duration: 100);
+                        Game1.player.applyBuff(b);
+                        buffsBySource.Add(sourceId, [b]);
+                    }
+                    else
+                        buffsToUpdate.AddRange(buffsBySource[sourceId]);
+                }
+
+                foreach (var buff in buffsToUpdate)
+                {
+                    buff.millisecondsDuration = 100;
                 }
             }
         }
@@ -223,6 +467,8 @@ namespace SpaceCore.VanillaAssetExpansion
                 e.LoadFrom(() => new Dictionary<string, FurnitureExtensionData>(), AssetLoadPriority.Low);
             if (e.NameWithoutLocale.IsEquivalentTo("spacechase0.SpaceCore/NpcExtensionData"))
                 e.LoadFrom(() => new Dictionary<string, NpcExtensionData>(), AssetLoadPriority.Low);
+            if (e.NameWithoutLocale.IsEquivalentTo("spacechase0.SpaceCore/ScheduleAnimationExtensionData"))
+                e.LoadFrom(() => new Dictionary<string, ScheduleAnimationExtensionData>(), AssetLoadPriority.Low);
             if (e.NameWithoutLocale.IsEquivalentTo("spacechase0.SpaceCore/ShopExtensionData"))
                 e.LoadFrom(() => new Dictionary<string, ShopExtensionData>(), AssetLoadPriority.Low);
             if (e.NameWithoutLocale.IsEquivalentTo("spacechase0.SpaceCore/FarmExtensionData"))
@@ -233,6 +479,12 @@ namespace SpaceCore.VanillaAssetExpansion
                 e.LoadFrom(() => new Dictionary<string, VAECraftingRecipe>(), AssetLoadPriority.Low);
             if (e.NameWithoutLocale.IsEquivalentTo("spacechase0.SpaceCore/CookingRecipeOverrides"))
                 e.LoadFrom(() => new Dictionary<string, VAECraftingRecipe>(), AssetLoadPriority.Low);
+            if (e.NameWithoutLocale.IsEquivalentTo("spacechase0.SpaceCore/VirtualCurrencyData"))
+                e.LoadFrom(() => new Dictionary<string, VirtualCurrencyData>(), AssetLoadPriority.Low);
+            if (e.NameWithoutLocale.IsEquivalentTo("spacechase0.SpaceCore/WearableData"))
+                e.LoadFrom(() => new Dictionary<string, WearableData>(), AssetLoadPriority.Low);
+            if (e.NameWithoutLocale.IsEquivalentTo("spacechase0.SpaceCore/TriggerActionExtensionData"))
+                e.LoadFrom(() => new Dictionary<string, TriggerActionExtensionData>(), AssetLoadPriority.Low);
         }
     }
 }

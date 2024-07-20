@@ -5,7 +5,7 @@ using System.Text;
 
 namespace SpaceShared
 {
-    public class Weighted<T> : ICloneable where T : ICloneable
+    public class Weighted<T>// : ICloneable where T : ICloneable
     {
         public double Weight { get; set; }
         public T Value { get; set; }
@@ -16,15 +16,17 @@ namespace SpaceShared
             this.Value = value;
         }
 
+        /*
         public object Clone()
         {
             return new Weighted<T>(this.Weight, (T)this.Value?.Clone());
         }
+        */
     }
 
     public static class WeightedExtensions
     {
-        public static T Choose<T>(this Weighted<T>[] choices, Random r = null) where T : ICloneable
+        public static T Choose<T>(this Weighted<T>[] choices, Random r = null)// where T : ICloneable
         {
             if (choices.Length == 0)
                 return default;
@@ -47,7 +49,7 @@ namespace SpaceShared
             throw new Exception("This should never happen");
         }
 
-        public static T Choose<T>(this List<Weighted<T>> choices, Random r = null) where T : ICloneable
+        public static T Choose<T>(this List<Weighted<T>> choices, Random r = null)// where T : ICloneable
         {
             return choices.ToArray().Choose(r);
         }

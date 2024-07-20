@@ -436,7 +436,7 @@ internal static class Rescheduler
 
                 if (ret is not null)
                 {
-                    continue;
+                    break;
                 }
 
                 Gender? PathfindingGenderConstrainedToCurrentSearch = GetTightestPathfindingGenderConstraint(Gender, node.PathfindingGenderConstraint);
@@ -648,7 +648,6 @@ internal static class Rescheduler
 #if TIMING
         _stopwatch.Value.Stop();
 #endif
-
         if (found)
         {
 #if TIMING

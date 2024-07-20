@@ -106,9 +106,13 @@ namespace SpaceCore
         public class SkillBuff : Buff
         {
             public Dictionary<string, int> SkillLevelIncreases { get; set; } = new Dictionary<string, int>();
+            public float HealthRegen { get; set; }
+            public float StaminaRegen { get; set; }
 
             private const string SkillBuffFieldLegacy = "spacechase.SpaceCore.SkillBuff.";
             private const string SkillBuffField = "spacechase0.SpaceCore.SkillBuff.";
+            private const string RegenHealth = "spacechase0.SpaceCore/HealthRegeneration";
+            private const string RegenStamina = "spacechase0.SpaceCore/StaminaRegeneration";
 
             public SkillBuff(Buff buff, string id, Dictionary<string, string> customFields) : base(id, buff.source, buff.displaySource, buff.millisecondsDuration, buff.iconTexture, buff.iconSheetIndex, buff.effects, false, buff.displayName, buff.description)
             {
@@ -116,6 +120,11 @@ namespace SpaceCore
                 {
                     SkillLevelIncreases[entry.Key] = entry.Value;
                 }
+                if (customFields.TryGetValue(RegenHealth, out string regenStr) && float.TryParse(regenStr, out float regen))
+                    HealthRegen = regen;
+                if (customFields.TryGetValue(RegenStamina, out regenStr) && float.TryParse(regenStr, out regen))
+                    StaminaRegen = regen;
+
             }
 
             public static IEnumerable<KeyValuePair<string, int>> ParseCustomFields(Dictionary<string, string> customFields)
@@ -138,9 +147,26 @@ namespace SpaceCore
                 }
             }
 
+            public string DescriptionHook()
+            {
+                string ret = "";
+                if (HealthRegen != 0)
+                {
+                    ret += (HealthRegen > 0 ? "+" : "") + HealthRegen + " " + I18n.HealthRegen();
+                }
+                if (StaminaRegen != 0)
+                {
+                    ret += (StaminaRegen > 0 ? "+" : "") + StaminaRegen + " " + I18n.StaminaRegen();
+                }
+                return ret;
+            }
+
             public override void OnAdded()
             {
                 base.OnAdded();
+
+                Game1.player.GetExtData().HealthRegen += HealthRegen;
+                Game1.player.GetExtData().StaminaRegen += StaminaRegen;
 
                 using var stream = new MemoryStream();
                 using var writer = new BinaryWriter(stream);
@@ -155,12 +181,15 @@ namespace SpaceCore
                     Log.Info($"Adding buff for skill {skill.Key} from source {this.id} at level {skill.Value}");
                 }
 
-                Networking.BroadcastMessage(Skills.MsgExperience, stream.ToArray());
+                Networking.BroadcastMessage(Skills.MsgBuffs, stream.ToArray());
             }
 
             public override void OnRemoved()
             {
                 base.OnRemoved();
+
+                Game1.player.GetExtData().HealthRegen -= HealthRegen;
+                Game1.player.GetExtData().StaminaRegen -= StaminaRegen;
 
                 using var stream = new MemoryStream();
                 using var writer = new BinaryWriter(stream);
@@ -175,7 +204,7 @@ namespace SpaceCore
                     Log.Info($"Removing buff for skill {skill.Key} from source {this.id} at level {skill.Value}");
                 }
 
-                Networking.BroadcastMessage(Skills.MsgExperience, stream.ToArray());
+                Networking.BroadcastMessage(Skills.MsgBuffs, stream.ToArray());
             }
         }
 
@@ -649,7 +678,7 @@ namespace SpaceCore
         {
             if (e.NewMenu is GameMenu gm)
             {
-                if (SpaceCore.Instance.Config.CustomSkillPage && ( Skills.SkillsByName.Count > 0 || SpaceEvents.HasAddWalletItemEventHandlers() ) )
+                if (SpaceCore.Instance.Config.CustomSkillPage ) // && ( Skills.SkillsByName.Count > 0 || SpaceEvents.HasAddWalletItemEventHandlers() ) )
                 {
                     gm.pages[GameMenu.skillsTab] = new NewSkillsPage(gm.xPositionOnScreen, gm.yPositionOnScreen, gm.width + (LocalizedContentManager.CurrentLanguageCode == LocalizedContentManager.LanguageCode.ru ? 64 : 0), gm.height);
                 }

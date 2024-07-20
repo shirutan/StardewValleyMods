@@ -41,6 +41,13 @@ namespace JumpOver
                     getValue: () => Mod.Config.KeyJump,
                     setValue: value => Mod.Config.KeyJump = value
                 );
+                configMenu.AddBoolOption(
+                    mod: this.ModManifest,
+                    name: I18n.Config_RockCrabCrushing_Name,
+                    tooltip: I18n.Config_RockCrabCrushing_Tooltip,
+                    getValue: () => Mod.Config.RockCrabCrushing,
+                    setValue: value => Mod.Config.RockCrabCrushing = value
+                );
             }
         }
 

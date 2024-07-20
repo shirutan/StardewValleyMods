@@ -11,6 +11,7 @@ using SpaceShared;
 using StardewValley;
 using static SpaceCore.SpaceCore;
 using Microsoft.Xna.Framework;
+using SpaceCore.VanillaAssetExpansion;
 
 namespace SpaceCore.Patches
 {

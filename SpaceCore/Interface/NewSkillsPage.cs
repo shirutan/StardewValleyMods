@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using SpaceCore.VanillaAssetExpansion;
 using SpaceShared;
 using StardewValley;
 using StardewValley.Locations;
@@ -813,9 +814,45 @@ namespace SpaceCore.Interface
                 skillBar.bounds = new Rectangle(skillBar.bounds.Left, skillBar.bounds.Top + this.skillScrollOffset * 56, skillBar.bounds.Width, skillBar.bounds.Height);
 
             // Stardew Valley 1.5 unique items
-            x = this.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder + 32 + 16;
-            y = this.yPositionOnScreen + IClickableMenu.spaceToClearTopBorder + 320 - 8;
+            x = this.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder + 32 + 24;
+            y = this.yPositionOnScreen + IClickableMenu.spaceToClearTopBorder + 320 - 20;
             {
+                Dictionary<string, int> active = new();
+                foreach (var entry in VanillaAssetExpansion.VanillaAssetExpansion.virtualCurrencies)
+                {
+                    int amt = entry.Value.TeamWide ? Game1.player.team.GetVirtualCurrencyAmount(entry.Key) : Game1.player.GetVirtualCurrencyAmount(entry.Key);
+                    if (amt > 0)
+                    {
+                        active.Add(entry.Key, amt);
+                    }
+                }
+
+                if (active.Count > 0)
+                {
+                    x = xPositionOnScreen - 150;
+                    y += -active.Count * 24;
+                    IClickableMenu.drawTextureBox(b, x, y, 150, 32 + 48 * active.Count, Color.White);
+                    x += 24; y += -24;
+                    foreach (var entry in active)
+                    {
+                        var data = ItemRegistry.GetDataOrErrorItem($"(O){entry.Key}");
+                        var tex = data.GetTexture();
+                        var sourceRect = data.GetSourceRect();
+
+                        y += 48;
+                        b.Draw(texture: tex,
+                            position: new Vector2(x, y),
+                            sourceRectangle: sourceRect,
+                            Color.White, rotation: 0f, origin: Vector2.Zero, scale: 2f, SpriteEffects.None, layerDepth: 0f);
+                        x += 48;
+                        b.DrawString(Game1.smallFont, text: string.Concat(entry.Value), position: new Vector2(x, y), Game1.textColor);
+                        x -= 48;
+                    }
+                }
+
+                x = this.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder + 32 + 24;
+                y = this.yPositionOnScreen + IClickableMenu.spaceToClearTopBorder + 320 - 36;
+
                 int addedX = 48;
                 int addedY = 48;
                 if (Game1.netWorldState.Value.GoldenWalnuts > 0)

@@ -41,9 +41,31 @@ using StardewValley.TerrainFeatures;
 using System.Reflection.PortableExecutable;
 using System.Reflection.Metadata;
 using StardewValley.Pathfinding;
+using static StardewValley.Menus.CharacterCustomization;
+using System.Collections;
+using StardewValley.TokenizableStrings;
 
 namespace SpaceCore
 {
+    internal class FarmerExtData
+    {
+        public static ConditionalWeakTable<Farmer, FarmerExtData> data = new();
+
+        public float HealthRegen { get; set; } = 0;
+        public float StaminaRegen { get; set; } = 0;
+
+        public float healthBuffer { get; set; } = 0;
+        public float staminaBuffer { get; set; } = 0;
+    }
+
+    internal static class Extensions
+    {
+        public static FarmerExtData GetExtData(this Farmer farmer)
+        {
+            return FarmerExtData.data.GetOrCreateValue(farmer);
+        }
+    }
+
     /// <summary>The mod entry class.</summary>
     internal class SpaceCore : Mod
     {
@@ -93,12 +115,26 @@ namespace SpaceCore
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
 
-            var manualContext = new TriggerActionContext("Manual", Array.Empty<object>(), null); ;
+            var manualContext = new TriggerActionContext("Manual", Array.Empty<object>(), null);
+            GameLocation.RegisterTileAction("spacechase0.SpaceCore_OpenGlobalInventory", (loc, args, farmer, pos) =>
+            {
+                var chest = new Chest();
+                chest.GlobalInventoryId = args[1];
+                chest.GetMutex().RequestLock(() =>
+                {
+                    chest.ShowMenu();
+                    Game1.activeClickableMenu.exitFunction = (IClickableMenu.onExit)Delegate.Combine(Game1.activeClickableMenu.exitFunction, () => chest.GetMutex().ReleaseLock());
+                });
+                return true;
+            });
             GameLocation.RegisterTileAction("spacechase0.SpaceCore_TriggerAction", (loc, args, farmer, pos) =>
             {
-                var triggers = TriggerActionManager.GetActionsForTrigger("Manual");
-                var trigger = triggers.FirstOrDefault(t => t.Data.Id == args[1]);
-                if (trigger != null && GameStateQuery.CheckConditions(trigger.Data.Condition))
+                if (!VanillaAssetExpansion.VanillaAssetExpansion.manualTriggerActionsById.TryGetValue(args[1], out var trigger))
+                {
+                    Log.Error($"Failed to find trigger action \"{args[0]}\" with \"Manual\" trigger type");
+                    return true;
+                }
+                if (GameStateQuery.CheckConditions(trigger.Data.Condition) && (!trigger.Data.HostOnly || Game1.IsMasterGame))
                 {
                     foreach (var action in trigger.Actions)
                     {
@@ -115,9 +151,12 @@ namespace SpaceCore
             });
             GameLocation.RegisterTouchAction("spacechase0.SpaceCore_TriggerAction", (loc, args, farmer, pos) =>
             {
-                var triggers = TriggerActionManager.GetActionsForTrigger("Manual");
-                var trigger = triggers.FirstOrDefault(t => t.Data.Id == args[1]);
-                if (trigger != null && GameStateQuery.CheckConditions(trigger.Data.Condition))
+                if (!VanillaAssetExpansion.VanillaAssetExpansion.manualTriggerActionsById.TryGetValue(args[1], out var trigger))
+                {
+                    Log.Error($"Failed to find trigger action \"{args[0]}\" with \"Manual\" trigger type");
+                    return;
+                }
+                if (GameStateQuery.CheckConditions(trigger.Data.Condition) && (!trigger.Data.HostOnly || Game1.IsMasterGame))
                 {
                     foreach (var action in trigger.Actions)
                     {
@@ -155,13 +194,13 @@ namespace SpaceCore
                     return false;
                 }
                 Item item = null;
-                if (ArgUtility.TryGetOptional(args, 2, out string qualItemId, out error))
+                if (ArgUtility.TryGetOptional(args, 2, out string qualItemId, out error) && qualItemId != null)
                 {
                     item = ItemRegistry.Create(qualItemId);
                 }
 
                 error = null;
-                Game1.addHUDMessage(new HUDMessage(args[1]) { noIcon = item == null, messageSubject = item});
+                Game1.addHUDMessage(new HUDMessage(TokenParser.ParseText(args[1])) { noIcon = item == null, messageSubject = item});
                 return true;
             });
 
@@ -195,6 +234,29 @@ namespace SpaceCore
                     return false;
                 }
                 Game1.player.takeDamage(dmg, false, null);
+                return true;
+            });
+
+            TriggerActionManager.RegisterAction("spacechase0.SpaceCore_ApplyBuff", (string[] args, TriggerActionContext ctx, out string error) =>
+            {
+                if (args.Length < 3)
+                {
+                    error = "Not enough arguments";
+                    return false;
+                }
+
+                try
+                {
+                    Buff b = new Buff(args[1], source: args[2], displaySource: args[2]);
+                    Game1.player.applyBuff(b);
+                }
+                catch (Exception e)
+                {
+                    error = "Failed to create and apply buff: " + e;
+                    return false;
+                }
+
+                error = null;
                 return true;
             });
 
@@ -799,12 +861,6 @@ namespace SpaceCore
             @event.CurrentCommand++;
         }
 
-        public class NpcExtensionData
-        {
-            public Dictionary<string, string> GiftEventTriggers = new();
-            public bool IgnoreMarriageSchedule { get; set; } = false;
-        }
-
         /*********
         ** Private methods
         *********/
@@ -850,6 +906,7 @@ namespace SpaceCore
                 Log.Info("Telling EntoaroxFramework to let us handle the serializer");
                 entoaroxFramework.HoistSerializerOwnership();
             }
+
 
             var cp = Helper.ModRegistry.GetApi<IContentPatcherApi>("Pathoschild.ContentPatcher");
             if (cp != null)
@@ -944,6 +1001,31 @@ namespace SpaceCore
                     this.shakeViewportPos = this.preShakeViewportPos + this.shakeAmount;
                     Game1.viewport.X = (int)this.shakeViewportPos.X;
                     Game1.viewport.Y = (int)this.shakeViewportPos.Y;
+                }
+            }
+
+            if (Game1.shouldTimePass())
+            {
+                var ext = Game1.player.GetExtData();
+                if (ext.StaminaRegen > 0)
+                {
+                    ext.staminaBuffer += ext.StaminaRegen * (float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds;
+                    if (ext.staminaBuffer >= 1)
+                    {
+                        int whole = (int)Math.Truncate(ext.staminaBuffer);
+                        ext.staminaBuffer -= whole;
+                        Game1.player.Stamina += whole; 
+                    }
+                }
+                if (ext.HealthRegen > 0)
+                {
+                    ext.healthBuffer += ext.HealthRegen * (float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds;
+                    if (ext.healthBuffer >= 1)
+                    {
+                        int whole = (int)Math.Truncate(ext.healthBuffer);
+                        ext.healthBuffer -= whole;
+                        Game1.player.health = Math.Min(Game1.player.health + whole, Game1.player.maxHealth);
+                    }
                 }
             }
 

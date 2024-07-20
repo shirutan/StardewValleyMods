@@ -71,12 +71,12 @@ namespace SpaceShared.Content
 
                 return se;
             }
-            else if (fcall.Function == "@")
+            else if (fcall.Function == "@" || fcall.Function == "@@")
             {
                 if (fcall.Parameters.Count != 1)
                     throw new ArgumentException($"Asset path function @ must have exactly one string parameter, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
 
-                string path = Path.Combine(ce.ContentRootFolder, Path.GetDirectoryName(fcall.Parameters[0].FilePath), fcall.Parameters[0].SimplifyToToken(ce).Value).Replace('\\', '/');
+                string path = Path.Combine(fcall.Function == "@" ? ce.ContentRootFolder : ce.ContentRootFolderActual, Path.GetDirectoryName(fcall.Parameters[0].FilePath), fcall.Parameters[0].SimplifyToToken(ce).Value).Replace('\\', '/');
                 List<string> pathParts = new(path.Split('/'));
                 for (int i = 1; i < pathParts.Count; ++i)
                 {
@@ -93,7 +93,7 @@ namespace SpaceShared.Content
                     FilePath = fcall.FilePath,
                     Line = fcall.Line,
                     Column = fcall.Column,
-                    Value = ce.Helper.ModContent.GetInternalAssetName(path).Name,
+                    Value = fcall.Function == "@" ? ce.Helper.ModContent.GetInternalAssetName(path).Name : path,
                     Context = fcall.Context,
                 };
             }
@@ -375,8 +375,16 @@ namespace SpaceShared.Content
                     if (RecursiveLoadImpl(array.Contents[i], subfolder, flatten: false, ctx, out SourceElement se ))
                     {
                         array.Contents.RemoveAt(i);
-                        array.Contents.InsertRange(i, (se as Array).Contents);
-                        i += (se as Array).Contents.Count - 1;
+                        // array.Contents.InsertRange(i, (se as Array).Contents);
+                        if (se is Array)
+                        {
+                            array.Contents.InsertRange(i, (se as Array).Contents);
+                            i += (se as Array).Contents.Count - 1;
+                        }
+                        else
+                        {
+                            array.Contents.Insert(i, se);
+                        }
                     }
                     else
                     {

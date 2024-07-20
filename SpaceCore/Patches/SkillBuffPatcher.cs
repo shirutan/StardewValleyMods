@@ -12,6 +12,8 @@ using StardewModdingAPI;
 using StardewValley;
 using StardewValley.GameData.Objects;
 using StardewValley.Menus;
+using static System.Net.Mime.MediaTypeNames;
+using static SpaceCore.Skills;
 
 namespace SpaceCore.Patches;
 internal class SkillBuffPatcher : BasePatcher
@@ -49,10 +51,11 @@ internal class SkillBuffPatcher : BasePatcher
         // If there is custom data, find the matching buff to wrap.
         foreach ( var buffData in data.Buffs )
         {
-            if (buffData.CustomFields?.Any(b => b.Key.StartsWith("spacechase.SpaceCore.SkillBuff.") || b.Key.StartsWith("spacechase0.SpaceCore.SkillBuff.")) ?? false)
+            if (buffData.CustomFields?.Any(b => b.Key.StartsWith("spacechase.SpaceCore.SkillBuff.") ||
+                                                b.Key.StartsWith("spacechase0.SpaceCore.SkillBuff.") ||
+                                                b.Key.StartsWith("spacechase0.SpaceCore/HealthRegeneration") ||
+                                                b.Key.StartsWith("spacechase0.SpaceCore/StaminaRegeneration") ) ?? false)
             {
-
-                Log.Warn("Custom Skill buffs am I being read?");
                 Buff matchingBuff = null;
                 string id = buffData.BuffId;
                 if (string.IsNullOrWhiteSpace(id))
@@ -188,6 +191,16 @@ internal class SkillBuffPatcher : BasePatcher
                 addedAny = true;
                 height += 34;
             }
+            if (buffData.CustomFields.ContainsKey("spacechase0.SpaceCore/HealthRegeneration"))
+            {
+                addedAny = true;
+                height += 34;
+            }
+            if (buffData.CustomFields.ContainsKey("spacechase0.SpaceCore/StaminaRegeneration"))
+            {
+                addedAny = true;
+                height += 34;
+            }
         }
 
         if (buffIconsToDisplay is null && addedAny)
@@ -223,6 +236,15 @@ internal class SkillBuffPatcher : BasePatcher
 
                 width = Math.Max(width, (int)font.MeasureString("+99 " + skill.GetName()).X) + 92;
             }
+
+            if (buffData.CustomFields.ContainsKey("spacechase0.SpaceCore/HealthRegeneration"))
+            {
+                width = Math.Max(width, (int)font.MeasureString("+999 " + I18n.HealthRegen()).X) + 92;
+            }
+            if (buffData.CustomFields.ContainsKey("spacechase0.SpaceCore/StaminaRegeneration"))
+            {
+                width = Math.Max(width, (int)font.MeasureString("+999 " + I18n.StaminaRegen()).X) + 92;
+            }
         }
 
         return width;
@@ -253,6 +275,23 @@ internal class SkillBuffPatcher : BasePatcher
                 string text = $"+{entry.Value}  {skill.GetName()}";
 
                 Utility.drawWithShadow(b, skill.SkillsPageIcon, new Vector2(x + 16 + 4, y + 16), new Rectangle(0, 0, 10, 10), Color.White, 0f, Vector2.Zero, 3f, flipped: false, 0.95f);
+                Utility.drawTextWithShadow(b, text, font, new Vector2(x + 16 + 34 + 4, y + 16), Game1.textColor);
+                y += 34;
+            }
+
+            if (buffData.CustomFields.ContainsKey("spacechase0.SpaceCore/HealthRegeneration"))
+            {
+                float amt = float.Parse(buffData.CustomFields["spacechase0.SpaceCore/HealthRegeneration"]);
+                string text = (amt >= 0 ? "+" : "") + amt + " " + I18n.HealthRegen();
+                Utility.drawWithShadow(b, Game1.mouseCursors, new Vector2(x + 16 + 4, y + 16), new Rectangle(0, 438, 10, 10), Color.White, 0f, Vector2.Zero, 3f, flipped: false, 0.95f);
+                Utility.drawTextWithShadow(b, text, font, new Vector2(x + 16 + 34 + 4, y + 16), Game1.textColor);
+                y += 34;
+            }
+            if (buffData.CustomFields.ContainsKey("spacechase0.SpaceCore/StaminaRegeneration"))
+            {
+                float amt = float.Parse(buffData.CustomFields["spacechase0.SpaceCore/StaminaRegeneration"]);
+                string text = (amt >= 0 ? "+" : "") + amt + " " + I18n.StaminaRegen();
+                Utility.drawWithShadow(b, Game1.mouseCursors, new Vector2(x + 16 + 4, y + 16), new Rectangle((amt < 0) ? 140 : 0, 428, 10, 10), Color.White, 0f, Vector2.Zero, 3f, flipped: false, 0.95f);
                 Utility.drawTextWithShadow(b, text, font, new Vector2(x + 16 + 34 + 4, y + 16), Game1.textColor);
                 y += 34;
             }

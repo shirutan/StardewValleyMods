@@ -26,6 +26,8 @@ namespace SpaceCore.VanillaAssetExpansion
             public string Value { get; set; }
             public int Amount { get; set; } = 1;
 
+            public bool ContextTagsRequireAll { get; set; } = false;
+
             public string OverrideText { get; set; }
             public string OverrideTexturePath { get; set; }
             public Rectangle? OverrideTextureRect { get; set; }
@@ -118,7 +120,8 @@ namespace SpaceCore.VanillaAssetExpansion
                 case VAECraftingRecipe.IngredientData.IngredientType.Item:
                     return i.QualifiedItemId == data.Value;
                 case VAECraftingRecipe.IngredientData.IngredientType.ContextTag:
-                    return data.Value.Split(',').Select(s => s.Trim()).Any(s => i.HasContextTag(s));
+                    var tags = data.Value.Split(',').Select(s => s.Trim());
+                    return data.ContextTagsRequireAll ? tags.All(s => i.HasContextTag(s)) : tags.Any(s => i.HasContextTag(s));
             }
 
             return false;
