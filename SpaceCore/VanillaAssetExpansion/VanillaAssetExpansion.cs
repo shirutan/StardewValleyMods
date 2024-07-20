@@ -27,6 +27,7 @@ namespace SpaceCore.VanillaAssetExpansion
         {
             SpaceCore.Instance.Helper.Events.Content.AssetRequested += Content_AssetRequested;
             SpaceCore.Instance.Helper.Events.Content.AssetsInvalidated += Content_AssetInvalidated;
+            SpaceCore.Instance.Helper.Events.Content.LocaleChanged += GameLoop_LocaleChanged;
             SpaceCore.Instance.Helper.Events.GameLoop.UpdateTicking += GameLoop_UpdateTicking;
             SpaceCore.Instance.Helper.Events.GameLoop.GameLaunched += GameLoop_GameLaunched;
 
@@ -72,6 +73,11 @@ namespace SpaceCore.VanillaAssetExpansion
         {
             SetupTextureOverrides();
             SetupRecipes();
+        }
+
+        private static void GameLoop_LocaleChanged(object sender, LocaleChangedEventArgs e)
+        {
+            SetupTextureOverrides();
         }
 
         private static void Content_AssetInvalidated(object sender, AssetsInvalidatedEventArgs e)
@@ -151,8 +157,11 @@ namespace SpaceCore.VanillaAssetExpansion
                 texs = newTexs;
 
                 SpriteBatchPatcher.packOverrides.Clear();
+                string localeStr = !string.IsNullOrEmpty(Instance.Helper.GameContent.CurrentLocale) ? "." + Instance.Helper.GameContent.CurrentLocale : "";
+
                 foreach (var tex in texs)
                 {
+                    tex.Value.TargetTexture += localeStr;
                     if (!SpriteBatchPatcher.packOverrides.ContainsKey(tex.Value.TargetTexture))
                         SpriteBatchPatcher.packOverrides.Add(tex.Value.TargetTexture, new());
                     SpriteBatchPatcher.packOverrides[tex.Value.TargetTexture].Add(tex.Value.TargetRect, tex.Value);
