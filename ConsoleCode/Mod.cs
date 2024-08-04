@@ -75,7 +75,12 @@ namespace ConsoleCode
             {
                 try
                 {
-                    refs.Add( MetadataReference.CreateFromFile( asm.Location ) );
+                    var mr = MetadataReference.CreateFromFile(asm.Location);
+                    if (asm.GetName().Name == "MonoMod.Common")
+                    {
+                        mr = mr.WithAliases(new string[] { "MMC" });
+                    }
+                    refs.Add(mr);
                     asms.Add(asm.GetName().Name);
                 }
                 catch ( Exception e )
@@ -89,10 +94,12 @@ namespace ConsoleCode
             foreach ( var r in refs )
             {
                 string str = "\"" + asms[i_] + "\"";
-                attrs += $"[assembly: IgnoresAccessChecksTo({str})]\n";
+                attrs += $"[assembly: MMC::System.Runtime.CompilerServices.IgnoresAccessChecksTo({str})]\n";
                 ++i_;
             }
             string code = $@"
+                extern alias MMC;
+
                 using System;
                 using System.Collections.Generic;
                 using System.Linq;
@@ -103,7 +110,7 @@ namespace ConsoleCode
                 using StardewValley;
                 using xTile;
                 using System.Runtime.CompilerServices;
-
+                
                 {attrs}
                 namespace ConsoleCode
                 {{

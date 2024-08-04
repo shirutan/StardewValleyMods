@@ -42,6 +42,13 @@ Provided functionality for content pack authors:
     * `spacechase0.SpaceCore_PlayEvent eventid ifNotSeen` - `ifNotSeen` is optional (defaults to false) - if true, the event won't play if it has been seen before
     * `spacechase0.SpaceCore_DamageCurrentFarmer amount`
     * `spacechase0.SpaceCore_ApplyBuff buffId "Source to show on the buff"` - Applies the buff `buffId` (from the vanilla file `Data/Buffs`), with the source in the tooltip being shown as what you provide.
+    * `spacechase0.SpaceCore_TriggerSpawnGroup spawnGroupId location includeRegions excludeRegions` - Trigger a spawn group (see spawnables documentation).
+        * `location` can be a static location name, or `Target` for triggering inside the current dungeon level (see the dungeons documentation).
+        * `includeRegions` and `excludeRegions` are a slash separated list of rectangles, with each component of the rectangle separated by commas.
+            * Ex. `2,2,10,10/25,30,15,10` would be two rectangles:
+                * One at X=2 Y=2 with a width of 10 and a height of 10
+                * One at X=25 Y=30 with a width of 15 and a height of 10
+    * `spacechase0.SpaceCore_ClearSetPiecesFromSpawnable spawnDefinitionId location` - Clear all set pieces spawned from a particular spawn definition in the specified location (see the spawnables documentation for what a spawn definition is).
 * Custom event commands
     * `damageFarmer amount`
     * `setDating npc [true/false]` - default true
@@ -128,6 +135,77 @@ Provided functionality for content pack authors:
     * Trigger Actions - Stored in `spacechase0.SpaceCore/TriggerActionExtensionData`, a dictionary with the key being the trigger action ID and the value being an object with the following fields.
         * `Times` - An list of the times the trigger action should be triggered. Example: `"Times": [ 630 ]`
             * The `Trigger` for this trigger action must be set to "Manual" for it to work.
+* Spawnables - Spawn things on a trigger action. The trigger action actions to use are listed in the trigger action section further above.
+    * First, an example with everything: https://gist.github.com/spacechase0/35453e1e7a0593d8d4f00246c1dd3990
+    * Spawnables consist of spawnable definitions (the spawns themselves) and spawning groups (a group of spawn definitions that are spawned together, specified with a trigger action).
+    * Spawnable definitions live in `spacechase0.SpaceCore/SpawnableDefinitions`. It's a dictionary with the key being the ID (referred to in spawn groups), and the value consisting of a `Type` field, with more fields depending on the type. (There is also a `Condition` GSQ on each one.) The types (with their additional fields listed in sub bullet points) are:
+        * `SetPiece` - Place a set piece (randomized map patch). Set pieces are random sections from a map file that are then applied onto an existing location. They persist until cleared with the relevant trigger action. If applied to the location you are in, they won't show up until you leave and re-enter the location. (The vanilla volcano dungeon uses something similar to set pieces - it's even called set pieces internally).
+            * `SetPiecesMap` - The map file to pull set pieces from. Use the `{{InternalAssetKey}}` token when specifying your custom maps.
+            * `SetPieceSizeX` - The width of each set piece in the map file.
+            * `SetPieceSizeY` - The height of each set piece in the map file.
+            * `SetPieceCount` - The amount of set pieces in the map file.
+            * Additionally, set pieces can use tile properties to trigger another spawn group. Place a tile on the `Paths` layer, and spsecify a tile property named `spacechase0.SpaceCore/TriggerSpawnGroup`. The value should be the spawn group to trigger at this tile.
+        * `Forageable` - Spawn a forageable (either pick-up or artifact spot)
+            * `ForageableItemData` - A list of weighted [item spawn fields](https://stardewvalleywiki.com/Modding:Item_queries#Item_spawn_fields). A random one will be chosen according to the weights. (See the example from before for how to format weighted item spawn fields.) These must be objects (unless `ForageableIsTillSpot` is true).
+            * `ForageableExpiresWeekly` - If the forageable should disappear at the end of Saturday like vanila forageables do. Default true.
+            * `ForageableIsTillSpot` - If it should make an artifact spot and have to be dug with a hoe instead of picked up normally. Default false.
+        * `Minable` - Spawn a minable, to be broken with a pickaxe or axe.
+            * `MinableTool` - Either `Pickaxe` or `Axe`.
+            * `MinableObjectId` - The object ID of the object this minable should look like.
+            * `MinableHealth` - The amount of health the minable has. Each hit takes away an amount of health equal to the tool tier.
+            * `MinableDrops` - A list of lists of weighted [item spawn fields](https://stardewvalleywiki.com/Modding:Item_queries#Item_spawn_fields). How this works is it will pick one weighted item spawn from each list in the outer list. (See the example from before for how to format these.)
+            * `MinableExperienceGranted` - How much skill experience to grant upon being broken. This will be mining experience for pickaxe minables, and foraging experience for axe minables.
+        * `LargeMinable` - Spawn a larger-than-one-tile minable, to be broken with a pickaxe or axe.
+            * `LargeMinableTool` - Either `Pickaxe` or `Axe`.
+            * `LargeMinableRequiredToolTier` - The required tool tier to be able to break this large minable.
+            * `LargeMinableHealth` - The amount of health the minable has.
+            * `LargeMinableSizeX` - How many tiles wide this minable should be.
+            * `LargeMinableSizeY` - How many tiles tall this minable should be.
+            * `LargeMinableTexture` - The texture to use for the minable, or null for the vanilla springobjects tilesheet.
+            * `LargeMinableSpriteIndex` - The inedx of the sprite in the texture. The indices are counted by 16x16 tiles, not by the size of the minable.
+            * `LargeMinableDrops` - A list of lists of weighted [item spawn fields](https://stardewvalleywiki.com/Modding:Item_queries#Item_spawn_fields). How this works is it will pick one weighted item spawn from each list in the outer list. (See the example from before for how to format these.)
+            * `LargeMinableShavingDrops` - A list of weighted [item spawn fields](https://stardewvalleywiki.com/Modding:Item_queries#Item_spawn_fields) to use if someone hits the minable with a tool with the Shaving enchantment. A random one will be chosen according to the weights. (See the example from before for how to format weighted item spawn fields.)
+            * `LargeMinableExperienceGranted` - How much skill experience to grant upon being broken. This will be mining experience for pickaxe minables, and foraging experience for axe minables.
+        * `Breakable` - A breakable container, like the barrels or crates in the mines.
+            * `BreakableBigCraftableId` - The ID of the big craftable this breakable should look like.
+            * `BreakableHealth` - How much health this breakable should have.
+            * `BreakbleHitSound` - The sound to make when hit. Default `woodWhack`.
+            * `BreakbleBrokenSound` - The sound to make when broken. Default `barrelBreak`.
+            * `BreakableDrops` - A list of lists of weighted [item spawn fields](https://stardewvalleywiki.com/Modding:Item_queries#Item_spawn_fields). How this works is it will pick one weighted item spawn from each list in the outer list. (See the example from before for how to format these.)
+        * `LootChest` - A chest that will drop items when opened, similar to the chests in the volcano dungeon.
+            * `LootChestBigCraftableId` - The ID of the big craftable this loot chest should look like. Note that the sprite indices after the chest are used for the lid - check a vanilla chest for an example.
+            * `LootChestDrops` - A list of lists of weighted [item spawn fields](https://stardewvalleywiki.com/Modding:Item_queries#Item_spawn_fields). How this works is it will pick one weighted item spawn from each list in the outer list. (See the example from before for how to format these.)
+        * `Furniture` - A furniture item, placed into the world.
+            * `FurnitureQualifiedId` - The qualified item ID of the furniture to spawn.
+            * `FurnitureRotation` - The amount of times it should be "rotated" (as if a player were placing it).
+            * `FurnitureIsOn` - For lamps, if they should be on.
+            * `FurnitureHeldObject` - A list of weighted [item spawn fields](https://stardewvalleywiki.com/Modding:Item_queries#Item_spawn_fields) to use for a single item to be sitting on the furniture (if it's a table). A random one will be chosen according to the weights. (See the example from before for how to format weighted item spawn fields.)
+            * `FurnitureCanPickUp` - If the furniture should be able to be picked up or not. Default true. (Note that any held object WILL be able to be taken regardless of this field.)
+        * `Monster` - A monster. This can be a vanilla type, or  a custom one if registered through the SpaceCore API.
+            * `MonsterType` - The type of monster to spawn. Valid types are any of the following: `Bat`, `BigSlime`, `BlueSquid`, `Bug`, `DinoMonster`, `Duggy`, `DustSpirit`, `DwarvishSentry`, `Fly`, `Ghost`, `GreenSlime`, `Grub`, `HotHead`, `LavaLurk`, `Leaper`, `MetalHead`, `Mummy`, `RockCrab`, `RockGolem`, `Serpent`, `ShadowBrute`, `ShadowGirl`, `ShadowGuy`, `ShadowShaman`, `Shooter`, `Skeleton`, `Spiker`, `SquidKid` (C# mods can register additional types with the SpaceCore API.)
+            * `MonsterName` - If specified, will reload the monster with stats from specified entry in `Data/Monsters`.
+            * `MonsterTextureOverride` - If specified, override the spritesheet of the monster.
+            * `MonsterDropOverride` - If specified, will replace the monster's drops with these. A list of lists of weighted [item spawn fields](https://stardewvalleywiki.com/Modding:Item_queries#Item_spawn_fields). How this works is it will pick one weighted item spawn from each list in the outer list. (See the example from before for how to format these.)
+            * `MonsterAdditionalData` - Some monsters can have additional data to configure them:
+                * `BigSlime`
+                    * `Color` - The color of the slime, specified with `{ "R": 255, "G": 255, "B": 255 }`
+                    * `HeldItemQualifiedId` - Qualified item ID of the item inside the slime
+                * `Bug` - `IsArmored` can be set to true
+                * `Ghost` - `IsPutrid` can be set to true
+                * `GreenSlime` - `Color` can be set just like with BigSlime
+                * `RockCrab` - `IsStickBug` can be set to true (preventing the armor from breaking)
+                * `Serpent` - `SegmentCount` can be set to an integer
+                * `Skeleton` - `IsMage` can be set to true
+                * `Spiker` - `Direction` must be specified - it determines the direction it will move when a player approaches
+        * `WildTree` - Spawn a fully grown wild tree.
+            * `WildTreeType` - the ID of the wild tree, as specified in `Data/WildTrees`.
+        * `FruitTree` - Spawn a fully grown fruit tree (with fruit if the season is correct in the location). This fruit tree will not drop a sapling when cut down.
+            * `FruitTreeType` - the ID of the fruit tree, as specified in `Data/fruitTrees`.
+    * Spawn groups live in `spacechase0.SpaceCore/SpawningGroups`. This is a dictionary with the key being the ID (referred to from trigger actions), and the value being an object containing the following fields:
+        * `SpawnablesToSpawn` - A list of objects with the following fields:
+            * `SpawnableIds` - A weighted list of IDs of spawnable definitions to chose from spawning.
+            * `Minimum` - The minimum amount to spawn. (Each attempt will have 10 tries - if there's no room, that attempt is skipped.)
+            * `Maximum` - The maximum amount to spawn.
 * Animations - You can animate textures by editing `"spacechase0.SpaceCore/TextureOverrides"`, which is a dictionary with the key being the ID of your animation, and the following information:
     * `TargetTexture` - The path to the file you want to animate.
     * `TargetRect` - The rectangle in the target file you want to animate. Example: `{ "X": 32, "Y": 48, "Width": 16, "Height": 16 }`

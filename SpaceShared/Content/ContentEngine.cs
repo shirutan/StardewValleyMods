@@ -136,13 +136,13 @@ namespace SpaceShared.Content
             else if (fcall.Function == "Rectangle")
             {
                 if (fcall.Parameters.Count != 4)
-                    throw new ArgumentException($"Vector2 function must have exactly two integer parameters, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+                    throw new ArgumentException($"Rectangle function must have exactly four integer parameters, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
                 Token tokX = fcall.Parameters[0].SimplifyToToken(ce);
                 Token tokY = fcall.Parameters[1].SimplifyToToken(ce);
                 Token tokW = fcall.Parameters[2].SimplifyToToken(ce);
                 Token tokH = fcall.Parameters[3].SimplifyToToken(ce);
                 if (!int.TryParse(tokX.Value, out int x) || !int.TryParse(tokY.Value, out int y) || !int.TryParse(tokX.Value, out int w) || !int.TryParse(tokY.Value, out int h))
-                    throw new ArgumentException($"Vector2 function must have exactly two float parameters, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+                    throw new ArgumentException($"Rectangle function must have exactly four integer parameters, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
 
                 return new Block()
                 {
@@ -155,6 +155,32 @@ namespace SpaceShared.Content
                         { new Token() { Value = "Y" }, tokY },
                         { new Token() { Value = "Width" }, tokW },
                         { new Token() { Value = "Height" }, tokH },
+                    },
+                    Context = fcall.Context,
+                };
+            }
+            else if (fcall.Function == "Color")
+            {
+                if (fcall.Parameters.Count <3 || fcall.Parameters.Count > 4)
+                    throw new ArgumentException($"Color function must have either three or four integer parameters, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+                Token tokR = fcall.Parameters[0].SimplifyToToken(ce);
+                Token tokG = fcall.Parameters[1].SimplifyToToken(ce);
+                Token tokB = fcall.Parameters[2].SimplifyToToken(ce);
+                Token tokA = fcall.Parameters.Count == 4 ? fcall.Parameters[3].SimplifyToToken(ce) : new Token() { Value = "255" };
+                if (!int.TryParse(tokR.Value, out int r) || !int.TryParse(tokG.Value, out int g) || !int.TryParse(tokB.Value, out int b) || !int.TryParse(tokA.Value, out int a))
+                    throw new ArgumentException($"Color function must have either three or four integer parameters, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+
+                return new Block()
+                {
+                    FilePath = fcall.FilePath,
+                    Line = fcall.Line,
+                    Column = fcall.Column,
+                    Contents =
+                    {
+                        { new Token() { Value = "R" }, tokR },
+                        { new Token() { Value = "G" }, tokG },
+                        { new Token() { Value = "B" }, tokB },
+                        { new Token() { Value = "A" }, tokA },
                     },
                     Context = fcall.Context,
                 };

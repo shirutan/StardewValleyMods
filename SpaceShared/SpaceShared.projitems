@@ -22,7 +22,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)APIs\IExperienceBarsApi.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)APIs\IGenericModConfigMenuApi.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)APIs\IJsonAssetsApi.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)APIs\IWearMoreRingsApi.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)APIs\ISolidFoundationsAPI.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)APIs\ISpaceCoreApi.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)APIs\ITrainStationApi.cs" />

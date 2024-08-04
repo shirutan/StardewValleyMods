@@ -104,7 +104,7 @@ namespace SpaceShared.Content
 
             if (ConditionsMet != oldConditionsMet)
             {
-                Log.Debug("Condition status changed: " + File + " " + path?.Value);
+                //Log.Debug("Condition status changed: " + File + " " + path?.Value);
             }
 
             return ConditionsMet != oldConditionsMet;

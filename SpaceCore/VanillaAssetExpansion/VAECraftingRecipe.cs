@@ -145,7 +145,25 @@ namespace SpaceCore.VanillaAssetExpansion
 
         public VAECraftingRecipe Data => data;
 
-        public override string Description => (cooking ? CraftingRecipe.cookingRecipes : CraftingRecipe.craftingRecipes)[id].Split('/')[cooking ? CraftingRecipe.index_cookingDisplayName : CraftingRecipe.index_craftingDisplayName];
+        public override string Description
+        {
+            get
+            {
+                Dictionary<string, string> dict = CraftingRecipe.craftingRecipes;
+                int ind = CraftingRecipe.index_craftingDisplayName;
+                if (cooking)
+                {
+                    dict = CraftingRecipe.cookingRecipes;
+                    ind = CraftingRecipe.index_cookingDisplayName;
+                }
+
+                if (ind < dict[id].Length)
+                    return dict[id].Split('/')[ind];
+
+                // Why are we using displayname here? I dunno, the old code returned the display name...
+                return ItemRegistry.GetDataOrErrorItem(data.ProductQualifiedId).DisplayName;
+            }
+        }
 
         public override Texture2D IconTexture => ItemRegistry.GetDataOrErrorItem(data.ProductQualifiedId).GetTexture();
 

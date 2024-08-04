@@ -381,7 +381,8 @@ namespace SpaceCore.VanillaAssetExpansion
                     worn.Add(Game1.player.boots.Value.QualifiedItemId);
                 foreach (var trinket in Game1.player.trinketItems)
                 {
-                    worn.Add(trinket.QualifiedItemId);
+                    if ( trinket != null )
+                        worn.Add(trinket.QualifiedItemId);
                 }
 
                 Queue<Ring> rings = new();

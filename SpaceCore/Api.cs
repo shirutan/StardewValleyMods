@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 using SpaceCore.Patches;
 using SpaceShared;
 using StardewValley;
+using StardewValley.Monsters;
 
 namespace SpaceCore
 {
@@ -100,6 +101,8 @@ namespace SpaceCore
 
         void RegisterCustomProperty( Type declaringType, string name, Type propType, MethodInfo getter, MethodInfo setter );
 
+        void RegisterSpawnableMonster(string id, Func<Vector2, Dictionary<string, object>, Monster> monsterSpawner);
+
         List<int> GetLocalIndexForMethod(MethodBase meth, string local);
 
         public event EventHandler<Action<string, Action>> AdvancedInteractionStarted;
@@ -184,6 +187,11 @@ namespace SpaceCore
                 Getter = getter,
                 Setter = setter,
             } );
+        }
+
+        public void RegisterSpawnableMonster(string id, Func<Vector2, Dictionary<string, object>, Monster> monsterSpawner)
+        {
+            Dungeons.SpawnableImpl.MonsterFactory.Add(id, monsterSpawner);
         }
 
         public List<int> GetLocalIndexForMethod(MethodBase meth, string local)

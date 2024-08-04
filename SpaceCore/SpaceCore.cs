@@ -44,6 +44,7 @@ using StardewValley.Pathfinding;
 using static StardewValley.Menus.CharacterCustomization;
 using System.Collections;
 using StardewValley.TokenizableStrings;
+using SpaceCore.Dungeons;
 
 namespace SpaceCore
 {
@@ -311,6 +312,8 @@ namespace SpaceCore
 
             Commands.Register();
             VanillaAssetExpansion.VanillaAssetExpansion.Init();
+            SpawnableImpl.Init();
+            DungeonImpl.Init();
 
             new NpcQuestions().Entry(ModManifest, Helper);
 
@@ -592,7 +595,7 @@ namespace SpaceCore
                     else
                     {
                         f.Status = FriendshipStatus.Dating;
-                        Game1.Multiplayer.globalChatInfoMessage("Dating", Game1.player.Name, Game1.getCharacterFromName(args[1]).GetTokenizedDisplayName());
+                        Game1.Multiplayer.globalChatInfoMessage("Dating", Game1.player.Name, DataLoader.Characters( Game1.content )[ args[ 1 ] ].DisplayName);
                     }
                     }
             }
