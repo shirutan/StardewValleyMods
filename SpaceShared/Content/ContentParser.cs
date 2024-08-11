@@ -206,7 +206,8 @@ namespace SpaceShared.Content
                     else if (!escaped && char.IsWhiteSpace(c))
                     {
                         FlushBuffer();
-                        tokens[tokens.Count - 1].ExtraWhitespace += c;
+                        if (tokens.Count > 0) // IF there's whitespace at the beginning of a file this won't be true
+                            tokens[tokens.Count - 1].ExtraWhitespace += c;
                     }
 
                     // Mod ID Shortcut

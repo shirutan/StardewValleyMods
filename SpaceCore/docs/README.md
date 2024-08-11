@@ -15,6 +15,8 @@ Provided functionality for players:
     * By default this only includes chatting (and gifting if you are holding something), but mods can add new entries.
     * Content pack authors can let you ask an NPC questions by editing an asset from Content Patcher (see "NPC Questions" in the content pack authors). You can ask one question per day.
     * You can set this menu to always show up when interacting with an NPC in the config, in case you want to (for example) prevent accidentally gifting an item to somebody.
+* If any mods add equipment slots through SpaceCore, a "+" button will show to the left of your boots slot. This can access the new equipment slots.
+    * The image can be edited by content pack authors for recolors. The asset path to this texture is: `spacechase0.SpaceCore/ExtraEquipmentIcon`
 
 Provided functionality for content pack authors:
 * Fixes NPCs taking the longer path when there are circular routes. Note that the "length" of the path is determined by amount of warps, not by amount of tiles travelled, so if there are two paths to a location with the same amount of warps but one map is much larger, they might still take the larger map path.
@@ -24,6 +26,7 @@ Provided functionality for content pack authors:
         * `type` - same as vanilla `Light` property light types, or you can use the path to a custom light texture (must be loaded with Action: Load)
         * `radiusMultiplier` - Make the light bigger or smaller
         * `colorR`, `colorG`, `colorB` - Make the lights a specific color, using RGB values. Each value should be in the range of [0, 255].
+    * A few dungeon-specific ones, listed in the Dungeons section.
 * New GameStateQuery queries:
     * Every custom skill registered through the C# API automatically registers a `PLAYER_<SKILLID_IN_CAPS>_LEVEL` query matching the vanilla ones (such as PLAYER_FARMING_LEVEL).
     * `NEARBY_CROPS radius cropId` - Only usable in CropExtensionData YieldOverrides PerItemCondition entries. Checks for fully grown crops of a particular type in a certain radius.
@@ -31,6 +34,7 @@ Provided functionality for content pack authors:
 * New tile actions
     * `spacechase0.SpaceCore_TriggerAction triggerActionId` - for running a trigger action, set the Trigger to "Manual"
     * `spacechase0.SpaceCore_OpenGlobalInventory inventoryId` - open a global inventory with the given ID
+    * A few dungeon-specific ones, listed in Dungeons section.
 * New touch actions
     * `spacechase0.SpaceCore_TriggerAction triggerActionId` - for running a trigger action, set the Trigger to "Manual"
 * New trigger actions
@@ -206,6 +210,38 @@ Provided functionality for content pack authors:
             * `SpawnableIds` - A weighted list of IDs of spawnable definitions to chose from spawning.
             * `Minimum` - The minimum amount to spawn. (Each attempt will have 10 tries - if there's no room, that attempt is skipped.)
             * `Maximum` - The maximum amount to spawn.
+* Dungeons - You can define custom dungeons like the mines or skull caverns.
+    * There is an example [here](https://gist.github.com/spacechase0/8502b78aed4c5d84a41881e3b2e1b42b).
+    * You can control entering and exiting the dungeon via tile actions and map properties.
+        * Tile actions
+            * `spacechase0.SpaceCore_DungeonEntrance dungeonId` - Has you enter the first floor of the dungeon. Works anywhere.
+            * `spacechase0.SpaceCore_DungeonElevatorMenu dungeonId` - Opens the elevator for the dungeon dungeonId. The floors available are based on how deep you go, and defined in the dungeon data. Works anywhere.
+            * `spacechase0.SpaceCore_DungeonLadderExit` - A normal exit for the dungeon - you will be taken to where is defined in the dungeon data. Works in a dungeon.
+            * `spacechase0.SpaceCore_DungeonLadder` - Acts like a ladder in the mines, descending one floor. Works in a dungeon.
+            * `spacechase0.SpaceCore_DungeonMineshaft` - Acts like a mineshaft in the skull cavern, descending a random amount of floors. Works in a dungeon.
+        * Map properties
+            * `spacechase0.SpaceCore_DungeonLadderEntrance x y` - Where the palyer is placed when entering the location via ladder or entering the dungeon.
+            * `spacechase0.SpaceCore_DungeonElevatorEntrance x y` - Where the player is placed when entering the location via an elevator.
+    * The dungeon data itself lives in `spacechase0.SpaceCore/Dungeons`, which is a dictionary with the dungeon ID being the key, and a model containing the following values:
+        * `LadderExitLocation` - The location name of the place to be taken to when exiting through `spacechase0.SpaceCore_DungeonLadderExit`.
+        * `LadderExitTile` - The position in the location above to to be taken to.
+        * `ElevatorExitLocation` - The location name of the place to be taken to when exiting through floor 0 of `spacechase0.SpaceCore_DungeonElevatorMenu dungeonId`.
+        * `ElevatorExitTile` - The position in the location above to be taken to.
+        * `FloorsWithElevators` - A list of floors that the elevator will list as choices (if someone on that farm has been that deep before).
+        * `SpawnLadders` - If this dungeon should spawn ladders when rocks are broken. Default true.
+        * `SpawnMineshafts` - If this dungeon should spawn mineshafts when rocks are broken. Default false.
+        * `LadderTileSheet` - The tilesheet dungeon ladders should show from. Default `"Maps/Mines/mine_desert"`.
+        * `LadderTileIndex` - The tile index dungeon ladders should show. Default 173.
+        * `MineshaftTileSheet` - The tilesheet dungeon mineshafts should show from. Default `"Maps/Mines/mine_desert"`.
+        * `MineshaftTileIndex` - The tile index dungeon mineshafts should show. Default 174.
+        * `AdditionalTimeMilliseconds` - How much time should slow, in milliseconds per ten minutes of in-game time, when in this dungeon in singleplayer. Default 2000.
+        * `Regions` - Also a dictionary, with the string being the region ID (unique to this dungeon), and the values being a model containing the following:
+            * `LevelRange` - An object with a `Begin` and `End` for which levels this region defines.
+            * `MapPool` - A list of weighted strings containing map paths to choose from. Choices with higher weight are more likely to be chosen, proportionate to the weight of other choices.
+                * For how to format these, check out the example.
+            * `TriggerActionsOnEntry` - A list of trigger actions to run when entering the location.
+                * If using SpaceCore's Spawnables system to populate the level, make sure to mark those trigger actions as `"HostOnly": true` (to prevent levels from getting repopulated when a new player enters) and `"MarkActionApplied": false` (to make sure it works more than once per save).
+            * `LocationDataEntry` - What location to emulate from the `Data/Locations` asset. This defines things like location context, music, how fish get chosen, etc.
 * Animations - You can animate textures by editing `"spacechase0.SpaceCore/TextureOverrides"`, which is a dictionary with the key being the ID of your animation, and the following information:
     * `TargetTexture` - The path to the file you want to animate.
     * `TargetRect` - The rectangle in the target file you want to animate. Example: `{ "X": 32, "Y": 48, "Width": 16, "Height": 16 }`
@@ -250,6 +286,20 @@ The rest of the features assume you understand C# and the game code a little bit
         * `getter` is a `MethodInfo` pointing to your static function acting as a getter. It take an instance of the type corresponding to `declaringType`, and return a value of the type corresponding to `propType`.
         * `setter` is a `MethodInfo` pointing to your static function acting as a setter. It take an instance of the type corresponding to `declaringType` and a value of the type corresponding to `propType`.
     * An event: `AdvancedInteractionStarted`, which passes the NPC as the `object sender` and an `Action<string, Action>` as the event argument, which you call with a string for what string to show for you choice, and an Action for what to happen when it is chosen. (See [Backstory Questions Framework](https://www.nexusmods.com/stardewvalley/mods/14451), a mod now integrated into SpaceCore, for an example on usage).
+    * `void RegisterSpawnableMonster(string id, Func<Vector2, Dictionary<string, object>, Monster> monsterSpawner)` - Register a spawnable monster with the spawnables system.
+    * `List<int> SpaceCore.GetLocalIndexForMethod(MethodBase meth, string local)` - gets the indices of all variables in a method using a given name. Used for transpilers.
+    * Custom equipment slot functions:
+        * Note: The IDs are global, across all mods. Please include your mod unique ID in your slot ID.
+        * `void RegisterEquipmentSlot(IManifest modManifest, string globalId, Func<Item, bool> slotValidator, Func<string> slotDisplayName, Texture2D bgTex, Rectangle? bgRect = null)` - Register an equipment slot to show on the additional equipment menu. (See player features section.)
+            * `IManifest modManifest` - Your mod's `ModManifest` field from your ModEntry class. Currently unused, might be used at some point to show what mod a slot comes from.
+            * `string globalId` - The id of the slot, must be unique across all mods.
+            * `Func<Item, bool> slotValidator` - The function to validate if an item will be accepted in the slot. Make sure it accepts `null`.
+            * `Func<string> slotDisplayName` - The display name of the slot, shown on the extra equipment menu.
+            * `Texture2D bgTex` - The texture containing the background iamge of the slot.
+            * `Rectangle? bgRect` - The rectangle of the texture for the slot, or null to use the whole texture.
+        * `Item GetItemInEquipmentSlot(Farmer farmer, string globalId)` - Get the item in the specified equipment slot for the specified farmer.
+        * `void SetItemInEquipmentSlot(Farmer farmer, string globalId, Item item)` - Set the item in the specified equipment slot for the specified farmer. Note: This only works for your local farmer or offline ones, not other online players.
+        * `bool CanItemGoInEquipmentSlot(string globalId, Item item)` - If the item can go in the requested slot.
 * Events, located in SpaceCore.Events.SpaceEvents:
     * `OnBlankSave` - Occurs before loading starts. Custom locations can be added here so that they retain player data.
     * `ShowNightEndMenus` - Right before the shipping menu, level up menus, etc. pop up so you can add your own.
@@ -362,7 +412,6 @@ The rest of the features assume you understand C# and the game code a little bit
             * `UserData` - an `object` field for you to store whatever you want in
 * Content Engine
     * Also hard to document, go read the source ([here](https://github.com/spacechase0/StardewValleyMods/tree/develop/SpaceShared/Content)) or look at Moon Misadventures Redux for an example.
-* `List<int> SpaceCore.GetLocalIndexForMethod(MethodBase meth, string local)` - gets the indices of all variables in a method using a given name. Used for transpilers.
 * Some other things that will remain undocumented because they will be removed soon.
 
 ## Compatibility

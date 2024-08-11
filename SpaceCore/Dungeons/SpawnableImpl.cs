@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -33,6 +34,7 @@ using StardewValley.Triggers;
 
 namespace SpaceCore.Dungeons
 {
+    [XmlType("Mods_spacechase0_SpaceCore_SetPieceNetData")]
     public class SetPieceNetData : INetObject<NetFields>
     {
         public NetFields NetFields { get; }
@@ -96,6 +98,7 @@ namespace SpaceCore.Dungeons
     {
         public static void Init()
         {
+            SpaceCore.Instance.Helper.Events.GameLoop.GameLaunched += GameLoop_GameLaunched;
             SpaceCore.Instance.Helper.Events.Content.AssetRequested += Content_AssetRequested;
             SpaceCore.Instance.Helper.Events.GameLoop.DayEnding += GameLoop_DayEnding;
 
@@ -106,6 +109,8 @@ namespace SpaceCore.Dungeons
                     error = "Not enough arguments";
                     return false;
                 }
+
+                Random r = context.TriggerArgs.FirstOrDefault(o => o is Random) as Random;
 
                 var loc = GameStateQuery.Helpers.RequireLocation(args[2], context.TriggerArgs.Length > 0 ? (context.TriggerArgs[0] as GameLocation) : null );
                 List<Rectangle> includeRegions = new();
@@ -149,7 +154,7 @@ namespace SpaceCore.Dungeons
                 }
 
                 error = null;
-                DoSpawning(loc, args[1], includeRegions, excludeRegions);
+                DoSpawning(loc, args[1], includeRegions, excludeRegions, r);
                 return true;
             });
 
@@ -185,6 +190,12 @@ namespace SpaceCore.Dungeons
             });
         }
 
+        private static void GameLoop_GameLaunched(object sender, StardewModdingAPI.Events.GameLaunchedEventArgs e)
+        {
+            var sc = SpaceCore.Instance.Helper.ModRegistry.GetApi<IApi>("spacechase0.SpaceCore");
+            sc.RegisterSerializerType(typeof(SetPieceNetData));
+        }
+
         private static void GameLoop_DayEnding(object sender, StardewModdingAPI.Events.DayEndingEventArgs e)
         {
             Utility.ForEachLocation(loc =>
@@ -211,9 +222,9 @@ namespace SpaceCore.Dungeons
                 e.LoadFrom(() => new Dictionary<string, SpawnableSpawningGroupData>(), StardewModdingAPI.Events.AssetLoadPriority.Low);
         }
 
-        public static void DoSpawning(GameLocation location, string spawnGroupId, List<Rectangle> includeRegions, List<Rectangle> excludeRegions)
+        public static void DoSpawning(GameLocation location, string spawnGroupId, List<Rectangle> includeRegions, List<Rectangle> excludeRegions, Random r = null)
         {
-            Random r = Game1.random;
+            r ??= Game1.random;
 
             List<Point> validTiles = new();
             foreach (var rect in includeRegions)
@@ -237,6 +248,15 @@ namespace SpaceCore.Dungeons
                     }
                 }
             }
+            foreach (var tile in validTiles.ToList())
+            {
+                if (!IsTileValid(location, tile.ToVector2()))
+                    validTiles.Remove(tile);
+            }
+            if (ArgUtility.TryGetPoint(location.GetMapPropertySplitBySpaces("spacechase0.SpaceCore_DungeonLadderEntrance"), 0, out Point entranceTile, out string err))
+                validTiles.Remove(entranceTile);
+            if (ArgUtility.TryGetPoint(location.GetMapPropertySplitBySpaces("spacechase0.SpaceCore_DungeonElevatorEntrance"), 0, out entranceTile, out err))
+                validTiles.Remove(entranceTile);
             if (validTiles.Count == 0)
             {
                 Log.Warn($"No valid spawn tiles, using spawn group '{spawnGroupId}'?");
@@ -296,6 +316,36 @@ namespace SpaceCore.Dungeons
             { SpawnableDefinitionData.SpawnableType.FruitTree, HandleSpawnable_FruitTree },
         };
 
+        private static bool IsTileValid(GameLocation loc, Vector2 tile)
+        {
+            if (loc.IsNoSpawnTile(tile))
+                return false;
+
+            if (!loc.CanItemBePlacedHere(tile, ignorePassables: CollisionMask.None))
+                return false;
+            if (loc.IsTileOccupiedBy(tile, CollisionMask.Characters | CollisionMask.Flooring | CollisionMask.TerrainFeatures))
+                return false;
+            if (loc.Objects.ContainsKey(tile))
+                return false;
+            if (loc.Map.RequireLayer("Back").Tiles[(int)tile.X, (int)tile.Y] == null)
+                return false;
+            if (loc.Map.RequireLayer("Front").Tiles[(int)tile.X, (int)tile.Y] != null)
+                return false;
+            if (loc.Map.RequireLayer("Buildings").Tiles[(int)tile.X, (int)tile.Y] != null)
+                return false;
+
+            var ext = loc.GetSpawnableExtData();
+            var spawnDefs = Game1.content.Load<Dictionary<string, SpawnableDefinitionData>>("spacechase0.SpaceCore/SpawnableDefinitions");
+            foreach (var sp in ext.setPieceCache)
+            {
+                var data = spawnDefs[sp.FromSpawnDef];
+                if (new Rectangle(sp.Tile.Value, new(data.SetPieceSizeX, data.SetPieceSizeY)).Contains(tile))
+                    return false;
+            }
+
+            return true;
+        }
+
         private static bool HandleSpawnable_SetPiece(GameLocation location, string id, SpawnableDefinitionData data, Point tile, Random r)
         {
             if (data.SetPiecesMap == null || !Game1.content.DoesAssetExist<xTile.Map>(data.SetPiecesMap))
@@ -308,7 +358,7 @@ namespace SpaceCore.Dungeons
                 for (int iy = 0; iy < data.SetPieceSizeY; ++iy)
                 {
                     Vector2 spot = tile.ToVector2() + new Vector2(ix, iy);
-                    if (!location.CanItemBePlacedHere(spot) || location.IsNoSpawnTile(spot))
+                    if (!IsTileValid(location, spot))
                         return false;
                 }
             }
@@ -336,7 +386,7 @@ namespace SpaceCore.Dungeons
                     for (int iy = 0; iy < data.SetPieceSizeY; ++iy)
                     {
                         xTile.Tiles.Tile t = paths.Tiles[new(sx + ix, sy + iy)];
-                        if (t.Properties != null && t.Properties.TryGetValue("spacechase0.SpaceCore/TriggerSpawnGroup", out string spawnGroupId))
+                        if (t != null && t.Properties != null && t.Properties.TryGetValue("spacechase0.SpaceCore/TriggerSpawnGroup", out string spawnGroupId))
                         {
                             DoSpawning(location, spawnGroupId, [new Rectangle( tile.X + ix, tile.Y + iy, 1, 1 )], []);
                         }
@@ -349,7 +399,7 @@ namespace SpaceCore.Dungeons
 
         private static bool HandleSpawnable_Forageable(GameLocation location, string id, SpawnableDefinitionData data, Point tile, Random r)
         {
-            if (!location.CanItemBePlacedHere(tile.ToVector2()) || location.IsNoSpawnTile(tile.ToVector2()))
+            if (!IsTileValid(location, tile.ToVector2()))
                 return false;
 
             var itemSpawns = data.ForageableItemData.ToList();
@@ -388,7 +438,7 @@ namespace SpaceCore.Dungeons
 
         private static bool HandleSpawnable_Minable(GameLocation location, string id, SpawnableDefinitionData data, Point tile, Random r)
         {
-            if (!location.CanItemBePlacedHere(tile.ToVector2()) || location.IsNoSpawnTile(tile.ToVector2()))
+            if (!IsTileValid(location, tile.ToVector2()))
                 return false;
 
             StardewValley.Object obj = (StardewValley.Object) ItemRegistry.Create( ItemRegistry.ManuallyQualifyItemId( data.MinableObjectId, "(O)" ) );
@@ -407,7 +457,7 @@ namespace SpaceCore.Dungeons
                 for (int iy = 0; iy < data.LargeMinableSizeY; ++iy)
                 {
                     Vector2 spot = tile.ToVector2() + new Vector2( ix, iy );
-                    if (!location.CanItemBePlacedHere(spot) || location.IsNoSpawnTile(spot))
+                    if (!IsTileValid(location, spot))
                         return false;
                 }
             }
@@ -422,7 +472,7 @@ namespace SpaceCore.Dungeons
 
         private static bool HandleSpawnable_Breakable(GameLocation location, string id, SpawnableDefinitionData data, Point tile, Random r)
         {
-            if (!location.CanItemBePlacedHere(tile.ToVector2()) || location.IsNoSpawnTile(tile.ToVector2()))
+            if (!IsTileValid(location, tile.ToVector2()))
                 return false;
 
             var breakable = new BreakableContainer(tile.ToVector2(), data.BreakableBigCraftableId, data.BreakableHealth, hitSound: data.BreakableHitSound, breakSound: data.BreakableBrokenSound);
@@ -435,7 +485,7 @@ namespace SpaceCore.Dungeons
 
         private static bool HandleSpawnable_LootChest(GameLocation location, string id, SpawnableDefinitionData data, Point tile, Random r)
         {
-            if (!location.CanItemBePlacedHere(tile.ToVector2()) || location.IsNoSpawnTile(tile.ToVector2()))
+            if (!IsTileValid(location, tile.ToVector2()))
                 return false;
 
             var chest = new Chest(false, data.LootChestBigCraftableId);
@@ -469,7 +519,7 @@ namespace SpaceCore.Dungeons
                 for (int iy = 0; iy < furniture.GetBoundingBox().Height / Game1.tileSize; ++iy)
                 {
                     Vector2 spot = tile.ToVector2() + new Vector2(ix, iy);
-                    if (!location.CanItemBePlacedHere(spot) || location.IsNoSpawnTile(spot))
+                    if (!IsTileValid(location, spot))
                         return false;
                 }
             }
@@ -601,7 +651,7 @@ namespace SpaceCore.Dungeons
                 for (int iy = 0; iy < monster.GetBoundingBox().Height / Game1.tileSize; ++iy)
                 {
                     Vector2 spot = tile.ToVector2() + new Vector2(ix, iy);
-                    if (!location.CanItemBePlacedHere(spot) || location.IsNoSpawnTile(spot))
+                    if (!IsTileValid(location, spot))
                         return false;
                 }
             }
@@ -614,8 +664,10 @@ namespace SpaceCore.Dungeons
             }
             if (data.MonsterTextureOverride != null)
             {
-                monster.modData.Add("spacechase0.SpaceCore/TextureOverride", data.MonsterTextureOverride);
-                monster.reloadSprite(onlyAppearance: true);
+                bool old = monster.Sprite.ignoreSourceRectUpdates;
+                monster.Sprite.ignoreSourceRectUpdates = true;
+                monster.Sprite.LoadTexture(data.MonsterTextureOverride);
+                monster.Sprite.ignoreSourceRectUpdates = old;
             }
 
             location.characters.Add(monster);
@@ -663,7 +715,7 @@ namespace SpaceCore.Dungeons
 
         private static bool HandleSpawnable_WildTree(GameLocation location, string id, SpawnableDefinitionData data, Point tile, Random r)
         {
-            if (!location.CanItemBePlacedHere(tile.ToVector2()) || location.IsNoSpawnTile(tile.ToVector2()))
+            if (!IsTileValid(location, tile.ToVector2()))
                 return false;
             if (location.terrainFeatures.ContainsKey(tile.ToVector2()))
                 return false;
@@ -677,7 +729,7 @@ namespace SpaceCore.Dungeons
 
         private static bool HandleSpawnable_FruitTree(GameLocation location, string id, SpawnableDefinitionData data, Point tile, Random r)
         {
-            if (!location.CanItemBePlacedHere(tile.ToVector2()) || location.IsNoSpawnTile(tile.ToVector2()))
+            if (!IsTileValid(location, tile.ToVector2()))
                 return false;
             if (location.terrainFeatures.ContainsKey(tile.ToVector2()))
                 return false;
@@ -1079,7 +1131,7 @@ namespace SpaceCore.Dungeons
         {
             var subclasses = from asm in AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.FullName.Contains("Steamworks.NET") && !a.IsDynamic)
                              from type in asm.GetExportedTypes()
-                             where type.IsInstanceOfType(typeof(Monster))
+                             where type.IsSubclassOf(typeof(Monster))
                              select type;
 
             var ps = new Type[] { typeof(bool) };

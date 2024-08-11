@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpaceCore.Patches;
 using SpaceShared;
+using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Monsters;
 
@@ -106,6 +107,11 @@ namespace SpaceCore
         List<int> GetLocalIndexForMethod(MethodBase meth, string local);
 
         public event EventHandler<Action<string, Action>> AdvancedInteractionStarted;
+
+        public void RegisterEquipmentSlot(IManifest modManifest, string globalId, Func<Item, bool> slotValidator, Func<string> slotDisplayName, Texture2D bgTex, Rectangle? bgRect = null);
+        public Item GetItemInEquipmentSlot(Farmer farmer, string globalId);
+        public void SetItemInEquipmentSlot(Farmer farmer, string globalId, Item item);
+        public bool CanItemGoInEquipmentSlot(string globalId, Item item);
     }
 
     public class Api : IApi
@@ -204,6 +210,39 @@ namespace SpaceCore
         internal void InvokeASI(NPC npc, Action<string, Action> addCallback)
         {
             AdvancedInteractionStarted?.Invoke(npc, addCallback);
+        }
+
+        public void RegisterEquipmentSlot(IManifest modManifest, string globalId, Func<Item, bool> slotValidator, Func<string> slotDisplayName, Texture2D bgTex, Rectangle? bgRect = null)
+        {
+            SpaceCore.EquipmentSlots.Add(globalId, new()
+            {
+                CorrespondingMod = modManifest,
+                SlotValidator = slotValidator,
+                DisplayName = slotDisplayName,
+                BackgroundTex = bgTex,
+                BackgroundRect = bgRect
+            });
+        }
+
+        public Item GetItemInEquipmentSlot(Farmer farmer, string globalId)
+        {
+            if (farmer.GetExtData().ExtraEquippables.TryGetValue(globalId, out var item))
+                return item;
+            return null;
+        }
+
+        public void SetItemInEquipmentSlot(Farmer farmer, string globalId, Item item)
+        {
+            if (SpaceCore.EquipmentSlots.TryGetValue(globalId, out var data) && data.SlotValidator( item ) )
+            {
+                farmer.GetExtData().ExtraEquippables[globalId] = item;
+            }
+        }
+
+        public bool CanItemGoInEquipmentSlot(string globalId, Item item)
+        {
+            var data = SpaceCore.EquipmentSlots.GetOrDefault(globalId);
+            return data?.SlotValidator?.Invoke(item) ?? false;
         }
     }
 }

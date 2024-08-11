@@ -45,10 +45,11 @@ using static StardewValley.Menus.CharacterCustomization;
 using System.Collections;
 using StardewValley.TokenizableStrings;
 using SpaceCore.Dungeons;
+using System.Collections.ObjectModel;
 
 namespace SpaceCore
 {
-    internal class FarmerExtData
+    public class FarmerExtData
     {
         public static ConditionalWeakTable<Farmer, FarmerExtData> data = new();
 
@@ -57,6 +58,29 @@ namespace SpaceCore
 
         public float healthBuffer { get; set; } = 0;
         public float staminaBuffer { get; set; } = 0;
+
+        public readonly NetStringDictionary<Item, NetRef<Item>> ExtraEquippables = new();
+
+        public static void set_equippables(Farmer farmer, NetStringDictionary<Item, NetRef<Item>> newData)
+        {
+            // not needed for net types
+            // (this method is for serialization)
+        }
+
+        public static NetStringDictionary<Item, NetRef<Item>> get_equippables(Farmer farmer)
+        {
+            return farmer.GetExtData().ExtraEquippables;
+        }
+    }
+
+    [HarmonyPatch(typeof(Farmer), "initNetFields")]
+    public static class FarmerAddNetFieldsPatch
+    {
+        public static void Postfix(Farmer __instance)
+        {
+            var ext = __instance.GetExtData();
+            __instance.NetFields.AddField(ext.ExtraEquippables);
+        }
     }
 
     internal static class Extensions
@@ -81,6 +105,14 @@ namespace SpaceCore
         /// <summary>Whether the current update tick is the first one raised by SMAPI.</summary>
         private bool IsFirstTick;
 
+        internal class EquipmentSlotData
+        {
+            public IManifest CorrespondingMod { get; set; }
+            public Func<Item, bool> SlotValidator { get; set; }
+            public Func<string> DisplayName { get; set; }
+            public Texture2D BackgroundTex { get; set; }
+            public Rectangle? BackgroundRect { get; set; }
+        }
 
         /*********
         ** Accessors
@@ -88,9 +120,10 @@ namespace SpaceCore
         public Configuration Config { get; set; }
         internal static SpaceCore Instance;
         internal static IReflectionHelper Reflection;
-        internal static List<Type> ModTypes = new();
-        internal static Dictionary<Type, Dictionary<string, CustomPropertyInfo>> CustomProperties = new();
-
+        internal static readonly List<Type> ModTypes = new();
+        internal static readonly Dictionary<Type, Dictionary<string, CustomPropertyInfo>> CustomProperties = new();
+        internal static readonly Dictionary<string, EquipmentSlotData> EquipmentSlots = new();
+        internal static IApi api;
 
         /*********
         ** Public methods
@@ -115,6 +148,13 @@ namespace SpaceCore
             helper.Events.Input.ButtonPressed += this.Input_ButtonPressed;
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
+            helper.Events.Content.AssetRequested += this.Content_AssetRequested;
+
+
+            helper.ConsoleCommands.Add("equipment", "Open the SpaceCore equipment menu", (cmd, args) =>
+            {
+                Game1.activeClickableMenu = new EquipmentMenu();
+            });
 
             var manualContext = new TriggerActionContext("Manual", Array.Empty<object>(), null);
             GameLocation.RegisterTileAction("spacechase0.SpaceCore_OpenGlobalInventory", (loc, args, farmer, pos) =>
@@ -309,6 +349,8 @@ namespace SpaceCore
             Event.RegisterCommand("screenShake", ScreenShakeEventCommand);
             Event.RegisterCommand("setZoom", SetZoomEventCommand);
             Event.RegisterCommand("smoothZoom", SmoothZoomEventCommand);
+            Event.RegisterCommand("switchEventFull", SwitchEventFullCommand);
+            Event.RegisterCommand("reSetUpCharacters", ReSetUpCharactersCommand);
 
             Commands.Register();
             VanillaAssetExpansion.VanillaAssetExpansion.Init();
@@ -338,6 +380,74 @@ namespace SpaceCore
                 new SpriteBatchPatcher(),
                 new ToolDataDefinitionPatcher()
             );
+        }
+
+        private void ReSetUpCharactersCommand(Event @event, string[] args, EventContext context)
+        {
+            @event.actors.Clear();
+            Helper.Reflection.GetMethod(@event, "setUpCharacters").Invoke(string.Join(' ', args.Skip(1)), context.Location);
+            @event.CurrentCommand++;
+        }
+
+        private void SwitchEventFullCommand(Event @event, string[] args, EventContext context)
+        {
+            if (!ArgUtility.TryGet(args, 1, out string newKey, out string error))
+            {
+                context.LogErrorAndSkip(error);
+                return;
+            }
+            string[] commands;
+            if (@event.isFestival)
+            {
+                if (!@event.TryGetFestivalDataForYear(newKey, out string raw2))
+                {
+                    DefaultInterpolatedStringHandler defaultInterpolatedStringHandler = new DefaultInterpolatedStringHandler(90, 2);
+                    defaultInterpolatedStringHandler.AppendLiteral("can't load new event from festival field '");
+                    defaultInterpolatedStringHandler.AppendFormatted(newKey);
+                    defaultInterpolatedStringHandler.AppendLiteral("' because there's no such key in the '");
+                    defaultInterpolatedStringHandler.AppendFormatted(@event.id);
+                    defaultInterpolatedStringHandler.AppendLiteral("' festival");
+                    context.LogErrorAndSkip(defaultInterpolatedStringHandler.ToStringAndClear());
+                    return;
+                }
+                commands = Event.ParseCommands(raw2, context.Event.farmer);
+            }
+            else
+            {
+                string assetName = "Data\\Events\\" + Game1.currentLocation.Name;
+                if (!Game1.content.DoesAssetExist<Dictionary<string, string>>(assetName))
+                {
+                    context.LogErrorAndSkip("can't load new event from asset '" + assetName + "' because it doesn't exist");
+                    return;
+                }
+                if (!Game1.content.Load<Dictionary<string, string>>(assetName).TryGetValue(newKey, out string raw))
+                {
+                    DefaultInterpolatedStringHandler defaultInterpolatedStringHandler = new DefaultInterpolatedStringHandler(81, 2);
+                    defaultInterpolatedStringHandler.AppendLiteral("can't load new event from asset '");
+                    defaultInterpolatedStringHandler.AppendFormatted(assetName);
+                    defaultInterpolatedStringHandler.AppendLiteral("' because it doesn't contain the required '");
+                    defaultInterpolatedStringHandler.AppendFormatted(newKey);
+                    defaultInterpolatedStringHandler.AppendLiteral("' key");
+                    context.LogErrorAndSkip(defaultInterpolatedStringHandler.ToStringAndClear());
+                    return;
+                }
+                commands = Event.ParseCommands(raw, context.Event.farmer);
+            }
+            List<string> baseCmd =
+            [
+                $"playMusic {commands[0]}",
+                $"viewport {commands[1]}",
+                $"reSetUpCharacters {commands[2]}"
+            ];
+
+            @event.ReplaceAllCommands(baseCmd.Concat(commands.Skip(3)).ToArray());
+            @event.eventSwitched = true;
+        }
+
+        private void Content_AssetRequested(object sender, AssetRequestedEventArgs e)
+        {
+            if (e.NameWithoutLocale.IsEquivalentTo("spacechase0.SpaceCore/ExtraEquipmentIcon"))
+                e.LoadFromModFile<Texture2D>("assets/extras.png", AssetLoadPriority.Low);
         }
 
         private static HashSet<string> ambiguousMethods = new();
@@ -544,11 +654,11 @@ namespace SpaceCore
             return string.Equals( str1, str2, caseSensitive ? StringComparison.InvariantCulture : StringComparison.InvariantCultureIgnoreCase );
         }
 
-        private Api api;
+        private Api apiReturned;
         /// <inheritdoc />
         public override object GetApi()
         {
-            return api ??= new Api();
+            return apiReturned ??= new Api();
         }
 
         private static void DamageFarmerEventCommand(Event evt, string[] args, EventContext ctx)
@@ -821,9 +931,10 @@ namespace SpaceCore
 
         private void SetRainingEventCommand(Event @event, string[] args, EventContext context)
         {
-            Game1.netWorldState.Value.GetWeatherForLocation(args[1]).IsRaining = Convert.ToBoolean(args[2]);
+            bool val = Convert.ToBoolean(args[2]);
+            Game1.netWorldState.Value.GetWeatherForLocation(args[1]).IsRaining = val;
             if (args[1] == "Default")
-                Game1.isRaining = true;
+                Game1.isRaining = val;
 
             @event.CurrentCommand++;
         }
@@ -874,6 +985,9 @@ namespace SpaceCore
         {
             // Set up skills in GameLaunched to allow ModRegistry to be used here.
             Skills.Init(this.Helper.Events);
+
+            api = Helper.ModRegistry.GetApi<IApi>(ModManifest.UniqueID);
+            api.RegisterCustomProperty(typeof(Farmer), "SpaceCore_ExtraEquippables", typeof(NetStringDictionary<Item, NetRef<Item>>), AccessTools.Method(typeof(FarmerExtData), nameof(FarmerExtData.get_equippables)), AccessTools.Method(typeof(FarmerExtData), nameof(FarmerExtData.set_equippables)));
 
             var configMenu = this.Helper.ModRegistry.GetGenericModConfigMenuApi(this.Monitor);
             if (configMenu != null)
@@ -1020,10 +1134,10 @@ namespace SpaceCore
                         Game1.player.Stamina += whole; 
                     }
                 }
-                if (ext.HealthRegen > 0)
+                if (ext.HealthRegen != 0)
                 {
                     ext.healthBuffer += ext.HealthRegen * (float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds;
-                    if (ext.healthBuffer >= 1)
+                    if (Math.Abs(ext.healthBuffer) >= 1)
                     {
                         int whole = (int)Math.Truncate(ext.healthBuffer);
                         ext.healthBuffer -= whole;

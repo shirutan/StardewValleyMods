@@ -10,6 +10,11 @@ namespace SpaceShared
         public double Weight { get; set; }
         public T Value { get; set; }
 
+        public Weighted()
+        : this(1.0, default)
+        {
+        }
+
         public Weighted(double weight, T value)
         {
             this.Weight = weight;

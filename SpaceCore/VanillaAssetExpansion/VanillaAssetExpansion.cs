@@ -20,6 +20,7 @@ using StardewValley.Extensions;
 using StardewValley.Menus;
 using StardewValley.Network;
 using StardewValley.Objects;
+using StardewValley.Tools;
 using StardewValley.Triggers;
 using static System.Collections.Specialized.BitVector32;
 using static SpaceCore.SpaceCore;
@@ -370,24 +371,39 @@ namespace SpaceCore.VanillaAssetExpansion
 
             if (Game1.shouldTimePass())
             {
-                List<string> worn = new();
-                if(Game1.player.hat.Value != null )
-                    worn.Add(Game1.player.hat.Value.QualifiedItemId);
-                if (Game1.player.shirtItem.Value != null)
-                    worn.Add(Game1.player.shirtItem.Value.QualifiedItemId);
-                if (Game1.player.pantsItem.Value != null)
-                    worn.Add(Game1.player.pantsItem.Value.QualifiedItemId);
-                if (Game1.player.boots.Value != null)
-                    worn.Add(Game1.player.boots.Value.QualifiedItemId);
+                List<Item> toCheck = Game1.player.GetEquippedItems().ToList();
+                if (Game1.player.ActiveItem != null &&
+                    !toCheck.Contains(Game1.player.CurrentItem)) // GetEquippedItems adds CurrentTool, which means it will already be there if it's a tool but not if it's a normal item
+                    toCheck.Add(Game1.player.CurrentItem);
                 foreach (var trinket in Game1.player.trinketItems)
                 {
-                    if ( trinket != null )
-                        worn.Add(trinket.QualifiedItemId);
+                    if (trinket != null)
+                        toCheck.Add(trinket);
+                }
+
+                foreach (var item in toCheck.ToList())
+                {
+                    if (item is not Tool t)
+                        continue;
+
+                    foreach (var attached in t.attachments)
+                    {
+                        if (attached != null)
+                            toCheck.Add(attached);
+                    }
                 }
 
                 Queue<Ring> rings = new();
-                rings.Enqueue(Game1.player.leftRing.Value);
-                rings.Enqueue(Game1.player.rightRing.Value);
+                foreach (var ring in toCheck.Where(i => i is Ring ring).Cast<Ring>())
+                {
+                    toCheck.Remove(ring);
+                    rings.AddItem(ring);
+                }
+
+                List<string> worn = new();
+                foreach (var item in toCheck)
+                    worn.Add(item.QualifiedItemId);
+
                 while (rings.Count > 0)
                 {
                     Ring r = rings.Dequeue();
