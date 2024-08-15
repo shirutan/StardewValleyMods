@@ -1,0 +1,2 @@
+namespace SpaceCore.Content.Functions;
+

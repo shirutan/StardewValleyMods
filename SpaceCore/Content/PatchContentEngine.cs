@@ -19,13 +19,8 @@ using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Minigames;
 
-#if IS_SPACECORE
 namespace SpaceCore.Content
 {
-#else
-namespace SpaceShared.Content
-{
-#endif
     public abstract class ContentEntry
     {
         private static Token AlwaysTrue = new Token() { Value = "TRUE", IsString = true };

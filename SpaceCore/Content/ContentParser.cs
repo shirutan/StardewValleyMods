@@ -10,13 +10,8 @@ using System.Xml;
 using StardewModdingAPI;
 using StardewValley;
 
-#if IS_SPACECORE
 namespace SpaceCore.Content
 {
-#else
-namespace SpaceShared.Content
-{
-#endif
     public class SourceElement
     {
         public string FilePath { get; set; }

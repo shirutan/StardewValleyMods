@@ -13,14 +13,8 @@ using SpaceShared.APIs;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
-#if IS_SPACECORE
 namespace SpaceCore.Content
 {
-#else
-namespace SpaceShared.Content
-{
-#endif
-
     public static class ContentExtensions
     {
         private class CPTokenHolder
@@ -138,7 +132,7 @@ namespace SpaceShared.Content
                     FilePath = fcall.FilePath,
                     Line = fcall.Line,
                     Column = fcall.Column,
-                    Value = ce.Helper.ModRegistry.IsLoaded( modTok.Value ) ? "true" : "false",
+                    Value = ce.Helper.ModRegistry.IsLoaded(modTok.Value) ? "true" : "false",
                     IsString = true,
                     Context = fcall.Context,
                 };
@@ -300,6 +294,42 @@ namespace SpaceShared.Content
                 // TODO: Do I need to re-simplify here?
 
                 return ret;
+            }
+            else if (fcall.Function == "Join")
+            {
+                if (fcall.Parameters.Count < 2 || fcall.Parameters[0] is not Token sep || fcall.Parameters[1] is not Array toJoin)
+                    throw new ArgumentException($"Join must have a separator parameter (token) then an array parameter (things to join), at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+
+                StringBuilder contents = new();
+                bool first = true;
+                void JoinArray(Array arr)
+                {
+                    foreach (var entry in toJoin.Contents)
+                    {
+                        if (entry is Token tok)
+                        {
+                            if (!first)
+                                contents.Append(sep.Value);
+                            contents.Append(tok.Value);
+                            first = false;
+                        }
+                        else if (entry is Array arr2)
+                        {
+                            JoinArray(arr2);
+                        }
+                    }
+                }
+                JoinArray(toJoin);
+
+                return new Token()
+                {
+                    FilePath = fcall.FilePath,
+                    Line = fcall.Line,
+                    Column = fcall.Column,
+                    Value = contents.ToString(),
+                    IsString = true,
+                    Context = fcall.Context,
+                };
             }
             else if (allowLateResolve && fcall.Function == "Choose")
             {
