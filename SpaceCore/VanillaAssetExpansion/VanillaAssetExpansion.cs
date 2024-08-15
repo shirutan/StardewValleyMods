@@ -394,7 +394,7 @@ namespace SpaceCore.VanillaAssetExpansion
                 }
 
                 Queue<Ring> rings = new();
-                foreach (var ring in toCheck.Where(i => i is Ring ring).Cast<Ring>())
+                foreach (var ring in toCheck.Where(i => i is Ring ring).Cast<Ring>().ToList())
                 {
                     toCheck.Remove(ring);
                     rings.AddItem(ring);

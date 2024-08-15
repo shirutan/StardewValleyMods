@@ -1124,6 +1124,8 @@ namespace SpaceCore.Dungeons
         }
     }
 
+    // reloadSprite isn't used anymore by us anyways
+    /*
     [HarmonyPatch]
     public static class MonsterSpriteOverridesPatch
     {
@@ -1160,6 +1162,8 @@ namespace SpaceCore.Dungeons
             __instance.Sprite.ignoreSourceRectUpdates = old;
         }
     }
+    */
+
 
     [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.monsterDrop))]
     public static class GameLocationMonsterDropOverrideForSpawnablesPatch

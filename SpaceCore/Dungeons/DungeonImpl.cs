@@ -436,6 +436,9 @@ namespace SpaceCore.Dungeons
                     dungeonsWithPlayers.Add(loc.GetDungeonExtData().spaceCoreDungeonId.Value);
                 }
 
+                if (farmer.currentLocation == null)
+                    continue;
+
                 var currExt = farmer.currentLocation.GetDungeonExtData();
                 if (currExt.spaceCoreDungeonId.Value != null)
                     dungeonsWithPlayers.Add(currExt.spaceCoreDungeonId.Value);
