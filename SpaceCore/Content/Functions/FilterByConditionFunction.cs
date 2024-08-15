@@ -95,9 +95,9 @@ internal class FilterByConditionFunction : BaseFunction, IRefreshingFunction
         return ret;
     }
 
-    public bool WouldChangeFromRefresh(FuncCall fcall, PatchContentEngine ce)
+    public bool WouldChangeFromRefresh(FuncCall fcall, PatchContentEngine pce)
     {
-        var arr = fcall.Parameters[0].DoSimplify(ce, true) as Array;
+        var arr = fcall.Parameters[0].DoSimplify(pce, true) as Array;
         if ( arr == null)
             return true;
 
@@ -108,12 +108,12 @@ internal class FilterByConditionFunction : BaseFunction, IRefreshingFunction
             SourceElement condElem = null;
             if (entryVal != null && entryVal.Contents.TryGetValue(ConditionKey, out condElem))
             {
-                cond = condElem.SimplifyToToken(ce, true);
+                cond = condElem.SimplifyToToken(pce, true);
                 if (cond == null && true)
                     return true;
             }
 
-            bool condMet = ce.CheckCondition(cond);
+            bool condMet = pce.CheckCondition(cond);
             if (!LastStates.TryGetValue(cond.Uid, out bool lastCond) || condMet != lastCond)
             {
                 return true;
