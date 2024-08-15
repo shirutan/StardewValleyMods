@@ -420,7 +420,7 @@ internal static class Rescheduler
                 _visited.Value.Add(node.Name);
                 if (Game1.getLocationFromName(node.Name) is not GameLocation current)
                 {
-                    SpaceCore.SpaceCore.Instance.Monitor.LogOnce($"A warp from {start.Name} references {node.Name} which could not be found.", LogLevel.Warn);
+                    SpaceCore.SpaceCore.Instance.Monitor.LogOnce($"A warp from {node.Prev?.Name} references {node.Name} which could not be found.", LogLevel.Warn);
                     continue;
                 }
 
