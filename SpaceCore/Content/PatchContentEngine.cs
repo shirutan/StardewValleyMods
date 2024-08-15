@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.Build.Framework;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using SpaceCore.Content.Functions;
 using SpaceShared;
 using SpaceShared.APIs;
 using StardewModdingAPI;
@@ -33,10 +34,10 @@ namespace SpaceCore.Content
         public SourceElement Path { get; set; }
         public SourceElement Condition { get; set; } = AlwaysTrue;
         public int Priority { get; set; } = (int)AssetLoadPriority.Medium;
-        public RefreshTime Refresh{ get; set; } = RefreshTime.Daily;
+        public RefreshTime Refresh { get; set; } = RefreshTime.Daily;
 
-        protected bool ConditionsMet { get; private set; }
-        protected bool NeedsRefresh { get; set; } = false;
+        protected internal bool ConditionsMet { get; private set; }
+        protected internal bool NeedsRefresh { get; set; } = false;
 
         public enum RefreshTime
         {
@@ -45,7 +46,7 @@ namespace SpaceCore.Content
 
         private static Token ConditionKey = new() { Value = "Condition", IsString = true };
         private static Token PriorityKey = new() { Value = "Priority", IsString = true };
-        private static Token IdKey = new() { Value = "ID", IsString = true };
+        private static Token IdKey = new() { Value = "Id", IsString = true };
         private static Token DefaultId = new() { Value = "", IsString = true };
         private static Token RefreshKey = new() { Value = "Refresh", IsString = true };
         private static Token DefaultRefresh = new() { Value = "Daily", IsString = true };
@@ -97,7 +98,7 @@ namespace SpaceCore.Content
                         break;
                 }
             }
-            Id = (extras.Contents.GetOrDefault(ConditionKey, DefaultId) as Token).Value;
+            Id = (extras.Contents.GetOrDefault(IdKey, DefaultId) as Token).Value;
             Refresh = Enum.Parse<RefreshTime>((extras.Contents.GetOrDefault(RefreshKey, DefaultRefresh) as Token).Value);
         }
 
@@ -343,7 +344,8 @@ namespace SpaceCore.Content
             }
             else if (se is Statement statement)
             {
-                if (Engine.FunctionsTriggeringRefresh.Contains(statement.FuncCall.Function))
+                if (Engine.SimplifyFunctions.TryGetValue(statement.FuncCall.Function, out var func) &&
+                    func is IRefreshingFunction rfunc && rfunc.WouldChangeFromRefresh(statement.FuncCall, Engine))
                     NeedsRefresh = true;
                 if (statement.SimplifyToToken(Engine, allowLateResolve: true) == null)
                     ret = false;
@@ -504,7 +506,8 @@ namespace SpaceCore.Content
             }
             else if (se is Statement statement)
             {
-                if (Engine.FunctionsTriggeringRefresh.Contains(statement.FuncCall.Function))
+                if (Engine.SimplifyFunctions.TryGetValue(statement.FuncCall.Function, out var func) &&
+                    func is IRefreshingFunction rfunc && rfunc.WouldChangeFromRefresh(statement.FuncCall, Engine))
                     NeedsRefresh = true;
                 if (statement.SimplifyToToken(Engine, allowLateResolve: true) == null)
                     ret = false;
@@ -610,8 +613,8 @@ namespace SpaceCore.Content
             }
             else if (se is Statement statement)
             {
-                if (Engine.FunctionsTriggeringRefresh.Contains(statement.FuncCall.Function))
-                    NeedsRefresh = true;
+                if (Engine.SimplifyFunctions.TryGetValue(statement.FuncCall.Function, out var func) &&
+                    func is IRefreshingFunction rfunc && rfunc.WouldChangeFromRefresh(statement.FuncCall, Engine))
                 if (statement.SimplifyToToken(Engine, allowLateResolve: true) == null)
                     ret = false;
             }
@@ -643,11 +646,11 @@ namespace SpaceCore.Content
         public Dictionary<string, List<ContentEntry>> EntriesById { get; } = new();
         private Dictionary<string, List<ContentEntry>> EntriesByEditedFile { get; } = new();
 
-        public HashSet<string> FunctionsTriggeringRefresh { get; } = ["Choose", "ChooseWeighted", "FilterByCondition"];
-
         public PatchContentEngine(IManifest manifest, IModHelper helper, string contentRootFile)
         :   base( manifest, helper, contentRootFile )
         {
+            AddSimplifyFunction(new ContentPatcherTokenFunction());
+
             cpVersion = manifest.Dependencies.FirstOrDefault(md => md.UniqueID == "Pathoschild.ContentPatcher")?.MinimumVersion;
             cp = Helper.ModRegistry.GetApi<IContentPatcherApi>("Pathoschild.ContentPatcher");
 

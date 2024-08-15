@@ -19,6 +19,7 @@ namespace SpaceCore.Content
         public int Column { get; set; }
 
         public Block Context { get; set; }
+        public string Uid { get; set; }
     }
 
     public class Token : SourceElement
@@ -99,14 +100,18 @@ namespace SpaceCore.Content
             ContentRootFolderActual = Path.Combine(Helper.DirectoryPath, contentRootFolder);
         }
 
-        public Array Load(string filePath)
+        public Array Load(string filePath, string uidContext = "")
         {
             string fullPath = Path.Combine(ContentRootFolderActual, filePath);
 
             string contents = File.ReadAllText(fullPath);
 
             List<Token> tokens = Tokenize(contents);
-            tokens.ForEach(t => t.FilePath = filePath);
+            tokens.ForEach(t =>
+            {
+                t.FilePath = filePath;
+                t.Uid = $"{uidContext}|{t.FilePath}:{t.Line}:{t.Column}";
+            });
 
             tokens.Insert(0, new Token() { FilePath = filePath, Value = "[" });
             tokens.Add(new Token() { FilePath = filePath, Value = "]" });
@@ -127,7 +132,13 @@ namespace SpaceCore.Content
             {
                 if (buffer.Length > 0)
                 {
-                    tokens.Add(new Token() { Line = line, Column = column - buffer.Length + 1, Value = buffer.ToString(), IsString = true });
+                    tokens.Add(new Token()
+                    {
+                        Line = line,
+                        Column = column - buffer.Length + 1,
+                        Value = buffer.ToString(),
+                        IsString = true
+                    });
                     buffer.Clear();
                 }
             }
@@ -194,7 +205,12 @@ namespace SpaceCore.Content
                     else if (!escaped && (c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']' || c == ';' || c == ':' || c == '~'))
                     {
                         FlushBuffer();
-                        tokens.Add(new Token() { Line = line, Column = column + 1, Value = c.ToString() });
+                        tokens.Add(new Token()
+                        {
+                            Line = line,
+                            Column = column + 1,
+                            Value = c.ToString()
+                        });
                     }
 
                     // Whitespace
@@ -308,6 +324,7 @@ namespace SpaceCore.Content
                 FilePath = tokens[start].FilePath,
                 Line = tokens[start].Line,
                 Column = tokens[start].Column,
+                Uid = tokens[start].Uid
             };
 
             int i = start + 1;
@@ -347,6 +364,7 @@ namespace SpaceCore.Content
                 FilePath = tokens[start].FilePath,
                 Line = tokens[start].Line,
                 Column = tokens[start].Column,
+                Uid = tokens[start].Uid,
             };
 
             int i = start + 1;
@@ -394,6 +412,7 @@ namespace SpaceCore.Content
                 FilePath = tokens[start].FilePath,
                 Line = tokens[start].Line,
                 Column = tokens[start].Column,
+                Uid = tokens[start].Uid,
             };
 
             (ret.FuncCall, start) = BuildFuncCall(tokens, start);
@@ -416,6 +435,7 @@ namespace SpaceCore.Content
                 FilePath = tokens[start].FilePath,
                 Line = tokens[start].Line,
                 Column = tokens[start].Column,
+                Uid = tokens[start].Uid,
             };
 
             ret.Function = tokens[start].Value;

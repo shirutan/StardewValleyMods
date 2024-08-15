@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework.Input;
+using SpaceCore.Content.Functions;
 using SpaceShared;
 using SpaceShared.APIs;
 using StardewModdingAPI;
@@ -17,13 +18,6 @@ namespace SpaceCore.Content
 {
     public static class ContentExtensions
     {
-        private class CPTokenHolder
-        {
-            public string LastString { get; set; }
-            public IManagedTokenString LastTokenString { get; set; }
-        }
-
-        private static ConditionalWeakTable<SourceElement, CPTokenHolder> elementTokens = new();
 
         public static Token SimplifyToToken(this SourceElement se, ContentEngine ce, bool allowLateResolve = false, bool require = true)
         {
@@ -54,466 +48,16 @@ namespace SpaceCore.Content
 
         public static SourceElement Simplify(this FuncCall fcall, ContentEngine ce, bool allowLateResolve = false)
         {
-            if (fcall.Function == "^")
+            if (ce.SimplifyFunctions.TryGetValue(fcall.Function, out var func))
             {
-                if (fcall.Parameters.Count < 1)
-                    throw new ArgumentException($"Dynamic value function ^ must have one string parameter, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+                if (!allowLateResolve && func.IsLateResolver)
+                    return fcall;
 
-                var tok = fcall.Parameters[0].SimplifyToToken(ce);
-                if (!fcall.Context.Contents.TryGetValue(tok, out SourceElement se))
-                {
-                    if (fcall.Parameters.Count == 1)
-                    {
-                        se = new Token()
-                        {
-                            FilePath = fcall.FilePath,
-                            Line = fcall.Line,
-                            Column = fcall.Column,
-                            Value = $"invalid dynamic value {tok.Value} @ {fcall.FilePath}:{fcall.Line}:{fcall.Column}",
-                            IsString = true,
-                            Context = fcall.Context,
-                        };
-                    }
-                    else return fcall.Parameters[1];
-                }
-
-                return se;
-            }
-            else if (fcall.Function == "@" || fcall.Function == "@@")
-            {
-                if (fcall.Parameters.Count != 1)
-                    throw new ArgumentException($"Asset path function @ must have exactly one string parameter, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
-
-                string path = Path.Combine(fcall.Function == "@" ? ce.ContentRootFolder : ce.ContentRootFolderActual, Path.GetDirectoryName(fcall.Parameters[0].FilePath), fcall.Parameters[0].SimplifyToToken(ce).Value).Replace('\\', '/');
-                List<string> pathParts = new(path.Split('/'));
-                for (int i = 1; i < pathParts.Count; ++i)
-                {
-                    if (pathParts[i] == "..")
-                    {
-                        pathParts.RemoveAt(i);
-                        pathParts.RemoveAt(i - 1);
-                    }
-                }
-                path = string.Join('/', pathParts);
-
-                return new Token()
-                {
-                    FilePath = fcall.FilePath,
-                    Line = fcall.Line,
-                    Column = fcall.Column,
-                    Value = fcall.Function == "@" ? ce.Helper.ModContent.GetInternalAssetName(path).Name : path,
-                    IsString = true,
-                    Context = fcall.Context,
-                };
-            }
-            else if (fcall.Function == "%")
-            {
-                if (fcall.Parameters.Count != 1)
-                    throw new ArgumentException($"I18n function $ must have exactly one string parameter, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
-
-                return new Token()
-                {
-                    FilePath = fcall.FilePath,
-                    Line = fcall.Line,
-                    Column = fcall.Column,
-                    Value = ce.Helper.Translation.Get(fcall.Parameters[0].SimplifyToToken(ce).Value),
-                    IsString = true,
-                    Context = fcall.Context,
-                };
-            }
-            else if (fcall.Function == "HasMod")
-            {
-                if (fcall.Parameters.Count != 1)
-                    throw new ArgumentException($"HasMod function must have exactly one string parameters, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
-                Token modTok = fcall.Parameters[0].SimplifyToToken(ce);
-
-                return new Token()
-                {
-                    FilePath = fcall.FilePath,
-                    Line = fcall.Line,
-                    Column = fcall.Column,
-                    Value = ce.Helper.ModRegistry.IsLoaded(modTok.Value) ? "true" : "false",
-                    IsString = true,
-                    Context = fcall.Context,
-                };
-            }
-            else if (fcall.Function == "Vector2")
-            {
-                if (fcall.Parameters.Count != 2)
-                    throw new ArgumentException($"Vector2 function must have exactly two float parameters, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
-                Token tokX = fcall.Parameters[0].SimplifyToToken(ce);
-                Token tokY = fcall.Parameters[1].SimplifyToToken(ce);
-                if (!float.TryParse(tokX.Value, out float x) || !float.TryParse(tokY.Value, out float y))
-                    throw new ArgumentException($"Vector2 function must have exactly two float parameters, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
-
-                return new Block()
-                {
-                    FilePath = fcall.FilePath,
-                    Line = fcall.Line,
-                    Column = fcall.Column,
-                    Contents =
-                    {
-                        { new Token() { Value = "X", IsString = true }, tokX },
-                        { new Token() { Value = "Y", IsString = true }, tokY },
-                    },
-                    Context = fcall.Context,
-                };
-            }
-            else if (fcall.Function == "Rectangle")
-            {
-                if (fcall.Parameters.Count != 4)
-                    throw new ArgumentException($"Rectangle function must have exactly four integer parameters, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
-                Token tokX = fcall.Parameters[0].SimplifyToToken(ce);
-                Token tokY = fcall.Parameters[1].SimplifyToToken(ce);
-                Token tokW = fcall.Parameters[2].SimplifyToToken(ce);
-                Token tokH = fcall.Parameters[3].SimplifyToToken(ce);
-                if (!int.TryParse(tokX.Value, out int x) || !int.TryParse(tokY.Value, out int y) || !int.TryParse(tokX.Value, out int w) || !int.TryParse(tokY.Value, out int h))
-                    throw new ArgumentException($"Rectangle function must have exactly four integer parameters, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
-
-                return new Block()
-                {
-                    FilePath = fcall.FilePath,
-                    Line = fcall.Line,
-                    Column = fcall.Column,
-                    Contents =
-                    {
-                        { new Token() { Value = "X", IsString = true }, tokX },
-                        { new Token() { Value = "Y", IsString = true }, tokY },
-                        { new Token() { Value = "Width", IsString = true }, tokW },
-                        { new Token() { Value = "Height", IsString = true }, tokH },
-                    },
-                    Context = fcall.Context,
-                };
-            }
-            else if (fcall.Function == "Color")
-            {
-                if (fcall.Parameters.Count < 3 || fcall.Parameters.Count > 4)
-                    throw new ArgumentException($"Color function must have either three or four integer parameters, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
-                Token tokR = fcall.Parameters[0].SimplifyToToken(ce);
-                Token tokG = fcall.Parameters[1].SimplifyToToken(ce);
-                Token tokB = fcall.Parameters[2].SimplifyToToken(ce);
-                Token tokA = fcall.Parameters.Count == 4 ? fcall.Parameters[3].SimplifyToToken(ce) : new Token() { Value = "255", IsString = true };
-                if (!int.TryParse(tokR.Value, out int r) || !int.TryParse(tokG.Value, out int g) || !int.TryParse(tokB.Value, out int b) || !int.TryParse(tokA.Value, out int a))
-                    throw new ArgumentException($"Color function must have either three or four integer parameters, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
-
-                return new Block()
-                {
-                    FilePath = fcall.FilePath,
-                    Line = fcall.Line,
-                    Column = fcall.Column,
-                    Contents =
-                    {
-                        { new Token() { Value = "R", IsString = true }, tokR },
-                        { new Token() { Value = "G", IsString = true }, tokG },
-                        { new Token() { Value = "B", IsString = true }, tokB },
-                        { new Token() { Value = "A", IsString = true }, tokA },
-                    },
-                    Context = fcall.Context,
-                };
-            }
-            else if (fcall.Function == "Concatenate")
-            {
-                string str = "";
-                foreach (var param in fcall.Parameters)
-                {
-                    str += param.SimplifyToToken(ce).Value;
-                }
-
-                return new Token()
-                {
-                    FilePath = fcall.FilePath,
-                    Line = fcall.Line,
-                    Column = fcall.Column,
-                    Value = str,
-                    IsString = true,
-                    Context = fcall.Context,
-                };
-            }
-            else if (fcall.Function == "Combine")
-            {
-                if (fcall.Parameters.Count == 0)
-                {
-                    return new Token()
-                    {
-                        FilePath = fcall.FilePath,
-                        Line = fcall.Line,
-                        Column = fcall.Column,
-                        Value = "~", // null
-                        Context = fcall.Context,
-                    };
-                }
-
-                SourceElement ret = null;
-                if (fcall.Parameters[0] is Array)
-                {
-                    var arr = new Array()
-                    {
-                        FilePath = fcall.FilePath,
-                        Line = fcall.Line,
-                        Column = fcall.Column,
-                        Context = fcall.Context,
-                    };
-
-                    foreach (var param in fcall.Parameters)
-                    {
-                        arr.Contents.AddRange((param as Array).Contents);
-                    }
-
-                    ret = arr;
-                }
-                else if (fcall.Parameters[0] is Block)
-                {
-                    var block = new Block()
-                    {
-                        FilePath = fcall.FilePath,
-                        Line = fcall.Line,
-                        Column = fcall.Column,
-                        Context = fcall.Context,
-                    };
-
-                    foreach (var param in fcall.Parameters)
-                    {
-                        foreach (var pair in (param as Block).Contents)
-                            block.Contents.Add(pair.Key, pair.Value);
-                    }
-
-                    ret = block;
-                }
-                else
-                {
-                    ret = new Token()
-                    {
-                        FilePath = fcall.FilePath,
-                        Line = fcall.Line,
-                        Column = fcall.Column,
-                        Value = "~", // null
-                        Context = fcall.Context,
-                    };
-                }
-
-                // TODO: Do I need to re-simplify here?
-
-                return ret;
-            }
-            else if (fcall.Function == "Join")
-            {
-                if (fcall.Parameters.Count < 2 || fcall.Parameters[0] is not Token sep || fcall.Parameters[1] is not Array toJoin)
-                    throw new ArgumentException($"Join must have a separator parameter (token) then an array parameter (things to join), at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
-
-                StringBuilder contents = new();
-                bool first = true;
-                void JoinArray(Array arr)
-                {
-                    foreach (var entry in toJoin.Contents)
-                    {
-                        if (entry is Token tok)
-                        {
-                            if (!first)
-                                contents.Append(sep.Value);
-                            contents.Append(tok.Value);
-                            first = false;
-                        }
-                        else if (entry is Array arr2)
-                        {
-                            JoinArray(arr2);
-                        }
-                    }
-                }
-                JoinArray(toJoin);
-
-                return new Token()
-                {
-                    FilePath = fcall.FilePath,
-                    Line = fcall.Line,
-                    Column = fcall.Column,
-                    Value = contents.ToString(),
-                    IsString = true,
-                    Context = fcall.Context,
-                };
-            }
-            else if (allowLateResolve && fcall.Function == "Choose")
-            {
-                var firstParam = fcall.Parameters.ElementAtOrDefault(0)?.DoSimplify(ce, allowLateResolve);
-                if (fcall.Parameters.Count != 1 || firstParam is not Array arr)
-                    throw new ArgumentException($"Choose function must have only an array parameter, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
-
-                return arr.Contents[ce.Random.Next(arr.Contents.Count)];
-            }
-            else if (allowLateResolve && fcall.Function == "ChooseWeighted")
-            {
-                var firstParam = fcall.Parameters.ElementAtOrDefault(0)?.DoSimplify(ce, allowLateResolve);
-                if (firstParam is not Array arr)
-                    throw new ArgumentException($"ChooseWeighted function must have an array parameter first, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
-
-                if (fcall.Parameters.Count > 2)
-                    throw new ArgumentException($"Too many parameters, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
-                bool flatten = false;
-                if (fcall.Parameters.Count == 2 && fcall.Parameters[1] is not Token { Value: "Flatten", IsString: true })
-                    throw new ArgumentException($"Second argument to ChooseWeighted can only be \"Flatten\", at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
-                else if (fcall.Parameters.Count == 2)
-                    flatten = true;
-
-                List<Weighted<SourceElement>> choices = new();
-                foreach (var entry in arr.Contents)
-                {
-                    double weight = 1.0;
-                    if (entry is Block block)
-                    {
-                        SourceElement weightElem = block.Contents.GetOrDefault(WeightKey, DefaultWeight);
-                        Token weightTok = weightElem.SimplifyToToken(ce);
-                        if (weightTok != null)
-                        {
-                            if (!double.TryParse(weightTok.Value, out weight))
-                                Log.Warn($"Failed to parse weight value as number, at {weightTok.FilePath}:{weightTok.Line}:{weightTok.Column}");
-                        }
-
-                        if (flatten && block != null &&
-                            ((weightTok == DefaultWeight && block.Contents.Count == 1) || (weightTok != DefaultWeight && block.Contents.Count == 2)))
-                        {
-                            SourceElement toAdd = block.Contents.First().Value;
-                            if (toAdd == weightTok)
-                                toAdd = block.Contents.Skip(1).First().Value;
-                            choices.Add(new(weight, toAdd));
-                        }
-                        else
-                        {
-                            Block newBlock = new()
-                            {
-                                FilePath = block.FilePath,
-                                Line = block.Line,
-                                Column = block.Column,
-                                Context = block.Context,
-                            };
-                            foreach (var entryValEntry in block.Contents)
-                            {
-                                if (entryValEntry.Value != weightElem)
-                                    newBlock.Contents.Add(entryValEntry.Key, entryValEntry.Value);
-                            }
-                            choices.Add(new(weight, newBlock));
-                        }
-                    }
-                    else
-                    {
-                        choices.Add(new(weight, entry));
-                    }
-                }
-
-                return choices.Choose(ce.Random);
-            }
-            else if (allowLateResolve && fcall.Function == "FilterByCondition")
-            {
-                var firstParam = fcall.Parameters.ElementAtOrDefault(0)?.DoSimplify(ce, allowLateResolve);
-                if (firstParam is not Array arr)
-                    throw new ArgumentException($"Choose function must have an array parameter first, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
-                if (fcall.Parameters.Count > 2)
-                    throw new ArgumentException($"Too many parameters, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
-                bool flatten = false;
-                if (fcall.Parameters.Count == 2 && fcall.Parameters[1] is not Token { Value: "Flatten", IsString: true })
-                    throw new ArgumentException($"Second argument to FilterByCondition can only be \"Flatten\", at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
-                else if (fcall.Parameters.Count == 2)
-                    flatten = true;
-
-                Array ret = new()
-                {
-                    FilePath = fcall.FilePath,
-                    Line = fcall.Line,
-                    Column = fcall.Column,
-                    Context = fcall.Context,
-                };
-
-                foreach (var entry in arr.Contents)
-                {
-                    Token cond = DefaultCondition;
-                    Block entryVal = entry as Block;
-                    SourceElement condElem = null;
-                    if (entryVal != null && entryVal.Contents.TryGetValue(ConditionKey, out condElem))
-                    {
-                        cond = condElem.SimplifyToToken(ce, allowLateResolve);
-                        if (cond == null && allowLateResolve)
-                            return null;
-                    }
-
-                    if (ce.CheckCondition(cond))
-                    {
-                        if (flatten && entryVal != null &&
-                            ((cond == DefaultCondition && entryVal.Contents.Count == 1) || (cond != DefaultCondition && entryVal.Contents.Count == 2)))
-                        {
-                            SourceElement toAdd = entryVal.Contents.First().Value;
-                            if (toAdd == cond)
-                                toAdd = entryVal.Contents.Skip(1).First().Value;
-                            ret.Contents.Add(toAdd);
-                        }
-                        else if (entryVal != null)
-                        {
-                            Block newBlock = new()
-                            {
-                                FilePath = entryVal.FilePath,
-                                Line = entryVal.Line,
-                                Column = entryVal.Column,
-                                Context = entryVal.Context,
-                            };
-                            foreach (var entryValEntry in entryVal.Contents)
-                            {
-                                if (entryValEntry.Value != cond)
-                                    newBlock.Contents.Add(entryValEntry.Key, entryValEntry.Value);
-                            }
-                            ret.Contents.Add(newBlock);
-                        }
-                        else
-                        {
-                            ret.Contents.Add(entry);
-                        }
-                    }
-                }
-
-                return ret;
-            }
-            else if (allowLateResolve && fcall.Function == "CP" && ce is PatchContentEngine pce && pce.cp != null)
-            {
-                if (pce.cp == null)
-                    throw new ArgumentException("Content Patcher API missing?");
-                if (fcall.Parameters.Count != 1)
-                    throw new ArgumentException($"CP function must have only 1 parameter, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
-
-                var arg = fcall.Parameters[0];
-                string argStr = arg.SimplifyToToken(ce).Value;
-                var managedTok = elementTokens.GetOrCreateValue(arg);
-                if (managedTok.LastString != argStr)
-                {
-                    managedTok.LastString = argStr;
-                    managedTok.LastTokenString = pce.cp.ParseTokenString(pce.Manifest, argStr, pce.cpVersion);
-                }
-                managedTok.LastTokenString.UpdateContext();
-
-                if (!managedTok.LastTokenString.IsValid)
-                    throw new ArgumentException($"Invalid CP token string at {fcall.FilePath}:{fcall.Line}:{fcall.Column}: {managedTok.LastTokenString.ValidationError}");
-                if (!managedTok.LastTokenString.IsReady)
-                {
-                    return null;
-                }
-
-                return new Token()
-                {
-                    FilePath = fcall.FilePath,
-                    Line = fcall.Line,
-                    Column = fcall.Column,
-                    Value = managedTok.LastTokenString.Value,
-                    IsString = true,
-                    Context = fcall.Context,
-                };
-            }
-            else if (ce.SimplifyExtensionFunctions.TryGetValue(fcall.Function, out var func))
-            {
-                return func(fcall, ce, allowLateResolve);
+                return func.Simplify(fcall, ce);
             }
 
             return fcall;
         }
-
-        private static Token ConditionKey = new() { Value = "Condition", IsString = true };
-        private static Token DefaultCondition = new() { Value = "true", IsString = true };
-        private static Token WeightKey = new() { Value = "Weight", IsString = true };
-        private static Token DefaultWeight = new() { Value = "1.0", IsString = true };
     }
 
     public class ContentEngine
@@ -529,11 +73,10 @@ namespace SpaceCore.Content
 
         protected Array Contents { get; set; }
 
-        public delegate SourceElement SourceElementSimplifyFunction(FuncCall fcall, ContentEngine ce, bool allowLateResolve);
-        internal Dictionary<string, SourceElementSimplifyFunction> SimplifyExtensionFunctions { get; } = new();
-        public void AddSimplifyExtensionFunction(string name, SourceElementSimplifyFunction func)
+        internal Dictionary<string, BaseFunction> SimplifyFunctions { get; } = new();
+        public void AddSimplifyFunction(BaseFunction func)
         {
-            SimplifyExtensionFunctions.Add(name, func);
+            SimplifyFunctions.Add(func.Name, func);
         }
 
         public Random Random { get; } = new();
@@ -546,6 +89,21 @@ namespace SpaceCore.Content
             ContentRootFolderActual = Path.Combine(Helper.DirectoryPath, ContentRootFolder);
             ContentRootFile = contentRootFile;
             Parser = new(Manifest, Helper, ContentRootFolder);
+
+            AddSimplifyFunction(new AssetPathFunction(absolute: false));
+            AddSimplifyFunction(new AssetPathFunction(absolute: true));
+            AddSimplifyFunction(new ChooseFunction());
+            AddSimplifyFunction(new ChooseWeightedFunction());
+            AddSimplifyFunction(new ColorFunction());
+            AddSimplifyFunction(new CombineFunction());
+            AddSimplifyFunction(new ConcatenateFunction());
+            AddSimplifyFunction(new ContextValueFunction());
+            AddSimplifyFunction(new FilterByConditionFunction());
+            AddSimplifyFunction(new HasModFunction());
+            AddSimplifyFunction(new JoinFunction());
+            AddSimplifyFunction(new LocalizationFunction());
+            AddSimplifyFunction(new RectangleFunction());
+            AddSimplifyFunction(new Vector2Function());
         }
 
         public virtual bool CheckCondition(Token condition)
@@ -574,11 +132,11 @@ namespace SpaceCore.Content
         {
         }
 
-        private SourceElement RecursiveLoad(string file, bool flatten = true, Block ctx = null )
+        private SourceElement RecursiveLoad(string file, bool flatten = true, Block ctx = null, string uidContext = "" )
         {
             ctx ??= new();
 
-            Array contents = Parser.Load(file);
+            Array contents = Parser.Load(file, uidContext);
             RecursiveLoadImpl( contents, Path.GetDirectoryName( file ), flatten: false, ctx, out SourceElement se );
             contents = (Array)se;
 
@@ -627,7 +185,7 @@ namespace SpaceCore.Content
                         }
                     }
 
-                    replacement = RecursiveLoad(token.Value.StartsWith( '/' ) ? token.Value.Substring( 1 ) : Path.Combine(subfolder, token.Value), flatten, newCtx);
+                    replacement = RecursiveLoad(token.Value.StartsWith( '/' ) ? token.Value.Substring( 1 ) : Path.Combine(subfolder, token.Value), flatten, newCtx, statement.Uid);
                     return true;
                 }
                 else if (statement.FuncCall.Function == "If")
@@ -650,6 +208,7 @@ namespace SpaceCore.Content
                             Value = "~",
                             IsString = false,
                             Context = ctx, // Can't recall if this is right or not... probably doesn't matter in this case though.
+                            Uid = statement.Uid,
                         };
                     }
                     return true;
@@ -696,7 +255,7 @@ namespace SpaceCore.Content
                     }
                 }
 
-                replacement = RecursiveLoad(Path.Combine(subfolder, token.Value), flatten: true, newCtx);
+                replacement = RecursiveLoad(Path.Combine(subfolder, token.Value), flatten: true, newCtx, elem.Uid);
                 return true;
             }
             else if ( elem is Block block )
