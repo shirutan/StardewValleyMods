@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 namespace SpaceCore.Content.Functions;
 internal class JoinFunction : BaseFunction
 {
+    public override bool IsLateResolver => true;
+
     public JoinFunction()
     :   base( "Join" )
     {
@@ -17,12 +19,21 @@ internal class JoinFunction : BaseFunction
         if (fcall.Parameters.Count < 2 || fcall.Parameters[0] is not Token sep || fcall.Parameters[1] is not Array toJoin)
             throw new ArgumentException($"Join must have a separator parameter (token) then an array parameter (things to join), at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
 
+        bool bail = false;
+
         StringBuilder contents = new();
         bool first = true;
         void JoinArray(Array arr)
         {
-            foreach (var entry in toJoin.Contents)
+            foreach (var entryRaw in arr.Contents)
             {
+                var entry = entryRaw.DoSimplify(ce, true);
+                if (entry == null)
+                {
+                    bail = true;
+                    return;
+                }
+
                 if (entry is Token tok)
                 {
                     if (!first)
@@ -37,6 +48,9 @@ internal class JoinFunction : BaseFunction
             }
         }
         JoinArray(toJoin);
+
+        if (bail)
+            return null;
 
         return new Token()
         {

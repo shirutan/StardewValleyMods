@@ -1,12 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace SpaceCore.Content.Functions;
 internal class Vector2Function : BaseFunction
 {
+    internal static readonly Token XKey = new Token() { Value = "X", IsString = true };
+    internal static readonly Token YKey = new Token() { Value = "Y", IsString = true };
+
     public Vector2Function()
     : base("Vector2")
     {
@@ -27,10 +31,10 @@ internal class Vector2Function : BaseFunction
             Line = fcall.Line,
             Column = fcall.Column,
             Contents =
-                    {
-                        { new Token() { Value = "X", IsString = true }, tokX },
-                        { new Token() { Value = "Y", IsString = true }, tokY },
-                    },
+            {
+                { XKey, tokX },
+                { YKey, tokY },
+            },
             Context = fcall.Context,
             Uid = fcall.Uid,
         };

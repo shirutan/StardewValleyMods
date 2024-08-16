@@ -8,7 +8,7 @@ using SpaceShared.APIs;
 using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
 
-namespace SpaceCore.Content.Functions;
+namespace SpaceCore.Content.Functions.StardewSpecific;
 internal class ContentPatcherTokenFunction : BaseFunction, IRefreshingFunction
 {
     private class CPTokenHolder

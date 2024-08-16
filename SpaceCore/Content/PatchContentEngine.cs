@@ -13,6 +13,7 @@ using Microsoft.Build.Framework;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpaceCore.Content.Functions;
+using SpaceCore.Content.Functions.StardewSpecific;
 using SpaceShared;
 using SpaceShared.APIs;
 using StardewModdingAPI;
@@ -649,7 +650,10 @@ namespace SpaceCore.Content
         public PatchContentEngine(IManifest manifest, IModHelper helper, string contentRootFile)
         :   base( manifest, helper, contentRootFile )
         {
+            AddSimplifyFunction(new ActorFunction());
             AddSimplifyFunction(new ContentPatcherTokenFunction());
+            AddSimplifyFunction(new FacingFunction());
+            AddSimplifyFunction(new QuickQuestionFunction());
 
             cpVersion = manifest.Dependencies.FirstOrDefault(md => md.UniqueID == "Pathoschild.ContentPatcher")?.MinimumVersion;
             cp = Helper.ModRegistry.GetApi<IContentPatcherApi>("Pathoschild.ContentPatcher");
@@ -696,8 +700,8 @@ namespace SpaceCore.Content
 
                     Entries.Add(ce);
 
-                    if (!EntriesByEditedFile.TryGetValue(ce.File, out var entries))
-                        EntriesByEditedFile.Add(ce.File, entries = new());
+                    if (!EntriesByEditedFile.TryGetValue(ce.File.ToLower(), out var entries))
+                        EntriesByEditedFile.Add(ce.File.ToLower(), entries = new());
                     entries.Add(ce);
 
                     if (!EntriesById.TryGetValue(ce.Id, out entries))
@@ -713,7 +717,7 @@ namespace SpaceCore.Content
 
         private void Content_AssetRequested(object sender, AssetRequestedEventArgs e)
         {
-            if (!EntriesByEditedFile.TryGetValue(e.Name.Name, out var entries))
+            if (!EntriesByEditedFile.TryGetValue(e.Name.Name.ToLower(), out var entries))
                 return;
 
             foreach ( var entry in entries )
@@ -739,16 +743,16 @@ namespace SpaceCore.Content
             {
                 if (entry.CheckConditionsOrRefresh(time))
                 {
-                    changedFiles.Add(entry.File);
+                    changedFiles.Add(entry.File.ToLower());
                 }
             }
 
-            Helper.GameContent.InvalidateCache(a => changedFiles.Contains(a.Name.BaseName.Replace('\\', '/')));
+            Helper.GameContent.InvalidateCache(a => changedFiles.Contains(a.Name.BaseName.ToLower().Replace('\\', '/')));
         }
 
         private void InvalidateUsedAssets()
         {
-            Helper.GameContent.InvalidateCache(a => EntriesByEditedFile.Keys.Contains(a.Name.BaseName.Replace('\\', '/')));
+            Helper.GameContent.InvalidateCache(a => EntriesByEditedFile.Keys.Contains(a.Name.BaseName.ToLower().Replace('\\', '/')));
         }
     }
 }

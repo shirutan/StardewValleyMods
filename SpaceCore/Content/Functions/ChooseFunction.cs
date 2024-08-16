@@ -23,7 +23,7 @@ internal class ChooseFunction : BaseFunction, IRefreshingFunction
         return arr.Contents[ce.Random.Next(arr.Contents.Count)];
     }
 
-    public bool WouldChangeFromRefresh(FuncCall fcall, PatchContentEngine ce)
+    public bool WouldChangeFromRefresh(FuncCall fcall, PatchContentEngine pce)
     {
         return true;
     }
