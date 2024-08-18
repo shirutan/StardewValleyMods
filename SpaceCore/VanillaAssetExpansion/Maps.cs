@@ -7,6 +7,7 @@ using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
+using StardewValley.Extensions;
 
 namespace SpaceCore.VanillaAssetExpansion
 {
@@ -35,12 +36,13 @@ namespace SpaceCore.VanillaAssetExpansion
                     int texInd = 0;
                     int.TryParse(texture, out texInd);
 
-                    Game1.currentLightSources.Add(new LightSource(0, tile.ToVector2() * Game1.tileSize + new Vector2(32, 32), radiusMultiplier, LightSource.LightContext.MapLight)
+                    string id = $"{__instance.NameOrUniqueName}_{tile.X}_{tile.Y}_Colored";
+                    Game1.currentLightSources.Add(new LightSource(id, 0, tile.ToVector2() * Game1.tileSize + new Vector2(32, 32), radiusMultiplier, LightSource.LightContext.MapLight)
                     {
                         color = { new Color(255 - colorR, 255 - colorG, 255 - colorB) },
                         lightTexture = texInd == 0 ? Game1.content.Load<Texture2D>(texture) : null,
                     });
-                    Game1.currentLightSources.Last().textureIndex.Value = texInd; // Set this later so that the texture refreshes if we null-ed it
+                    Game1.currentLightSources[id].textureIndex.Value = texInd; // Set this later so that the texture refreshes if we null-ed it
                 }
             }
         }
