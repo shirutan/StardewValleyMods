@@ -361,7 +361,8 @@ namespace SpaceCore.Dungeons
                         ext.spaceCoreDungeonIsMonsterLevel.Value = true;
                     }
                     // We want to force a ladder to spawn if there are no stones or monsters
-                    else if (ext.spaceCoreDungeonLevel.Value != dungeon.GetMaxLevel())
+                    else if (ext.spaceCoreDungeonLevel.Value != dungeon.GetMaxLevel() &&
+                        (dungeon.SpawnLadders || dungeon.SpawnMineshafts))
                     {
                         for (int i = 0; i < 100; ++i)
                         {
