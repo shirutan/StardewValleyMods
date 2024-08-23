@@ -288,6 +288,11 @@ The rest of the features assume you understand C# and the game code a little bit
     * An event: `AdvancedInteractionStarted`, which passes the NPC as the `object sender` and an `Action<string, Action>` as the event argument, which you call with a string for what string to show for you choice, and an Action for what to happen when it is chosen. (See [Backstory Questions Framework](https://www.nexusmods.com/stardewvalley/mods/14451), a mod now integrated into SpaceCore, for an example on usage).
     * `void RegisterSpawnableMonster(string id, Func<Vector2, Dictionary<string, object>, Monster> monsterSpawner)` - Register a spawnable monster with the spawnables system.
     * `List<int> SpaceCore.GetLocalIndexForMethod(MethodBase meth, string local)` - gets the indices of all variables in a method using a given name. Used for transpilers.
+    * Virtual currency manipulation functions (corresponding to the content pack feature):
+        * `List<string> GetVirtualCurrencyList()` - Get a list of virtual currency IDs that are currently active.
+        * `bool IsVirtualCurrencyTeamWide(string currency)` - Check if the virtual currency is a team-wide currency or not.
+        * `int GetVirtualCurrencyAmount(Farmer who, string currency)` - Get the current amount of virtual currency the player has. (You still need to pass in a player for team wide currencies.)
+        * `void AddToVirtualCurrency(Farmer who, string currency, int amount)` - Add an amount of virtual currency to the player. (You still need to pass in a player for team wide currencies.) You can pass in a negative value to consume some - the amount the player has will never be less than zero.
     * Custom equipment slot functions:
         * Note: The IDs are global, across all mods. Please include your mod unique ID in your slot ID.
         * `void RegisterEquipmentSlot(IManifest modManifest, string globalId, Func<Item, bool> slotValidator, Func<string> slotDisplayName, Texture2D bgTex, Rectangle? bgRect = null)` - Register an equipment slot to show on the additional equipment menu. (See player features section.)
@@ -387,6 +392,7 @@ The rest of the features assume you understand C# and the game code a little bit
     * `IngredientMatcher IngredientItem { get; }` - for the right slot
     * `int CinderShardCost { get; }` - for how many cinder shards the recipe costs
     * `Item CreateResult(Item baseItem, Item ingredItem)` - for creating the resulting item from the base and ingredient items
+* Custom tool class will work in the vanilla `Data/Tools` asset, if they are added to the SpaceCore serializer API.
 * UI Framework
     * This one is hard to document thoroughly, so your best bet is to look through the C# source code.
         * It's stored [here](https://github.com/spacechase0/StardewValleyMods/tree/develop/SpaceShared/UI).

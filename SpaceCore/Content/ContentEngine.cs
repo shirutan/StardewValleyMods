@@ -104,6 +104,7 @@ namespace SpaceCore.Content
             AddSimplifyFunction(new LocalizationFunction());
             AddSimplifyFunction(new RectangleFunction());
             AddSimplifyFunction(new Vector2Function());
+            AddSimplifyFunction(new RemoveFunction());
         }
 
         public virtual bool CheckCondition(Token condition)

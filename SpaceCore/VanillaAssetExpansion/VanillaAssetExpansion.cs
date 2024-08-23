@@ -76,14 +76,7 @@ namespace SpaceCore.VanillaAssetExpansion
                     return;
                 }
 
-                if (data[args[0]].TeamWide)
-                {
-                    Game1.player.team.AddVirtualCurrencyAmount(args[0], amt);
-                }
-                else
-                {
-                    Game1.player.AddVirtualCurrencyAmount(args[0], amt);
-                }
+                SpaceCore.api.AddToVirtualCurrency(Game1.player, args[0], amt);
             });
 
             SpaceCore.Instance.Helper.ConsoleCommands.Add("spacecore_getcurrencyid", "...", (cmd, args) =>

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SpaceShared;
+using StardewValley;
 
 namespace SpaceCore.Content.Functions;
 internal class ChooseFunction : BaseFunction, IRefreshingFunction
@@ -17,10 +19,28 @@ internal class ChooseFunction : BaseFunction, IRefreshingFunction
     public override SourceElement Simplify(FuncCall fcall, ContentEngine ce)
     {
         var firstParam = fcall.Parameters.ElementAtOrDefault(0)?.DoSimplify(ce, true);
-        if (fcall.Parameters.Count != 1 || firstParam is not Array arr)
-            throw new ArgumentException($"Choose function must have only an array parameter, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+        if (fcall.Parameters.Count == 0 || firstParam is not Array arr)
+            throw new ArgumentException($"Choose function must have an array parameter, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
 
-        return arr.Contents[ce.Random.Next(arr.Contents.Count)];
+        Random r = ce.Random;
+        if (fcall.Parameters.Count >= 2)
+        {
+            Token tok = fcall.Parameters[1].SimplifyToToken(ce, true);
+            if (tok == null)
+                return null;
+
+            bool staticRand = false;
+            if (fcall.Parameters.Count >= 3 &&
+                 fcall.Parameters[2].SimplifyToToken(ce).Value.ToLower() == "static")
+            {
+                staticRand = true;
+            }
+
+            int seed = tok.Value.GetDeterministicHashCode();
+            r = staticRand ? Utility.CreateRandom( seed ) : Utility.CreateDaySaveRandom( seed );
+        }
+
+        return arr.Contents[r.Next(arr.Contents.Count)];
     }
 
     public bool WouldChangeFromRefresh(FuncCall fcall, PatchContentEngine pce)

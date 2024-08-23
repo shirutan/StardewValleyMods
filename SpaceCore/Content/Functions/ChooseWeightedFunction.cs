@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SpaceShared;
+using StardewValley;
 
 namespace SpaceCore.Content.Functions;
 internal class ChooseWeightedFunction : BaseFunction, IRefreshingFunction
@@ -78,7 +79,25 @@ internal class ChooseWeightedFunction : BaseFunction, IRefreshingFunction
             }
         }
 
-        return choices.Choose(ce.Random);
+        Random r = ce.Random;
+        if (fcall.Parameters.Count >= 2)
+        {
+            Token tok = fcall.Parameters[1].SimplifyToToken(ce, true);
+            if (tok == null)
+                return null;
+
+            bool staticRand = false;
+            if (fcall.Parameters.Count >= 3 &&
+                 fcall.Parameters[2].SimplifyToToken(ce).Value.ToLower() == "static")
+            {
+                staticRand = true;
+            }
+
+            int seed = tok.Value.GetDeterministicHashCode();
+            r = staticRand ? Utility.CreateRandom(seed) : Utility.CreateDaySaveRandom(seed);
+        }
+
+        return choices.Choose(r);
     }
 
     public bool WouldChangeFromRefresh(FuncCall fcall, PatchContentEngine pce)

@@ -18,10 +18,21 @@ internal class AssetPathFunction : BaseFunction
 
     public override SourceElement Simplify(FuncCall fcall, ContentEngine ce)
     {
-        if (fcall.Parameters.Count != 1)
-            throw new ArgumentException($"Asset path function @ must have exactly one string parameter, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+        if (fcall.Parameters.Count < 1)
+            throw new ArgumentException($"Asset path function {Name} must have exactly one string parameter, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
 
-        string path = Path.Combine(AbsolutePaths ? ce.ContentRootFolderActual : ce.ContentRootFolder, Path.GetDirectoryName(fcall.Parameters[0].FilePath), fcall.Parameters[0].SimplifyToToken(ce).Value).Replace('\\', '/');
+        string sep = "/";
+        if (fcall.Parameters.Count >= 2)
+        {
+            sep = fcall.Parameters[1].SimplifyToToken(ce).Value;
+        }
+
+        string addonPath = fcall.Parameters[0].SimplifyToToken(ce).Value;
+        if (!addonPath.StartsWith('/'))
+            addonPath = Path.Combine(Path.GetDirectoryName(fcall.Parameters[0].FilePath), addonPath);
+        else
+            addonPath = addonPath.Remove(0, 1);
+        string path = Path.Combine(AbsolutePaths ? ce.ContentRootFolderActual : ce.ContentRootFolder, addonPath).Replace('\\', '/');
         List<string> pathParts = new(path.Split('/'));
         for (int i = 1; i < pathParts.Count; ++i)
         {
@@ -32,6 +43,8 @@ internal class AssetPathFunction : BaseFunction
             }
         }
         path = string.Join('/', pathParts);
+
+        path = path.Replace("/", sep);
 
         return new Token()
         {
