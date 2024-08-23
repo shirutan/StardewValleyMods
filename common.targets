@@ -18,6 +18,9 @@
     <PackageReference Include="Leclair.Stardew.ModManifestBuilder" Version="2.1.0" />
   </ItemGroup>
 
+  <!-- Why didn't I do this for SpaceShared in the first place? -->
+  <Import Project="$(SolutionDir)\SpaceShared.Common\SpaceShared.Common.projitems" Label="Shared" />
+
   <!--common mod build package options-->
   <PropertyGroup>
     <ModZipPath>$(SolutionDir)\_releases</ModZipPath>
@@ -26,12 +29,10 @@
 
   <!-- This sometimes fixes running the game from the right folder when I use an environment variable to override my game path. No idea why -->
   <!-- Other times it breaks it when it was working (which is only sometimes)! Joy -->
-  <!--
   <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
     <StartProgram>$(GamePath)\StardewModdingAPI.exe</StartProgram>
     <StartWorkingDirectory>$(GamePath)</StartWorkingDirectory>
   </PropertyGroup>
-  -->
 
 
   <!-- mac workaround, remove when updating mod build config -->

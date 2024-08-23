@@ -4,11 +4,12 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using SpaceCore.Content.Functions;
 using SpaceShared.APIs;
 using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
 
-namespace SpaceCore.Content.Functions.StardewSpecific;
+namespace SpaceCore.Content.StardewFunctions;
 internal class ContentPatcherTokenFunction : BaseFunction, IRefreshingFunction
 {
     private class CPTokenHolder
@@ -66,8 +67,10 @@ internal class ContentPatcherTokenFunction : BaseFunction, IRefreshingFunction
         };
     }
 
-    public bool WouldChangeFromRefresh(FuncCall fcall, PatchContentEngine pce)
+    public bool WouldChangeFromRefresh(FuncCall fcall, ContentEngine ce)
     {
+        var pce = ce as PatchContentEngine;
+
         var arg = fcall.Parameters[0];
         string argStr = arg.SimplifyToToken(pce).Value;
         if (!ElementTokens.TryGetValue(arg.Uid, out var managedTok))

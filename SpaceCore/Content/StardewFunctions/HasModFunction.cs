@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SpaceCore.Content.Functions;
 
-namespace SpaceCore.Content.Functions;
+namespace SpaceCore.Content.StardewFunctions;
 internal class HasModFunction : BaseFunction
 {
     public HasModFunction()
@@ -23,7 +24,7 @@ internal class HasModFunction : BaseFunction
             FilePath = fcall.FilePath,
             Line = fcall.Line,
             Column = fcall.Column,
-            Value = ce.Helper.ModRegistry.IsLoaded(modTok.Value) ? "true" : "false",
+            Value = (ce as PatchContentEngine).Helper.ModRegistry.IsLoaded(modTok.Value) ? "true" : "false",
             IsString = true,
             Context = fcall.Context,
             Uid = fcall.Uid,

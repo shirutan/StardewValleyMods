@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SpaceShared;
-using StardewValley;
+
 
 namespace SpaceCore.Content.Functions;
 internal class ChooseWeightedFunction : BaseFunction, IRefreshingFunction
@@ -44,7 +44,7 @@ internal class ChooseWeightedFunction : BaseFunction, IRefreshingFunction
                 if (weightTok != null)
                 {
                     if (!double.TryParse(weightTok.Value, out weight))
-                        Log.Warn($"Failed to parse weight value as number, at {weightTok.FilePath}:{weightTok.Line}:{weightTok.Column}");
+                        ;// Log.Warn($"Failed to parse weight value as number, at {weightTok.FilePath}:{weightTok.Line}:{weightTok.Column}");
                 }
 
                 if (flatten && block != null &&
@@ -94,13 +94,13 @@ internal class ChooseWeightedFunction : BaseFunction, IRefreshingFunction
             }
 
             int seed = tok.Value.GetDeterministicHashCode();
-            r = staticRand ? Utility.CreateRandom(seed) : Utility.CreateDaySaveRandom(seed);
+            r = ce.RandomGenerator(seed, staticRand);
         }
 
         return choices.Choose(r);
     }
 
-    public bool WouldChangeFromRefresh(FuncCall fcall, PatchContentEngine pce)
+    public bool WouldChangeFromRefresh(FuncCall fcall, ContentEngine pce)
     {
         return true;
     }

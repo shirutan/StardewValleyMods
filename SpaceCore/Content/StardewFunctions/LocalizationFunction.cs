@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SpaceCore.Content.Functions;
 
-namespace SpaceCore.Content.Functions;
+namespace SpaceCore.Content.StardewFunctions;
 internal class LocalizationFunction : BaseFunction
 {
     public LocalizationFunction()
@@ -22,7 +23,7 @@ internal class LocalizationFunction : BaseFunction
             FilePath = fcall.FilePath,
             Line = fcall.Line,
             Column = fcall.Column,
-            Value = ce.Helper.Translation.Get(fcall.Parameters[0].SimplifyToToken(ce).Value),
+            Value = (ce as PatchContentEngine).Helper.Translation.Get(fcall.Parameters[0].SimplifyToToken(ce).Value),
             IsString = true,
             Context = fcall.Context,
             Uid = fcall.Uid,

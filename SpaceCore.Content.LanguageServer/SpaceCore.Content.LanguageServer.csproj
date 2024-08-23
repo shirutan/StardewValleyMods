@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+	  <OutputPath>$(SolutionDir)/spacecore-content-tools/server</OutputPath>
+	  <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LanguageServerProtocol" Version="7.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SpaceCore.Content.Engine\SpaceCore.Content.Engine.csproj" />
+    <ProjectReference Include="..\SpaceCore.Content.Parser\SpaceCore.Content.Parser.csproj" />
+  </ItemGroup>
+
+</Project>

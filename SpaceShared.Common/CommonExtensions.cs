@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using SpaceShared.APIs;
-using StardewModdingAPI;
+//using SpaceShared.APIs;
+//using StardewModdingAPI;
 
 namespace SpaceShared
 {
@@ -152,6 +152,7 @@ namespace SpaceShared
         /****
         ** SMAPI
         ****/
+        /*
         /// <inheritdoc cref="IModRegistry.GetApi{T}"/>
         /// <param name="modRegistry">The mod registry to extend.</param>
         /// <param name="uniqueId">The mod's unique ID.</param>
@@ -191,5 +192,6 @@ namespace SpaceShared
         {
             return modRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu", "Generic Mod Config Menu", "1.8.0", monitor);
         }
+        */
     }
 }

@@ -51,7 +51,7 @@ internal class AssetPathFunction : BaseFunction
             FilePath = fcall.FilePath,
             Line = fcall.Line,
             Column = fcall.Column,
-            Value = AbsolutePaths ? path : ce.Helper.ModContent.GetInternalAssetName(path).Name,
+            Value = AbsolutePaths ? path : ce.AssetNameSimplfier( path ),
             IsString = true,
             Context = fcall.Context,
             Uid = fcall.Uid,

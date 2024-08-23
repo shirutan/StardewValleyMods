@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SpaceShared;
-using StardewValley;
+
 
 namespace SpaceCore.Content.Functions;
 internal class ChooseFunction : BaseFunction, IRefreshingFunction
@@ -37,13 +37,13 @@ internal class ChooseFunction : BaseFunction, IRefreshingFunction
             }
 
             int seed = tok.Value.GetDeterministicHashCode();
-            r = staticRand ? Utility.CreateRandom( seed ) : Utility.CreateDaySaveRandom( seed );
+            r = ce.RandomGenerator(seed, staticRand);
         }
 
         return arr.Contents[r.Next(arr.Contents.Count)];
     }
 
-    public bool WouldChangeFromRefresh(FuncCall fcall, PatchContentEngine pce)
+    public bool WouldChangeFromRefresh(FuncCall fcall, ContentEngine pce)
     {
         return true;
     }

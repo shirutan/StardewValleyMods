@@ -95,7 +95,7 @@ internal class FilterByConditionFunction : BaseFunction, IRefreshingFunction
         return ret;
     }
 
-    public bool WouldChangeFromRefresh(FuncCall fcall, PatchContentEngine pce)
+    public bool WouldChangeFromRefresh(FuncCall fcall, ContentEngine pce)
     {
         var arr = fcall.Parameters[0].DoSimplify(pce, true) as Array;
         if ( arr == null)

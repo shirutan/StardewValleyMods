@@ -4,9 +4,10 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SpaceCore.Content.Functions;
 using StardewValley;
 
-namespace SpaceCore.Content.Functions.StardewSpecific;
+namespace SpaceCore.Content.StardewFunctions;
 internal class FacingFunction : BaseFunction
 {
     public FacingFunction()

@@ -30,6 +30,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SpaceCore.Content.Engine\SpaceCore.Content.Engine.csproj" />
+    <ProjectReference Include="..\SpaceCore.Content.Parser\SpaceCore.Content.Parser.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <SMAPIDependency Include="Pathoschild.ContentPatcher" Required="false" />
   </ItemGroup>
 
