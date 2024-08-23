@@ -15,13 +15,14 @@ internal class ContextValueFunction : BaseFunction
     public override SourceElement Simplify(FuncCall fcall, ContentEngine ce)
     {
         if (fcall.Parameters.Count < 1)
-            throw new ArgumentException($"Context value function ^ must have one string parameter, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+            return LogErrorAndGetToken($"Context value function ^ must have one string parameter", fcall, ce);
 
         var tok = fcall.Parameters[0].SimplifyToToken(ce);
         if (!fcall.Context.Contents.TryGetValue(tok, out SourceElement se))
         {
             if (fcall.Parameters.Count == 1)
             {
+                LogErrorAndGetToken($"Invalid context value {tok.Value}", fcall, ce); // TODO: Warnings
                 se = new Token()
                 {
                     FilePath = fcall.FilePath,

@@ -15,13 +15,13 @@ internal class RectangleFunction : BaseFunction
     public override SourceElement Simplify(FuncCall fcall, ContentEngine ce)
     {
         if (fcall.Parameters.Count != 4)
-            throw new ArgumentException($"Rectangle function must have exactly four integer parameters, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+            return LogErrorAndGetToken($"Rectangle function must have exactly four integer parameters", fcall, ce);
         Token tokX = fcall.Parameters[0].SimplifyToToken(ce);
         Token tokY = fcall.Parameters[1].SimplifyToToken(ce);
         Token tokW = fcall.Parameters[2].SimplifyToToken(ce);
         Token tokH = fcall.Parameters[3].SimplifyToToken(ce);
         if (!int.TryParse(tokX.Value, out int x) || !int.TryParse(tokY.Value, out int y) || !int.TryParse(tokX.Value, out int w) || !int.TryParse(tokY.Value, out int h))
-            throw new ArgumentException($"Rectangle function must have exactly four integer parameters, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+            return LogErrorAndGetToken($"Rectangle function must have exactly four integer parameters", fcall, ce);
 
         return new Block()
         {
@@ -29,12 +29,13 @@ internal class RectangleFunction : BaseFunction
             Line = fcall.Line,
             Column = fcall.Column,
             Contents =
-                    {
-                        { new Token() { Value = "X", IsString = true }, tokX },
-                        { new Token() { Value = "Y", IsString = true }, tokY },
-                        { new Token() { Value = "Width", IsString = true }, tokW },
-                        { new Token() { Value = "Height", IsString = true }, tokH },
-                    },
+            {
+                // TODO: Reuuse these keys
+                { new Token() { Value = "X", IsString = true }, tokX },
+                { new Token() { Value = "Y", IsString = true }, tokY },
+                { new Token() { Value = "Width", IsString = true }, tokW },
+                { new Token() { Value = "Height", IsString = true }, tokH },
+            },
             Context = fcall.Context,
             Uid = fcall.Uid,
         };

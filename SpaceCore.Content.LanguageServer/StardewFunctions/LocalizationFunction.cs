@@ -6,25 +6,24 @@ using System.Threading.Tasks;
 using SpaceCore.Content.Functions;
 
 namespace SpaceCore.Content.StardewFunctions;
-internal class HasModFunction : BaseFunction
+internal class LocalizationFunction : BaseFunction
 {
-    public HasModFunction()
-    :   base( "HasMod" )
+    public LocalizationFunction()
+    :   base( "%" )
     {
     }
 
     public override SourceElement Simplify(FuncCall fcall, ContentEngine ce)
     {
         if (fcall.Parameters.Count != 1)
-            return LogErrorAndGetToken($"HasMod function must have exactly one string parameters", fcall, ce);
-        Token modTok = fcall.Parameters[0].SimplifyToToken(ce);
+            return LogErrorAndGetToken($"I18n function % must have exactly one string parameter", fcall, ce);
 
         return new Token()
         {
             FilePath = fcall.FilePath,
             Line = fcall.Line,
             Column = fcall.Column,
-            Value = (ce as PatchContentEngine).Helper.ModRegistry.IsLoaded(modTok.Value) ? "true" : "false",
+            Value = $"<localized {fcall.Parameters[0].SimplifyToToken(ce).Value}>",
             IsString = true,
             Context = fcall.Context,
             Uid = fcall.Uid,

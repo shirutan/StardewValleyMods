@@ -26,12 +26,12 @@ internal class FilterByConditionFunction : BaseFunction, IRefreshingFunction
     {
         var firstParam = fcall.Parameters.ElementAtOrDefault(0)?.DoSimplify(ce, true);
         if (firstParam is not Array arr)
-            throw new ArgumentException($"Choose function must have an array parameter first, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+            return LogErrorAndGetToken($"Choose function must have an array parameter first", fcall, ce);
         if (fcall.Parameters.Count > 2)
-            throw new ArgumentException($"Too many parameters, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+            return LogErrorAndGetToken($"Too many parameters", fcall, ce);
         bool flatten = false;
         if (fcall.Parameters.Count == 2 && fcall.Parameters[1] is not Token { Value: "Flatten", IsString: true })
-            throw new ArgumentException($"Second argument to FilterByCondition can only be \"Flatten\", at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+            return LogErrorAndGetToken($"Second argument to FilterByCondition can only be \"Flatten\"", fcall, ce);
         else if (fcall.Parameters.Count == 2)
             flatten = true;
 

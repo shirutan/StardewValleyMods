@@ -15,7 +15,7 @@ internal class RemoveFunction : BaseFunction
     public override SourceElement Simplify(FuncCall fcall, ContentEngine ce)
     {
         if (fcall.Parameters.Count < 2)
-            throw new ArgumentException($"Remove function must have at least two parameters (and array/block, and what to remove), at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+            return LogErrorAndGetToken($"Remove function must have at least two parameters (and array/block, and what to remove)", fcall, ce);
 
         var param = fcall.Parameters[0].DoSimplify(ce, true);
 
@@ -83,7 +83,7 @@ internal class RemoveFunction : BaseFunction
         }
         else
         {
-            throw new ArgumentException($"Remove function must have its first parameter be either an array or a block, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+            return LogErrorAndGetToken($"Remove function must have its first parameter be either an array or a block", fcall, ce);
         }
     }
 }

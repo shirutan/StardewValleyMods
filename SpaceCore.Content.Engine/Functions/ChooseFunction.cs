@@ -20,7 +20,7 @@ internal class ChooseFunction : BaseFunction, IRefreshingFunction
     {
         var firstParam = fcall.Parameters.ElementAtOrDefault(0)?.DoSimplify(ce, true);
         if (fcall.Parameters.Count == 0 || firstParam is not Array arr)
-            throw new ArgumentException($"Choose function must have an array parameter, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+            return LogErrorAndGetToken($"Choose function must have an array parameter", fcall, ce);
 
         Random r = ce.Random;
         if (fcall.Parameters.Count >= 2)

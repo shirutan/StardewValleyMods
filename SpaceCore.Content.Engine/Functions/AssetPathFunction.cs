@@ -19,7 +19,7 @@ internal class AssetPathFunction : BaseFunction
     public override SourceElement Simplify(FuncCall fcall, ContentEngine ce)
     {
         if (fcall.Parameters.Count < 1)
-            throw new ArgumentException($"Asset path function {Name} must have exactly one string parameter, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+            return LogErrorAndGetToken($"Asset path function {Name} must have exactly one string parameter", fcall, ce);
 
         string sep = "/";
         if (fcall.Parameters.Count >= 2)
@@ -29,7 +29,10 @@ internal class AssetPathFunction : BaseFunction
 
         string addonPath = fcall.Parameters[0].SimplifyToToken(ce).Value;
         if (!addonPath.StartsWith('/'))
-            addonPath = Path.Combine(Path.GetDirectoryName(fcall.Parameters[0].FilePath), addonPath);
+        {
+            string dir = Path.GetDirectoryName(fcall.Parameters[0].FilePath);
+            addonPath = dir != "" ? Path.Combine(dir, addonPath) : addonPath;
+        }
         else
             addonPath = addonPath.Remove(0, 1);
         string path = Path.Combine(AbsolutePaths ? ce.ContentRootFolderActual : ce.ContentRootFolder, addonPath).Replace('\\', '/');

@@ -9,6 +9,7 @@
       "SpaceCore.Content.LanguageServer/1.0.0": {
         "dependencies": {
           "LanguageServerProtocol": "7.0.1",
+          "SpaceCore.Content.Engine": "1.0.0",
           "SpaceCore.Content.Parser": "1.0.0"
         },
         "runtime": {
@@ -836,6 +837,17 @@
           "System.Xml.ReaderWriter": "4.3.0"
         }
       },
+      "SpaceCore.Content.Engine/1.0.0": {
+        "dependencies": {
+          "SpaceCore.Content.Parser": "1.0.0"
+        },
+        "runtime": {
+          "SpaceCore.Content.Engine.dll": {
+            "assemblyVersion": "1.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
       "SpaceCore.Content.Parser/1.0.0": {
         "runtime": {
           "SpaceCore.Content.Parser.dll": {
@@ -1453,6 +1465,11 @@
       "sha512": "sha512-lJ8AxvkX7GQxpC6GFCeBj8ThYVyQczx2+f/cWHJU8tjS7YfI6Cv6bon70jVEgs2CiFbmmM8b9j1oZVx0dSI2Ww==",
       "path": "system.xml.xmldocument/4.3.0",
       "hashPath": "system.xml.xmldocument.4.3.0.nupkg.sha512"
+    },
+    "SpaceCore.Content.Engine/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
     },
     "SpaceCore.Content.Parser/1.0.0": {
       "type": "project",

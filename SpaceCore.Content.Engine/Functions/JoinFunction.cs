@@ -17,7 +17,7 @@ internal class JoinFunction : BaseFunction
     public override SourceElement Simplify(FuncCall fcall, ContentEngine ce)
     {
         if (fcall.Parameters.Count < 2 || fcall.Parameters[0] is not Token sep || fcall.Parameters[1] is not Array toJoin)
-            throw new ArgumentException($"Join must have a separator parameter (token) then an array parameter (things to join), at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+            return LogErrorAndGetToken($"Join must have a separator parameter (token) then an array parameter (things to join)", fcall, ce);
 
         bool bail = false;
 

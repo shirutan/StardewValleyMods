@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SpaceCore.Content.Functions;
-using StardewValley;
 
 namespace SpaceCore.Content.StardewFunctions;
 internal class QuickQuestionFunction : BaseFunction

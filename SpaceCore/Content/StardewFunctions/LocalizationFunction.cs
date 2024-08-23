@@ -16,7 +16,7 @@ internal class LocalizationFunction : BaseFunction
     public override SourceElement Simplify(FuncCall fcall, ContentEngine ce)
     {
         if (fcall.Parameters.Count != 1)
-            throw new ArgumentException($"I18n function $ must have exactly one string parameter, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+            return LogErrorAndGetToken($"I18n function % must have exactly one string parameter", fcall, ce);
 
         return new Token()
         {

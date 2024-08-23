@@ -1,4 +1,5 @@
-﻿using LanguageServer;
+using System.Runtime.InteropServices;
+using LanguageServer;
 using LanguageServer.Parameters.General;
 using LanguageServer.Parameters.TextDocument;
 
@@ -7,9 +8,9 @@ namespace SpaceCore.Content.LanguageServer;
 // Based on https://github.com/matarillo/vscode-languageserver-csharp-example/
 internal class App : ServiceConnection
 {
-    private Dictionary<Uri, (TextDocumentItem doc, int version)> docs = new();
+    internal Dictionary<Uri, (TextDocumentItem doc, int version)> docs = new();
 
-    private ContentParser parser;
+    private ContentEngine engine;
 
     public App(Stream input, Stream output)
         : base(input, output)
@@ -18,9 +19,8 @@ internal class App : ServiceConnection
 
     protected override Result<InitializeResult, ResponseError<InitializeErrorData>> Initialize(InitializeParams @params)
     {
-        Console.Error.WriteLine("meow!?!?!");
         // TODO: Read unique ID from manifest.json
-        parser = new("meow", @params.rootUri?.AbsolutePath ?? "", "");
+        engine = new AppContentEngine("meow", @params.rootUri?.AbsolutePath ?? "", "content.spacecore", this);
         InitializeResult result = new()
         {
             capabilities = new ServerCapabilities()
@@ -40,12 +40,28 @@ internal class App : ServiceConnection
         List<Diagnostic> errors = new();
         try
         {
-            string path = parser.ContentRootFolderActual != "" ? Path.GetRelativePath(parser.ContentRootFolderActual, doc.uri.AbsolutePath) : Path.GetFileName( doc.uri.AbsolutePath );
-            parser.LoadText(doc.text, path);
+            string absPath = doc.uri.AbsoluteUri.Replace("file://", "");
+            string baseFolder = engine.ContentRootFolderActual;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                absPath = AppContentEngine.regexBecauseLazy.Replace(absPath, "$2:");
+                baseFolder = AppContentEngine.regexBecauseLazy.Replace(baseFolder, "$2:");
+            }
+            Console.Error.WriteLine("validating " + doc.uri.AbsoluteUri + " " + absPath + " " + baseFolder);
+            string path = engine.ContentRootFolderActual != "" ? Path.GetRelativePath(baseFolder, absPath) : absPath;
+            //parser.LoadText(doc.text, path);
+            engine.LastErrors.Clear();
+            var stuff = (Array) engine.RecursiveLoad(path, flatten: false);
+            foreach (var entry in stuff.Contents)
+            {
+                entry.DoSimplify(engine, true);
+            }
 
-            foreach (var e in parser.LastErrors)
+            foreach (var e in engine.LastErrors)
             {
                 Console.Error.WriteLine("Error: " + e);
+                if (e.File.Replace('/', '\\') != path.Replace('/', '\\') && e.File.Replace('/', '\\') != absPath.Replace('/', '\\'))
+                    continue;
                 if (e.Line == 0 && e.Column == 0)
                 {
                     // Generally only happens for the starting and ending added [] tokens
@@ -86,6 +102,8 @@ internal class App : ServiceConnection
             Console.Error.WriteLine(e);
         }
 
+        // TODO: Dedup errors
+
         Proxy.TextDocument.PublishDiagnostics(new()
         {
             uri = doc.uri,
@@ -108,7 +126,7 @@ internal class App : ServiceConnection
             }
 
             Console.Error.WriteLine($"Change at {change.text} {change.rangeLength ?? -1} {change.range?.start?.line ?? -1} {change.range?.start?.character ?? -1} {change.range?.end?.line ?? -1} {change.range?.end?.character ?? -1}");
-            var str = doc.text;
+            string str = doc.text;
             int begin = GetPosition(str, (int)change.range.start.line, (int)change.range.start.character);
             int end = GetPosition(str, (int)change.range.end.line, (int)change.range.end.character);
             doc.text = str.Substring(0, begin) + change.text + str.Substring(end);
@@ -118,18 +136,18 @@ internal class App : ServiceConnection
     
     private static int GetPosition(string text, int line, int character)
     {
-        var pos = 0;
+        int pos = 0;
         for (; 0 <= line; line--)
         {
-            var lf = text.IndexOf('\n', pos);
+            int lf = text.IndexOf('\n', pos);
             if (lf < 0)
             {
                 return text.Length;
             }
             pos = lf + 1;
         }
-        var linefeed = text.IndexOf('\n', pos);
-        var max = 0;
+        int linefeed = text.IndexOf('\n', pos);
+        int max = 0;
         if (linefeed < 0)
         {
             max = text.Length;

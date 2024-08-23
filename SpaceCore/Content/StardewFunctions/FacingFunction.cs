@@ -18,7 +18,7 @@ internal class FacingFunction : BaseFunction
     public override SourceElement Simplify(FuncCall fcall, ContentEngine ce)
     {
         if (fcall.Parameters.Count != 1)
-            throw new ArgumentException($"Facing function must have exactly one string parameters, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+            return LogErrorAndGetToken($"Facing function must have exactly one string parameters", fcall, ce);
         Token tok = fcall.Parameters[0].SimplifyToToken(ce);
 
         return new Token()

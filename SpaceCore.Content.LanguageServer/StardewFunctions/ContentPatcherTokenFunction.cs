@@ -1,33 +1,40 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using SpaceCore.Content.Functions;
 
 namespace SpaceCore.Content.StardewFunctions;
-internal class HasModFunction : BaseFunction
+internal class ContentPatcherTokenFunction : BaseFunction, IRefreshingFunction
 {
-    public HasModFunction()
-    :   base( "HasMod" )
+    public override bool IsLateResolver => true;
+
+    public ContentPatcherTokenFunction()
+    : base("CP")
     {
     }
 
     public override SourceElement Simplify(FuncCall fcall, ContentEngine ce)
     {
         if (fcall.Parameters.Count != 1)
-            return LogErrorAndGetToken($"HasMod function must have exactly one string parameters", fcall, ce);
-        Token modTok = fcall.Parameters[0].SimplifyToToken(ce);
+            return LogErrorAndGetToken($"CP function must have only 1 parameter", fcall, ce);
 
         return new Token()
         {
             FilePath = fcall.FilePath,
             Line = fcall.Line,
             Column = fcall.Column,
-            Value = (ce as PatchContentEngine).Helper.ModRegistry.IsLoaded(modTok.Value) ? "true" : "false",
+            Value = "<CP token value>",
             IsString = true,
             Context = fcall.Context,
             Uid = fcall.Uid,
         };
+    }
+
+    public bool WouldChangeFromRefresh(FuncCall fcall, ContentEngine ce)
+    {
+        return true;
     }
 }

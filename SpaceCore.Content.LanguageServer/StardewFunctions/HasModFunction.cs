@@ -24,7 +24,7 @@ internal class HasModFunction : BaseFunction
             FilePath = fcall.FilePath,
             Line = fcall.Line,
             Column = fcall.Column,
-            Value = (ce as PatchContentEngine).Helper.ModRegistry.IsLoaded(modTok.Value) ? "true" : "false",
+            Value = "true",
             IsString = true,
             Context = fcall.Context,
             Uid = fcall.Uid,

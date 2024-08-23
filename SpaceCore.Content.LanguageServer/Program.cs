@@ -1,10 +1,12 @@
-﻿using SpaceCore.Content.LanguageServer;
+using SpaceCore.Content.LanguageServer;
 using System.Text;
 
 Console.OutputEncoding = Encoding.UTF8;
 try
 {
-    var app = new App(Console.OpenStandardInput(), Console.OpenStandardOutput());
+    using var input = Console.OpenStandardInput();
+    using var output = Console.OpenStandardOutput();
+    var app = new App(input, output);
     app.Listen().Wait();
 }
 catch (Exception e)

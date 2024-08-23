@@ -1,3 +1,5 @@
+using System.Data.Common;
+
 namespace SpaceCore.Content.Functions;
 
 public abstract class BaseFunction
@@ -11,4 +13,25 @@ public abstract class BaseFunction
     }
 
     public abstract SourceElement Simplify(FuncCall fcall, ContentEngine ce);
+
+    protected Token LogErrorAndGetToken(string msg, SourceElement se, ContentEngine ce)
+    {
+        ce.LastErrors.Add(new(msg)
+        {
+            File = se.FilePath,
+            Line = se.Line,
+            Column = se.Column,
+            Length = 1,
+        });
+        return new Token()
+        {
+            FilePath = se.FilePath,
+            Line = se.Line,
+            Column = se.Line,
+            IsString = true,
+            Value = "error",
+            Context = se.Context,
+            Uid = se.Uid,
+        };
+    }
 }

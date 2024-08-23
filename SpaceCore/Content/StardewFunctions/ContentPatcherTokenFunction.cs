@@ -33,9 +33,9 @@ internal class ContentPatcherTokenFunction : BaseFunction, IRefreshingFunction
             return null;
 
         if (pce.cp == null)
-            throw new ArgumentException("Content Patcher API missing?");
+            return LogErrorAndGetToken("Content Patcher API missing?", fcall, ce);
         if (fcall.Parameters.Count != 1)
-            throw new ArgumentException($"CP function must have only 1 parameter, at {fcall.FilePath}:{fcall.Line}:{fcall.Column}");
+            return LogErrorAndGetToken($"CP function must have only 1 parameter", fcall, ce);
 
         var arg = fcall.Parameters[0];
         string argStr = arg.SimplifyToToken(ce).Value;
@@ -49,7 +49,7 @@ internal class ContentPatcherTokenFunction : BaseFunction, IRefreshingFunction
         managedTok.LastTokenString.UpdateContext();
 
         if (!managedTok.LastTokenString.IsValid)
-            throw new ArgumentException($"Invalid CP token string at {fcall.FilePath}:{fcall.Line}:{fcall.Column}: {managedTok.LastTokenString.ValidationError}");
+            return LogErrorAndGetToken($"Invalid CP token string: {managedTok.LastTokenString.ValidationError}", fcall, ce);
         if (!managedTok.LastTokenString.IsReady)
         {
             return null;

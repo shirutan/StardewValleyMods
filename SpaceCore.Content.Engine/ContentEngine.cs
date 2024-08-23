@@ -9,11 +9,12 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
+[assembly: InternalsVisibleTo("SpaceCore.Content.LanguageServer")]
+
 namespace SpaceCore.Content;
 
 public static class ContentExtensions
 {
-
     public static Token SimplifyToToken(this SourceElement se, ContentEngine ce, bool allowLateResolve = false, bool require = true)
     {
         Token tok = se as Token;
@@ -25,7 +26,25 @@ public static class ContentExtensions
             tok = simplified as Token;
         }
         if (tok == null && require)
-            throw new ArgumentException($"Source element must simplify to string at {se.FilePath}:{se.Line}:{se.Column}");
+        {
+            ce.LastErrors.Add(new($"Source element must simplify to string")
+            {
+                File = se.FilePath,
+                Line = se.Line,
+                Column = se.Column,
+                Length = 1
+            });
+            return new Token()
+            {
+                FilePath = se.FilePath,
+                Line = se.Line,
+                Column = se.Column,
+                IsString = true,
+                Value = "error",
+                Context = se.Context,
+                Uid = se.Uid,
+            };
+        }
         return tok;
     }
 
@@ -61,7 +80,7 @@ public class ContentEngine
     public string ContentRootFolderActual { get; private set; }
     public string ContentRootFile { get; }
 
-    private ContentParser Parser { get; }
+    protected ContentParser Parser { get; }
 
     protected Array Contents { get; set; }
 
@@ -123,6 +142,10 @@ public class ContentEngine
     {
         LastErrors.Clear();
         Contents = (Array)RecursiveLoad(Path.GetFileName(ContentRootFile), flatten: false);
+        if (Contents == null)
+        {
+            LastErrors.Add( new($"Failed to find root content file {Path.GetFileName(ContentRootFile)}") );
+        }
         PostReload();
     }
 
@@ -130,11 +153,18 @@ public class ContentEngine
     {
     }
 
-    private SourceElement RecursiveLoad(string file, bool flatten = true, Block ctx = null, string uidContext = "")
+    protected virtual Array ParserLoad(string file, string uidContext)
+    {
+        return Parser.Load(file, uidContext);
+    }
+
+    internal SourceElement RecursiveLoad(string file, bool flatten = true, Block ctx = null, string uidContext = "")
     {
         ctx ??= new();
 
-        Array contents = Parser.Load(file, uidContext);
+        Array contents = ParserLoad(file, uidContext);
+        if (contents == null) // file not found
+            return null;
         LastErrors.AddRange(Parser.LastErrors);
         RecursiveLoadImpl(contents, Path.GetDirectoryName(file), flatten: false, ctx, out SourceElement se);
         contents = (Array)se;
@@ -198,7 +228,39 @@ public class ContentEngine
                     }
                 }
 
+                if (token.Value.StartsWith('/') && ContentRootFolderActual == "")
+                {
+                    LastErrors.Add(new("Include with absolute paths only supported with a selected folder for your workspace")
+                    {
+                        File = token.FilePath,
+                        Line = token.Line,
+                        Column = token.Column,
+                        Length = 1,
+                    });
+                    replacement = statement;
+                    return false;
+                }
+
                 replacement = RecursiveLoad(token.Value.StartsWith('/') ? token.Value.Substring(1) : Path.Combine(subfolder, token.Value), flatten, newCtx, statement.Uid);
+                if (replacement == null)
+                {
+                    LastErrors.Add(new($"Failed to find Include file \"{token.Value}\"")
+                    {
+                        File = token.FilePath,
+                        Line = token.Line,
+                        Column = token.Column,
+                        Length = 1,
+                    });
+                    replacement = new Token()
+                    {
+                        FilePath = token.FilePath,
+                        Line = token.Line,
+                        Column = token.Column,
+                        Value = "~",
+                        Context = token.Context,
+                        Uid = token.Uid,
+                    };
+                }
                 return true;
             }
             else if (statement.FuncCall.Function == "If")
@@ -303,6 +365,25 @@ public class ContentEngine
             }
 
             replacement = RecursiveLoad(Path.Combine(subfolder, token.Value), flatten: true, newCtx, elem.Uid);
+            if (replacement == null)
+            {
+                LastErrors.Add(new($"Failed to find Include file \"{token.Value}\"")
+                {
+                    File = token.FilePath,
+                    Line = token.Line,
+                    Column = token.Column,
+                    Length = 1,
+                });
+                replacement = new Token()
+                {
+                    FilePath = token.FilePath,
+                    Line = token.Line,
+                    Column = token.Column,
+                    Value = "~",
+                    Context = token.Context,
+                    Uid = token.Uid,
+                };
+            }
             return true;
         }
         else if (elem is Block block)

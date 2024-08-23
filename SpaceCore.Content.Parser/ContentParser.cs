@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace SpaceCore.Content;
@@ -40,6 +40,8 @@ public class ContentParser
     public Array Load(string filePath, string uidContext = "")
     {
         string fullPath = Path.Combine(ContentRootFolderActual, filePath);
+        if (!File.Exists(fullPath))
+            return null;
 
         string contents = File.ReadAllText(fullPath);
 
