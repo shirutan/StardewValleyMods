@@ -1,6 +1,7 @@
-{
+﻿{
 	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-	"name": "SpaceCore Content",
+    "name": "SpaceCore Content",
+    "filestypes": "spacecore",
 	"scopeName": "source.spacecore",
 	"patterns": [
 		{

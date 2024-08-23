@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
 	  <OutputPath>$(SolutionDir)/spacecore-content-tools/server</OutputPath>
 	  <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,5 +17,9 @@
     <ProjectReference Include="..\SpaceCore.Content.Engine\SpaceCore.Content.Engine.csproj" />
     <ProjectReference Include="..\SpaceCore.Content.Parser\SpaceCore.Content.Parser.csproj" />
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy &quot;$(SolutionDir)spacecore-content-tools\server\*.*&quot; &quot;$(SolutionDir)SpaceCore.Content.VisualStudio\Server&quot; /Y /I /E" />
+  </Target>
 
 </Project>

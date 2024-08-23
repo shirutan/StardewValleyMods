@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using LanguageServer;
 using LanguageServer.Parameters.General;
 using LanguageServer.Parameters.TextDocument;
+using LanguageServer.Parameters.Workspace;
 
 namespace SpaceCore.Content.LanguageServer;
 
@@ -11,6 +12,7 @@ internal class App : ServiceConnection
     internal Dictionary<Uri, (TextDocumentItem doc, int version)> docs = new();
 
     private ContentEngine engine;
+    private Dictionary<Uri, ContentEngine> workspaceEngines = new();
 
     public App(Stream input, Stream output)
         : base(input, output)
@@ -20,7 +22,11 @@ internal class App : ServiceConnection
     protected override Result<InitializeResult, ResponseError<InitializeErrorData>> Initialize(InitializeParams @params)
     {
         // TODO: Read unique ID from manifest.json
-        engine = new AppContentEngine("meow", @params.rootUri?.AbsolutePath ?? "", "content.spacecore", this);
+        engine = new AppContentEngine("meow", "", "content.spacecore", this);
+        if ((@params.rootUri?.AbsolutePath ?? "") != "")
+        {
+            workspaceEngines.Add(@params.rootUri, new AppContentEngine("meow", @params.rootUri?.AbsolutePath, "content.spacecore", this));
+        }
         InitializeResult result = new()
         {
             capabilities = new ServerCapabilities()
@@ -35,11 +41,28 @@ internal class App : ServiceConnection
         return Result<InitializeResult, ResponseError<InitializeErrorData>>.Success(result);
     }
 
+    protected override void DidChangeWorkspaceFolders(DidChangeWorkspaceFoldersParams @params)
+    {
+        foreach (var entry in @params.@event.added)
+            workspaceEngines.TryAdd(entry.uri, new AppContentEngine("meow", entry.uri?.AbsolutePath ?? "", "content.spacecore", this));
+        foreach (var entry in @params.@event.removed)
+            workspaceEngines.Remove(entry.uri);
+    }
+
+    private SourceElement lastParse = null;
+
     private void Validate(TextDocumentItem doc)
     {
         List<Diagnostic> errors = new();
         try
         {
+            var engine = this.engine;
+            foreach (var entry in workspaceEngines.Keys)
+            {
+                if (entry.IsBaseOf(doc.uri))
+                    engine = workspaceEngines[entry];
+            }
+
             string absPath = doc.uri.AbsoluteUri.Replace("file://", "");
             string baseFolder = engine.ContentRootFolderActual;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -51,8 +74,8 @@ internal class App : ServiceConnection
             string path = engine.ContentRootFolderActual != "" ? Path.GetRelativePath(baseFolder, absPath) : absPath;
             //parser.LoadText(doc.text, path);
             engine.LastErrors.Clear();
-            var stuff = (Array) engine.RecursiveLoad(path, flatten: false);
-            foreach (var entry in stuff.Contents)
+            var lastParse = (Array) engine.RecursiveLoad(path, flatten: false);
+            foreach (var entry in lastParse.Contents)
             {
                 entry.DoSimplify(engine, true);
             }
@@ -101,8 +124,6 @@ internal class App : ServiceConnection
             Console.Error.WriteLine("meow? " + e.Message);
             Console.Error.WriteLine(e);
         }
-
-        // TODO: Dedup errors
 
         Proxy.TextDocument.PublishDiagnostics(new()
         {
