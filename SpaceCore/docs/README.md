@@ -119,6 +119,7 @@ Provided functionality for content pack authors:
             * The event can reoccur if the item is given again.
                 * For Content Patcher users: If you don't want this behavior, make sure to add a `HasSeenEvent` event condition to your `"When"` block for the patch.
         * `IgnoreMarriageSchedule` - true/false, defaults to false
+        * `SeparateDatability` - If datability is tracked separately in multiplayer for this NPC. (ie. if the NPC can be datable for one player but not the other) - Default false.
     * Schedule Animations - Stored in the asset `spacechase0.SpaceCore/ScheduleAnimationExtensionData`, which is a dictionary with the key being the animation ID from `Data/animationDescriptions` and the value containing the data for the animation override.
         * You can make bigger animations and make the NPC emote or play a sound at certain points in the animation. Example [here](https://gist.github.com/spacechase0/55f5b8b75a47b5d4d6f790609f48d20c).
     * Crafting/Cooking Recipes - Stored in `spacechase0.SpaceCore/CraftingRecipeOverrides` and `spacechase0.SpaceCore/CookingRecipeOverrides`, these assets are both a dictionary, with the key being the ID of the corresponding recipe, and the value being an object with the following:
