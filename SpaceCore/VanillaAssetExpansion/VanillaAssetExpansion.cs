@@ -390,7 +390,7 @@ namespace SpaceCore.VanillaAssetExpansion
                 foreach (var ring in toCheck.Where(i => i is Ring ring).Cast<Ring>().ToList())
                 {
                     toCheck.Remove(ring);
-                    rings.AddItem(ring);
+                    rings.Enqueue(ring);
                 }
 
                 List<string> worn = new();
