@@ -49,6 +49,41 @@ using System.Collections.ObjectModel;
 
 namespace SpaceCore
 {
+    // Remove this once vanilla fixes it
+    [HarmonyPatch(typeof(NPC), "parseMasterScheduleImpl")]
+    public static class FixZeroSchedulePatch
+    {
+        public static void Prefix(NPC __instance)
+        {
+            __instance.reloadDefaultLocation();
+            Game1.warpCharacter(__instance, __instance.DefaultMap, (__instance.DefaultPosition / Game1.tileSize).ToPoint());
+        }
+
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator, MethodBase original)
+        {
+            List<CodeInstruction> ret = new();
+
+            foreach (var insn in instructions)
+            {
+                if (insn.opcode == OpCodes.Call && insn.operand is MethodInfo { Name: "warpCharacter" } m)
+                {
+                    insn.operand = AccessTools.Method(typeof(FixZeroSchedulePatch), nameof(WarpAndSetDefaultMap));
+                }
+
+                ret.Add(insn);
+            }
+
+            return ret;
+        }
+
+        public static void WarpAndSetDefaultMap(NPC npc, string map, Point pos)
+        {
+            npc.DefaultMap = map;
+            npc.DefaultPosition = pos.ToVector2() * Game1.tileSize;
+            Game1.warpCharacter(npc, map, pos);
+        }
+    }
+
     public class FarmerExtData
     {
         public static ConditionalWeakTable<Farmer, FarmerExtData> data = new();
