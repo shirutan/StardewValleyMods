@@ -81,7 +81,7 @@ namespace SpaceCore.VanillaAssetExpansion
                 return;
 
             bool newNewVal = __instance.GetData().CanBeRomanced;
-            SpaceCore.Instance.Monitor.Log("meow2, setting to: " + newNewVal, StardewModdingAPI.LogLevel.Alert);
+            //SpaceCore.Instance.Monitor.Log("meow2, setting to: " + newNewVal, StardewModdingAPI.LogLevel.Alert);
             if (newNewVal == __instance.datable.Value)
                 return;
 
