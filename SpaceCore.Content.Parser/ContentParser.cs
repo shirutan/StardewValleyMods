@@ -45,7 +45,7 @@ public class ContentParser
 
         string contents = File.ReadAllText(fullPath);
 
-        return LoadText(contents, filePath);
+        return LoadText(contents, filePath, uidContext);
     }
 
     public Array LoadText(string contents, string filePath, string uidContext = "")
@@ -291,7 +291,8 @@ public class ContentParser
             FilePath = tokens[start].FilePath,
             Line = tokens[start].Line,
             Column = tokens[start].Column,
-            Uid = tokens[start].Uid
+            Uid = tokens[start].Uid,
+            UserData = tokens[start].UserData,
         };
 
         int i = start + 1;
@@ -338,6 +339,7 @@ public class ContentParser
             Line = tokens[start].Line,
             Column = tokens[start].Column,
             Uid = tokens[start].Uid,
+            UserData = tokens[start].UserData,
         };
 
         int i = start + 1;
@@ -404,6 +406,7 @@ public class ContentParser
             Line = tokens[start].Line,
             Column = tokens[start].Column,
             Uid = tokens[start].Uid,
+            UserData = tokens[start].UserData,
         };
 
         (ret.FuncCall, start) = BuildFuncCall(tokens, start);
@@ -427,6 +430,7 @@ public class ContentParser
             Line = tokens[start].Line,
             Column = tokens[start].Column,
             Uid = tokens[start].Uid,
+            UserData = tokens[start].UserData,
         };
 
         ret.Function = tokens[start].Value;

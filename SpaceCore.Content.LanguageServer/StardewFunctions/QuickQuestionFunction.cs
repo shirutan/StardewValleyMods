@@ -93,6 +93,7 @@ internal class QuickQuestionFunction : BaseFunction
             IsString = true,
             Context = fcall.Context,
             Uid = fcall.Uid,
+            UserData = fcall.UserData,
         };
     }
 }

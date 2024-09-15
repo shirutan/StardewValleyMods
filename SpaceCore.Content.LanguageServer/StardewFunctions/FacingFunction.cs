@@ -36,6 +36,7 @@ internal class FacingFunction : BaseFunction
             IsString = true,
             Context = fcall.Context,
             Uid = fcall.Uid,
+            UserData = fcall.UserData,
         };
     }
 }

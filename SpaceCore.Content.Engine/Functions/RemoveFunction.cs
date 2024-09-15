@@ -28,6 +28,7 @@ internal class RemoveFunction : BaseFunction
                 Column = fcall.Column,
                 Context = fcall.Context,
                 Uid = fcall.Uid,
+                UserData = fcall.UserData,
             };
 
             ret.Contents.AddRange(arr.Contents);
@@ -60,6 +61,7 @@ internal class RemoveFunction : BaseFunction
                 Column = fcall.Column,
                 Context = fcall.Context,
                 Uid = fcall.Uid,
+                UserData = fcall.UserData,
             };
 
             foreach ( var entry in block.Contents )

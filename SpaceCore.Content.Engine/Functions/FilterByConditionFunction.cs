@@ -42,6 +42,7 @@ internal class FilterByConditionFunction : BaseFunction, IRefreshingFunction
             Column = fcall.Column,
             Context = fcall.Context,
             Uid = fcall.Uid,
+            UserData = fcall.UserData,
         };
 
         foreach (var entry in arr.Contents)
@@ -76,6 +77,7 @@ internal class FilterByConditionFunction : BaseFunction, IRefreshingFunction
                         Column = entryVal.Column,
                         Context = entryVal.Context,
                         Uid = entryVal.Uid,
+                        UserData = entryVal.UserData,
                     };
                     foreach (var entryValEntry in entryVal.Contents)
                     {

@@ -32,6 +32,7 @@ public abstract class BaseFunction
             Value = "error",
             Context = se.Context,
             Uid = se.Uid,
+            UserData = se.UserData,
         };
     }
 }

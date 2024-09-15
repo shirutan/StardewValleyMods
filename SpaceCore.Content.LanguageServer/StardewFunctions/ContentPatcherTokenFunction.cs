@@ -30,6 +30,7 @@ internal class ContentPatcherTokenFunction : BaseFunction, IRefreshingFunction
             IsString = true,
             Context = fcall.Context,
             Uid = fcall.Uid,
+            UserData = fcall.UserData,
         };
     }
 

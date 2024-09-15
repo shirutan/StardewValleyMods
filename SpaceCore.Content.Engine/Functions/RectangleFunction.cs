@@ -38,6 +38,7 @@ internal class RectangleFunction : BaseFunction
             },
             Context = fcall.Context,
             Uid = fcall.Uid,
+            UserData = fcall.UserData,
         };
     }
 }

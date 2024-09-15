@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,6 +17,7 @@ public class SourceElement
 
     public Block Context { get; set; }
     public string Uid { get; set; }
+    public object UserData { get; set; }
 }
 
 public class Token : SourceElement

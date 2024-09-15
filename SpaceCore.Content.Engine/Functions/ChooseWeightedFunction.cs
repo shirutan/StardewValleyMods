@@ -64,7 +64,8 @@ internal class ChooseWeightedFunction : BaseFunction, IRefreshingFunction
                         Line = block.Line,
                         Column = block.Column,
                         Context = block.Context,
-                        Uid = fcall.Uid,
+                        Uid = block.Uid,
+                        UserData = block.UserData,
                     };
                     foreach (var entryValEntry in block.Contents)
                     {

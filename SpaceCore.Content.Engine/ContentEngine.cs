@@ -43,6 +43,7 @@ public static class ContentExtensions
                 Value = "error",
                 Context = se.Context,
                 Uid = se.Uid,
+                UserData = se.UserData,
             };
         }
         return tok;
@@ -259,6 +260,7 @@ public class ContentEngine
                         Value = "~",
                         Context = token.Context,
                         Uid = token.Uid,
+                        UserData = token.UserData,
                     };
                 }
                 return true;
@@ -284,6 +286,7 @@ public class ContentEngine
                         IsString = false,
                         Context = ctx, // Can't recall if this is right or not... probably doesn't matter in this case though.
                         Uid = statement.Uid,
+                        UserData = statement.UserData,
                     };
                     return true;
                 }
@@ -304,6 +307,7 @@ public class ContentEngine
                         IsString = false,
                         Context = ctx, // Can't recall if this is right or not... probably doesn't matter in this case though.
                         Uid = statement.Uid,
+                        UserData = statement.UserData,
                     };
                 }
                 return true;
@@ -382,6 +386,7 @@ public class ContentEngine
                     Value = "~",
                     Context = token.Context,
                     Uid = token.Uid,
+                    UserData = token.UserData,
                 };
             }
             return true;

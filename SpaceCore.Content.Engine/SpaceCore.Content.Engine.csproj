@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<Name>SpaceCore Content Engine</Name>
 		<Author>kittycatcasey</Author>
-		<Version>1.0.0</Version>
+		<Version>1.1.1</Version>
 		<TargetFramework>net6.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>

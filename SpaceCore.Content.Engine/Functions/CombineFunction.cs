@@ -24,6 +24,7 @@ internal class CombineFunction : BaseFunction
                 Value = "~", // null
                 Context = fcall.Context,
                 Uid = fcall.Uid,
+                UserData = fcall.UserData,
             };
         }
 
@@ -37,6 +38,7 @@ internal class CombineFunction : BaseFunction
                 Column = fcall.Column,
                 Context = fcall.Context,
                 Uid = fcall.Uid,
+                UserData = fcall.UserData,
             };
 
             foreach (var param in fcall.Parameters)
@@ -55,6 +57,7 @@ internal class CombineFunction : BaseFunction
                 Column = fcall.Column,
                 Context = fcall.Context,
                 Uid = fcall.Uid,
+                UserData = fcall.UserData,
             };
 
             foreach (var param in fcall.Parameters)
@@ -75,6 +78,7 @@ internal class CombineFunction : BaseFunction
                 Value = "~", // null
                 Context = fcall.Context,
                 Uid = fcall.Uid,
+                UserData = fcall.UserData,
             };
         }
 

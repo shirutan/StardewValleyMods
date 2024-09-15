@@ -37,6 +37,7 @@ internal class Vector2Function : BaseFunction
             },
             Context = fcall.Context,
             Uid = fcall.Uid,
+            UserData = fcall.UserData,
         };
     }
 }
