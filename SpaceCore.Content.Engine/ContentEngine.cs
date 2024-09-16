@@ -167,7 +167,7 @@ public class ContentEngine
         if (contents == null) // file not found
             return null;
         LastErrors.AddRange(Parser.LastErrors);
-        RecursiveLoadImpl(contents, Path.GetDirectoryName(file), flatten: false, ctx, out SourceElement se);
+        RecursiveLoadImpl(contents, Path.GetDirectoryName(file), flatten: false, ref ctx, out SourceElement se);
         contents = (Array)se;
 
         if (flatten && contents.Contents.Count == 1)
@@ -176,7 +176,7 @@ public class ContentEngine
         return contents;
     }
 
-    private bool RecursiveLoadImpl(SourceElement elem, string subfolder, bool flatten, Block ctx, out SourceElement replacement)
+    private bool RecursiveLoadImpl(SourceElement elem, string subfolder, bool flatten, ref Block ctx, out SourceElement replacement)
     {
         elem.Context = ctx;
 
@@ -186,7 +186,7 @@ public class ContentEngine
             for (int i = 0; i < statement.FuncCall.Parameters.Count; ++i)
             {
                 statement.FuncCall.Parameters[i].Context = ctx;
-                RecursiveLoadImpl(statement.FuncCall.Parameters[i], subfolder, flatten: true, ctx, out var param);
+                RecursiveLoadImpl(statement.FuncCall.Parameters[i], subfolder, flatten: true, ref ctx, out var param);
                 statement.FuncCall.Parameters[i] = param;
             }
             if (statement.Data != null)
@@ -294,7 +294,7 @@ public class ContentEngine
                 var tok = statement.FuncCall.Parameters[0].SimplifyToToken(this); // TODO: Figure out how to handle errors from here
                 if (tok.Value.Equals("true", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    RecursiveLoadImpl(statement.Data, subfolder, flatten, ctx, out replacement);
+                    RecursiveLoadImpl(statement.Data, subfolder, flatten, ref ctx, out replacement);
                 }
                 else
                 {
@@ -312,13 +312,60 @@ public class ContentEngine
                 }
                 return true;
             }
+            else if (statement.FuncCall.Function == "Set^")
+            {
+                if (statement.FuncCall.Parameters.Count != 2)
+                {
+                    LastErrors.Add(new($"Set^ needs a value name to set, and an actual value. This block will be ignored since those were not specified.")
+                    {
+                        File = statement.FuncCall.FilePath,
+                        Line = statement.FuncCall.Line,
+                        Column = statement.FuncCall.Column,
+                        Length = 4,
+                    });
+
+                    replacement = new Token()
+                    {
+                        FilePath = statement.FilePath,
+                        Line = statement.Line,
+                        Column = statement.Column,
+                        Value = "~",
+                        IsString = false,
+                        Context = ctx, // Can't recall if this is right or not... probably doesn't matter in this case though.
+                        Uid = statement.Uid,
+                        UserData = statement.UserData,
+                    };
+                    return true;
+                }
+
+                Token param = statement.FuncCall.Parameters[0].SimplifyToToken(this, false);
+                SourceElement val = statement.FuncCall.Parameters[1];
+
+                Block newCtx = new();
+                newCtx.Contents = new(ctx.Contents);
+                newCtx.Contents[param] = val;
+                ctx = newCtx;
+
+                replacement = new Token()
+                {
+                    FilePath = statement.FilePath,
+                    Line = statement.Line,
+                    Column = statement.Column,
+                    Value = "~",
+                    IsString = false,
+                    Context = ctx, // Can't recall if this is right or not... probably doesn't matter in this case though.
+                    Uid = statement.Uid,
+                    UserData = statement.UserData,
+                };
+                return true;
+            }
             else
             {
                 SourceElement se = statement.FuncCall.Simplify(this);
                 if (se as FuncCall == statement.FuncCall)
                 {
                     if (statement.Data != null)
-                        RecursiveLoadImpl(statement.Data, subfolder, flatten: true, ctx, out se);
+                        RecursiveLoadImpl(statement.Data, subfolder, flatten: true, ref ctx, out se);
                     statement.Data = se;
                 }
                 else
@@ -397,7 +444,7 @@ public class ContentEngine
             {
                 block.Contents[key].Context = ctx;
 
-                RecursiveLoadImpl(block.Contents[key], subfolder, flatten: true, ctx, out SourceElement se);
+                RecursiveLoadImpl(block.Contents[key], subfolder, flatten: true, ref ctx, out SourceElement se);
                 block.Contents[key] = se;
             }
         }
@@ -407,7 +454,7 @@ public class ContentEngine
             {
                 array.Contents[i].Context = ctx;
 
-                if (RecursiveLoadImpl(array.Contents[i], subfolder, flatten: false, ctx, out SourceElement se))
+                if (RecursiveLoadImpl(array.Contents[i], subfolder, flatten: false, ref ctx, out SourceElement se))
                 {
                     array.Contents.RemoveAt(i);
                     // array.Contents.InsertRange(i, (se as Array).Contents);
