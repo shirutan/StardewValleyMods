@@ -53,12 +53,15 @@ namespace GenericModConfigMenu.Framework
 
         private ModConfigManager ConfigsForKeybinds;
 
+        private List<Label> keybindOpts = new();
+
 
         /*********
         ** Accessors
         *********/
-        public IManifest Manifest => this.ModConfig.ModManifest;
+        public IManifest Manifest => this.ModConfig?.ModManifest;
         public readonly string CurrPage;
+        public bool IsKeybindingsPage => Manifest == null;
 
 
         /*********
@@ -79,12 +82,13 @@ namespace GenericModConfigMenu.Framework
             this.Table.LocalPosition = new Vector2((Game1.uiViewport.Width - this.Table.Size.X) / 2, (Game1.uiViewport.Height - this.Table.Size.Y) / 2);
             foreach (var config in mods.GetAll())
             {
+                List<Element[]> rows = new();
                 foreach (var opt in config.GetAllOptions())
                 {
                     if (!(opt is SimpleModOption<SButton> || opt is SimpleModOption<KeybindList>))
                         continue;
 
-                    string name = config.ModName + ": " + opt.Name();
+                    string name = opt.Name();
                     string tooltip = opt.Tooltip();
 
                     if (this.InGame && opt.IsTitleScreenOnly)
@@ -116,7 +120,8 @@ namespace GenericModConfigMenu.Framework
                             {
                                 String = option.FormatValue(),
                                 LocalPosition = new Vector2(this.Table.Size.X / 5 * 4, 0),
-                                Callback = (Element e) => this.ShowKeybindOverlay(option, e as Label)
+                                Callback = (Element e) => this.ShowKeybindOverlay(option, e as Label),
+                                UserData = opt,
                             };
                             break;
 
@@ -128,12 +133,32 @@ namespace GenericModConfigMenu.Framework
                             {
                                 String = option.FormatValue(),
                                 LocalPosition = new Vector2(this.Table.Size.X / 5 * 4, 0),
-                                Callback = (Element e) => this.ShowKeybindOverlay(option, e as Label)
+                                Callback = (Element e) => this.ShowKeybindOverlay(option, e as Label),
+                                UserData = opt,
                             };
                             break;
                     }
 
-                    this.Table.AddRow(new[] { label, optionElement, rightLabel }.Where(p => p != null).ToArray());
+                    keybindOpts.Add(optionElement as Label);
+                    rows.Add(new[] { label, optionElement, rightLabel }.Where(p => p != null).ToArray());
+                }
+
+                if (rows.Count > 0)
+                {
+                    Label header = new()
+                    {
+                        String = config.ModName,
+                        UserData = config.ModManifest.Description,
+                        Bold = true,
+                    };
+                    if (!string.IsNullOrEmpty(config.ModManifest.Description))
+                        OptHovers.Add(header);
+                    Table.AddRow([header]);
+
+                    foreach (var row in rows)
+                        Table.AddRow(row);
+
+                    Table.AddRow([]);
                 }
             }
             this.Ui.AddChild(this.Table);
@@ -142,6 +167,7 @@ namespace GenericModConfigMenu.Framework
             // We need to update widgets at least once so ComplexModOptionWidget's get initialized
             this.Table.ForceUpdateEvenHidden();
 
+            RefreshKeybindingColor();
         }
 
         public SpecificModConfigMenu(ModConfig config, int scrollSpeed, string page, Action<string> openPage, Action returnToList)
@@ -748,6 +774,53 @@ namespace GenericModConfigMenu.Framework
         {
             this.ActiveKeybindOverlay = null;
             this.Ui.Obscured = false;
+
+            RefreshKeybindingColor();
+        }
+
+        private void RefreshKeybindingColor()
+        {
+            if (IsKeybindingsPage)
+            {
+                Dictionary<string, int> keybinds = new();
+                foreach (var opt in keybindOpts)
+                {
+                    if (opt.UserData is SimpleModOption<Keybind> kopt)
+                    {
+                        string entry = kopt.FormatValue();
+                        if (!keybinds.ContainsKey(entry))
+                            keybinds.Add(entry, 0);
+                        keybinds[entry]++;
+                    }
+                    else if (opt.UserData is SimpleModOption<KeybindList> klopt)
+                    {
+                        string entry = klopt.FormatValue();
+                        if (!keybinds.ContainsKey(entry))
+                            keybinds.Add(entry, 0);
+                        keybinds[entry]++;
+                    }
+                }
+
+                foreach (var opt in keybindOpts)
+                {
+                    string entry = "";
+                    if (opt.UserData is SimpleModOption<Keybind> kopt)
+                        entry = kopt.FormatValue();
+                    else if (opt.UserData is SimpleModOption<KeybindList> klopt)
+                        entry = klopt.FormatValue();
+
+                    if (keybinds[entry] > 1 && entry != "(None)")
+                    {
+                        opt.IdleTextColor = Color.Red;
+                        opt.HoverTextColor = Color.PaleVioletRed;
+                    }
+                    else
+                    {
+                        opt.IdleTextColor = Game1.textColor;
+                        opt.HoverTextColor = Game1.unselectedOptionColor;
+                    }
+                }
+            }
         }
     }
 }

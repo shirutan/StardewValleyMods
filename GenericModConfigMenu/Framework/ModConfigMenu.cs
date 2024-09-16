@@ -221,6 +221,8 @@ namespace GenericModConfigMenu.Framework
         /// <inheritdoc />
         public override void gameWindowSizeChanged(Rectangle oldBounds, Rectangle newBounds)
         {
+            var oldUi = this.Ui;
+
             this.Ui = new RootElement();
 
             Vector2 newSize = new Vector2(800, Game1.uiViewport.Height - 128);
@@ -231,6 +233,10 @@ namespace GenericModConfigMenu.Framework
             this.Table.Size = newSize;
             this.Table.Scrollbar.Update();
             this.Ui.AddChild(this.Table);
+
+            var b = oldUi.Children.First(e => e is Button);
+            oldUi.RemoveChild(b);
+            this.Ui.AddChild(b);
         }
 
         /// <inheritdoc/>
