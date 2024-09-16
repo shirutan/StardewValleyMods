@@ -78,6 +78,7 @@ Provided functionality for content pack authors:
             * `Location` - string, the location to warp to - ex. `"CommunityCenter"`
             * `Position` - Vector2, the tile to warp to - ex. `"25, 15"`
             * `Color` - Color, the color the screen should flash - ex. `{ "R": 0, "G": 0, "B": 255, "A": 255 }`
+            * `ConsumedOnUse` - bool, default true
         * `UseForTriggerAction` - True to run a trigger action upon use, false otherwise. Default false.
         * `ConsumeForTriggerAction` - If the above field is true, this will control if the item is consumed on use. Default false for backwards compatibility.
         * `GiftableToNpcDisallowList` - A dictionary of NPC names to messages that should show when you try to gift the item to them, instead of them receiving the gift.
