@@ -32,6 +32,7 @@ namespace SpaceCore.VanillaAssetExpansion
             public string Location { get; set; }
             public Vector2 Position { get; set; }
             public Color Color { get; set; }
+            public bool ConsumedOnUse { get; set; } = true;
         }
         public TotemWarpData TotemWarp { get; set; }
 
@@ -250,7 +251,7 @@ namespace SpaceCore.VanillaAssetExpansion
                     Game1.Multiplayer.broadcastSprites(location, sprite);
                     Game1.screenGlowOnce(sprinkleColor, hold: false);
                     Utility.addSprinklesToLocation(location, Game1.player.TilePoint.X, Game1.player.TilePoint.Y, 16, 16, 1300, 20, Color.White, null, motionTowardCenter: true);
-                    __result = true;
+                    __result = dict[__instance.ItemId].TotemWarp.ConsumedOnUse;
                     return false;
                 }
             }
