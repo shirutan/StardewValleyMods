@@ -701,7 +701,7 @@ namespace GenericModConfigMenu.Framework
             }
             else
             {
-                foreach (var config in ConfigsForKeybinds.GetAll())
+                foreach (var config in ConfigsForKeybinds.GetAll().ToArray())
                 {
                     bool foundKey = false;
                     foreach (var option in config.GetAllOptions())
@@ -808,6 +808,9 @@ namespace GenericModConfigMenu.Framework
                         entry = kopt.FormatValue();
                     else if (opt.UserData is SimpleModOption<KeybindList> klopt)
                         entry = klopt.FormatValue();
+
+                    if (!keybinds.ContainsKey(entry))
+                        continue; // I have no clue how this happened.
 
                     if (keybinds[entry] > 1 && entry != "(None)")
                     {
