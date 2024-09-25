@@ -206,8 +206,7 @@ namespace SpaceCore.VanillaAssetExpansion
             try
             {
                 actualItem.Stack = countAdded;
-                __instance.checkForQuestComplete(null, -1, countAdded, actualItem, null, 9);
-                __instance.checkForQuestComplete(null, -1, countAdded, actualItem, null, 10);
+                __instance.NotifyQuests(q => q.OnItemReceived(actualItem, countAdded));
                 if (__instance.team.specialOrders != null)
                 {
                     foreach (SpecialOrder specialOrder in __instance.team.specialOrders)
