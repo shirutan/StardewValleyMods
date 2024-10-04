@@ -282,7 +282,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpaceCore.Content.VisualStu
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YarnEvents", "YarnEvents\YarnEvents.csproj", "{9049ED3A-495D-4E6A-B325-35E57CE1BF90}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiserableLife", "7thaxisMiserableLife\MiserableLife.csproj", "{ED79699D-06AF-4B23-B60E-1BED2D06BE8D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MiserableLife", "7thaxisMiserableLife\MiserableLife.csproj", "{ED79699D-06AF-4B23-B60E-1BED2D06BE8D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
