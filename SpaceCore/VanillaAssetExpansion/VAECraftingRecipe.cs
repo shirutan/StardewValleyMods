@@ -157,8 +157,9 @@ namespace SpaceCore.VanillaAssetExpansion
                     ind = CraftingRecipe.index_cookingDisplayName;
                 }
 
-                if (ind < dict[id].Length)
-                    return dict[id].Split('/')[ind];
+                string[] split = dict[id].Split('/');
+                if (ind < split.Length)
+                    return split[ind];
 
                 // Why are we using displayname here? I dunno, the old code returned the display name...
                 return ItemRegistry.GetDataOrErrorItem(data.ProductQualifiedId).DisplayName;

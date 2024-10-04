@@ -6,7 +6,7 @@
   <PropertyGroup>
     <Name>SpaceCore</Name>
     <Description>The space-iest of cores. (Framework mod)</Description>
-    <Version>1.25.4</Version>
+    <Version>1.26.0</Version>
     <UpdateKeys>Nexus:1348</UpdateKeys>
     <Version_AppendConfiguration>false</Version_AppendConfiguration> <!-- Otherwise mods get confused about having 1.13.0-Debug, but needing 1.13.0 or newer -->
 
@@ -27,6 +27,11 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Pathoschild.Stardew.ModTranslationClassBuilder" Version="2.0.0" PrivateAssets="all" />
     <PackageReference Include="System.Reflection.Metadata" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SpaceCore.Content.Engine\SpaceCore.Content.Engine.csproj" />
+    <ProjectReference Include="..\SpaceCore.Content.Parser\SpaceCore.Content.Parser.csproj" />
   </ItemGroup>
 
   <ItemGroup>

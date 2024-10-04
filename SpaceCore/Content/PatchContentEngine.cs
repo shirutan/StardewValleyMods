@@ -13,7 +13,7 @@ using Microsoft.Build.Framework;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpaceCore.Content.Functions;
-using SpaceCore.Content.Functions.StardewSpecific;
+using SpaceCore.Content.StardewFunctions;
 using SpaceShared;
 using SpaceShared.APIs;
 using StardewModdingAPI;
@@ -640,6 +640,9 @@ namespace SpaceCore.Content
 
     public class PatchContentEngine : ContentEngine
     {
+        public IManifest Manifest { get; }
+        public IModHelper Helper { get; }
+
         internal IContentPatcherApi cp;
         internal readonly ISemanticVersion cpVersion;
 
@@ -648,12 +651,19 @@ namespace SpaceCore.Content
         private Dictionary<string, List<ContentEntry>> EntriesByEditedFile { get; } = new();
 
         public PatchContentEngine(IManifest manifest, IModHelper helper, string contentRootFile)
-        :   base( manifest, helper, contentRootFile )
+        :   base( manifest.UniqueID, helper.DirectoryPath, contentRootFile,
+                (path) => helper.ModContent.GetInternalAssetName(path).Name,
+                (seed, isStatic) => isStatic ? Utility.CreateRandom(seed) : Utility.CreateDaySaveRandom(seed) )
         {
+            Manifest = manifest;
+            Helper = helper;
+
             AddSimplifyFunction(new ActorFunction());
             AddSimplifyFunction(new ContentPatcherTokenFunction());
             AddSimplifyFunction(new FacingFunction());
             AddSimplifyFunction(new QuickQuestionFunction());
+            AddSimplifyFunction(new HasModFunction());
+            AddSimplifyFunction(new LocalizationFunction());
 
             cpVersion = manifest.Dependencies.FirstOrDefault(md => md.UniqueID == "Pathoschild.ContentPatcher")?.MinimumVersion;
             cp = Helper.ModRegistry.GetApi<IContentPatcherApi>("Pathoschild.ContentPatcher");
@@ -675,6 +685,11 @@ namespace SpaceCore.Content
 
         protected override void PostReload()
         {
+            foreach (var error in LastErrors)
+            {
+                Log.Error($"Content error: {error}");
+            }
+
             base.PostReload();
             Entries.Clear();
             EntriesById.Clear();

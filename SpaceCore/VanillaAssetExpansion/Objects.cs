@@ -164,6 +164,7 @@ namespace SpaceCore.VanillaAssetExpansion
     {
         public static bool Prefix(StardewValley.Object __instance, GameLocation location, ref bool __result)
         {
+            bool didStuff = false;
             var dict = Game1.content.Load<Dictionary<string, ObjectExtensionData>>("spacechase0.SpaceCore/ObjectExtensionData");
             if (dict.ContainsKey(__instance.ItemId) && dict[__instance.ItemId].UseForTriggerAction)
             {
@@ -175,7 +176,7 @@ namespace SpaceCore.VanillaAssetExpansion
                 TriggerActionManager.Raise("spacechase0.SpaceCore_OnItemUsed", location: Game1.player.currentLocation, player: Game1.player, inputItem: __instance);
 
                 __result = dict[__instance.ItemId].ConsumeForTriggerAction;
-                return false;
+                didStuff = true;
             }
             if (dict.ContainsKey(__instance.ItemId) && dict[__instance.ItemId].TotemWarp != null)
             {
@@ -197,8 +198,8 @@ namespace SpaceCore.VanillaAssetExpansion
                     Game1.changeMusicTrack("silence");
                     Game1.player.FarmerSprite.animateOnce(new FarmerSprite.AnimationFrame[2]
                     {
-            new FarmerSprite.AnimationFrame(57, 2000, secondaryArm: false, flip: false),
-            new FarmerSprite.AnimationFrame((short)Game1.player.FarmerSprite.CurrentFrame, 0, secondaryArm: false, flip: false, (Farmer who) => { DoTotemWarp( __instance, who ); }, behaviorAtEndOfFrame: true)
+                        new FarmerSprite.AnimationFrame(57, 2000, secondaryArm: false, flip: false),
+                        new FarmerSprite.AnimationFrame((short)Game1.player.FarmerSprite.CurrentFrame, 0, secondaryArm: false, flip: false, (Farmer who) => { DoTotemWarp( __instance, who ); }, behaviorAtEndOfFrame: true)
                     });
                     TemporaryAnimatedSprite sprite = new TemporaryAnimatedSprite(0, 9999f, 1, 999, Game1.player.Position + new Vector2(0f, -96f), flicker: false, flipped: false, verticalFlipped: false, 0f)
                     {
@@ -256,7 +257,7 @@ namespace SpaceCore.VanillaAssetExpansion
                 }
             }
 
-            return true;
+            return !didStuff;
         }
 
         private static void DoTotemWarp(StardewValley.Object __instance, Farmer who)

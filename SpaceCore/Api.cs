@@ -6,6 +6,7 @@ using System.Xml.Serialization;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpaceCore.Patches;
+using SpaceCore.VanillaAssetExpansion;
 using SpaceShared;
 using StardewModdingAPI;
 using StardewValley;
@@ -107,6 +108,11 @@ namespace SpaceCore
         List<int> GetLocalIndexForMethod(MethodBase meth, string local);
 
         public event EventHandler<Action<string, Action>> AdvancedInteractionStarted;
+
+        public List<string> GetVirtualCurrencyList();
+        public bool IsVirtualCurrencyTeamWide(string currency);
+        public int GetVirtualCurrencyAmount(Farmer who, string currency);
+        public void AddToVirtualCurrency(Farmer who, string currency, int amount); // supports negative numbers
 
         public void RegisterEquipmentSlot(IManifest modManifest, string globalId, Func<Item, bool> slotValidator, Func<string> slotDisplayName, Texture2D bgTex, Rectangle? bgRect = null);
         public Item GetItemInEquipmentSlot(Farmer farmer, string globalId);
@@ -210,6 +216,33 @@ namespace SpaceCore
         internal void InvokeASI(NPC npc, Action<string, Action> addCallback)
         {
             AdvancedInteractionStarted?.Invoke(npc, addCallback);
+        }
+
+        public List<string> GetVirtualCurrencyList()
+        {
+            return VanillaAssetExpansion.VanillaAssetExpansion.virtualCurrencies.Keys.ToList();
+        }
+
+        public bool IsVirtualCurrencyTeamWide(string currency)
+        {
+            return VanillaAssetExpansion.VanillaAssetExpansion.virtualCurrencies.TryGetValue(currency, out var data) ? data.TeamWide : false;
+        }
+        public int GetVirtualCurrencyAmount(Farmer who, string currency)
+        {
+            if (!VanillaAssetExpansion.VanillaAssetExpansion.virtualCurrencies.TryGetValue(currency, out var data))
+                return 0;
+
+            return data.TeamWide ? who.team.GetVirtualCurrencyAmount(currency) : who.GetVirtualCurrencyAmount(currency);
+        }
+        public void AddToVirtualCurrency(Farmer who, string currency, int amt)
+        {
+            if (!VanillaAssetExpansion.VanillaAssetExpansion.virtualCurrencies.TryGetValue(currency, out var data))
+                return;
+
+            if (data.TeamWide)
+                who.team.AddVirtualCurrencyAmount(currency, amt);
+            else
+                who.AddVirtualCurrencyAmount(currency, amt);
         }
 
         public void RegisterEquipmentSlot(IManifest modManifest, string globalId, Func<Item, bool> slotValidator, Func<string> slotDisplayName, Texture2D bgTex, Rectangle? bgRect = null)
