@@ -300,7 +300,7 @@ internal class GuidebookMenu : IClickableMenu
                     string[] parts = elem.Value.Split(':');
                     string imagePath = parts[0];
                     Rectangle? rect = null;
-                    int scale = 1;
+                    int scale = 4;
                     if (parts.Length >= 2 && parts[1] != "null")
                     {
                         string[] rectParts = parts[1].Split(',');

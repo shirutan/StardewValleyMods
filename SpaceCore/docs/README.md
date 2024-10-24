@@ -269,6 +269,38 @@ Provided functionality for content pack authors:
 * New dialogue keys:
     * `HitBySlingshot_(O)ItemId` for if they get hit with a slingshot shot of the `(O)ItemId` item.
     * `HitBySlingshot_context_tag` for if they get hit with a slingshot shot of an item with the context tag `context_tag`.
+* Guidebooks - You can add guidebooks with dynamioc contents, openable via trigger action.
+    * The trigger action to open them is `spacechase0.SpaceCore_OpenGuidebook guidebookId optionalChpaterId optionalPageId`
+    * The guidebooks are stored in `spacechase0.SpaceCore/Guidebooks`. You can find example data [here](https://gist.github.com/spacechase0/18743e1ead1c33fadc807040fdb3626c).
+    * Each entry must have the following:
+        * `Title` - The title of the guidebook, shown at the top. You should use `{{i18n}}` here.
+        * `PageTexture` - Optional - if specified (use `{{InternalAssetKey}}`), use a specific texture for the background of your pages in the book. The size of the image will be the size of the entire page, without scaling.
+        * `PagePadding` - Optional, a vector2 that defaults to "28, 28" - The distance from the edges of the page texture the contents will show up.
+        * `PageSize` - Optional, defaults to "600, 500" - If there is no `PageTexture`, this size will be used for each page.
+        * `DefaultChapter` - The default chapter to open when one isn't specified in the trigger action.
+        * `Chapters` - A dictionary of chapter ID to object containing the following fields:
+            * `Name` - The chapter name, shown just below the book title, and when hovering over the tab icon. You should use `{{i18n}}` here.
+            * `TabIconTexture` - The texture to use for the tab icon (use `{{InternalAssetKey}}`) on the side of the book if the chapter is unlocked.
+            * `TabIconRect` - A rectangle for the part of the texture to use for the tab icon. If not specified, the whole texture is used.
+            * `TabIconScale` - Optional, default 4 - A scale factor for how big the tab icon should be.
+            * `Condition` - Optional, default `TRUE` - A GameStateQuery to use for if this chapter should be unlocked (and have a visible tab).
+            * `Pages` - A list of pages, which are objects containing the following values:
+                * `Id` - Optional, only needed if you want to link to a specific page. The ID to use for the `[link]` tag.
+                * `Contents` - The contents of the page (see further below for formatting). You should use `{{i18n}}` here.
+                * `Condition` - Optional, default `TRUE` - A GameStateQuery for if this page should be available.
+     * Page contents formatting - You should probably use newlines in this field. (In VSCode, set the format of your file to "JSON Lines" to hide errors from this - though this will cause comments to error). You can use the following tags inside the content, and you can next these tags as well (formatted like BBCode - see the example gist's i18n for examples).
+        * `[center]centered text[/center]` - Puts the text `centered text` centered horizontally on the page. May work when not a single line on its own.
+        * `[font=FontName]text[/font]` - Puts the text `text` on the page in the `FontName` font. Valid fonts are: `default`, `dialogue`, `tiny`
+        * `[color=Color]text[/color]` - Puts the text `text` on the page in the `Color` color. Valid color syntax can be found [on the Stardew wiki](https://stardewvalleywiki.com/Modding:Common_data_field_types#Color).
+        * `[image=PathToImageAsset:SourceRect:Scale]` - Adds a centered image to the page. There are three parameters, separated by `:` (though the second and third parameters are optional).
+            * `PathToImageAsset` - This is the asset path to the image you want to use. Normally you'd use `{{InternalAssetKey}}` here.
+                * If you're doing this in your i18n and don't have access to tokens, you can use the undocumented syntax SMAPI uses internally: `SMAPI/mod.id/path_in_mod` - `mod.id` being your mod ID, and `path_in_mod` should be the path to your image file. (Note that everything except the initial `SMAPI` should be lowercase, even if it isn't normally lowercase.)
+            * `SourceRect` - If specified, four values separated by commas indicating the X, Y, Width, and Height of the image to use. (You can also just put `null` to use the whole thing.)
+            * `Scale` - The scale of the image to use. Defaults to 4 times the normal size, like most game assets.
+        * `[link=ChapterID/PageID]Click here[/link]` - Puts the text `Click here` that, when clicked, will link to the specified page in the specified chapter.
+        * `[action=TriggerActionActionHere]Click here[/link]`- Puts the text `Click here` that, when clicked, will run the specified trigger action when clicked.
+        * `[if=Condition]meow[/if]` - Puts the text `meow` in the page, but only if the game state query `Condition` passes.
+        * `[else]meow2[/else]` - If the most recent `[if]` that ended failed, put the text `meow2` on the page.
 
 The rest of the features assume you understand C# and the game code a little bit (and are only accessible via C#):
 * In the API provided through SMAPI's mod registry (see mod source for interface you can copy):
