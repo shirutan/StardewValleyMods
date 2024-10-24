@@ -19,7 +19,6 @@ namespace SpaceCore.Interface
     [SuppressMessage("Style", "IDE1006:Naming Styles", Justification = DiagnosticMessages.CopiedFromGameCode)]
     public class NewSkillsPage : IClickableMenu
     {
-        public Texture2D texture;
         public List<ClickableTextureComponent> skillBars = new();
         public List<ClickableTextureComponent> skillAreas = new();
         public ClickableComponent playerPanel;
@@ -83,8 +82,6 @@ namespace SpaceCore.Interface
         public NewSkillsPage(int x, int y, int width, int height)
             : base(x, y, width, height)
         {
-            this.texture = SpaceCore.Instance.Helper.ModContent.Load<Texture2D>(Path.Combine("assets/sprites.png"));
-
             // Player panel
             this.playerPanel = new ClickableComponent(bounds: new Rectangle(this.xPositionOnScreen + 64, this.yPositionOnScreen + IClickableMenu.borderWidth + IClickableMenu.spaceToClearTopBorder, 128, 192), name: null)
             {

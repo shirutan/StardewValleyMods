@@ -46,6 +46,7 @@ using System.Collections;
 using StardewValley.TokenizableStrings;
 using SpaceCore.Dungeons;
 using System.Collections.ObjectModel;
+using SpaceCore.Guidebooks;
 
 namespace SpaceCore
 {
@@ -185,7 +186,23 @@ namespace SpaceCore
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.Content.AssetRequested += this.Content_AssetRequested;
 
+            helper.ConsoleCommands.Add("guidebook", "Open a specific guidebook", (cmd, args) =>
+            {
+                if (args.Length < 1)
+                {
+                    Log.Error("Need to specify a guidebook ID");
+                    return;
+                }
 
+                var data = Game1.content.Load<Dictionary<string, GuidebookData>>("spacechase0.SpaceCore/Guidebooks");
+                if (!data.TryGetValue(args[0], out var specificData))
+                {
+                    Log.Error("Invalid guidebook ID");
+                    return;
+                }
+
+                Game1.activeClickableMenu = new GuidebookMenu(specificData);
+            });
             helper.ConsoleCommands.Add("equipment", "Open the SpaceCore equipment menu", (cmd, args) =>
             {
                 Game1.activeClickableMenu = new EquipmentMenu();
@@ -331,6 +348,35 @@ namespace SpaceCore
                     error = "Failed to create and apply buff: " + e;
                     return false;
                 }
+
+                error = null;
+                return true;
+            });
+
+            TriggerActionManager.RegisterAction("spacechase0.SpaceCore_OpenGuidebook", (string[] args, TriggerActionContext ctx, out string error) =>
+            {
+                if (args.Length < 2)
+                {
+                    error = "Not enough arguments";
+                    return false;
+                }
+
+                var data = Game1.content.Load<Dictionary<string, GuidebookData>>("spacechase0.SpaceCore/Guidebooks");
+                if (!data.TryGetValue(args[1], out var specificData))
+                {
+                    error = "Invalid guidebook ID";
+                    return false;
+                }
+
+                GuidebookMenu menu = new(specificData);
+                if (args.Length >= 3)
+                {
+                    string chapter = args[2], pageId = null;
+                    if (args.Length >= 4)
+                        pageId = args[3];
+                    menu.GotoChapter(chapter, pageId);
+                }
+                Game1.activeClickableMenu = menu;
 
                 error = null;
                 return true;
@@ -483,6 +529,8 @@ namespace SpaceCore
         {
             if (e.NameWithoutLocale.IsEquivalentTo("spacechase0.SpaceCore/ExtraEquipmentIcon"))
                 e.LoadFromModFile<Texture2D>("assets/extras.png", AssetLoadPriority.Low);
+            else if (e.NameWithoutLocale.IsEquivalentTo("spacechase0.SpaceCore/Guidebooks"))
+                e.LoadFrom(() => new Dictionary<string, GuidebookData>(), AssetLoadPriority.Exclusive);
         }
 
         private static HashSet<string> ambiguousMethods = new();
@@ -1020,6 +1068,11 @@ namespace SpaceCore
         {
             // Set up skills in GameLaunched to allow ModRegistry to be used here.
             Skills.Init(this.Helper.Events);
+
+            // These are null in mod entry
+            GuidebookFont.Fonts.Add("default", Game1.smallFont);
+            GuidebookFont.Fonts.Add("tiny", Game1.tinyFont);
+            GuidebookFont.Fonts.Add("dialogue", Game1.dialogueFont);
 
             api = Helper.ModRegistry.GetApi<IApi>(ModManifest.UniqueID);
             api.RegisterCustomProperty(typeof(Farmer), "SpaceCore_ExtraEquippables", typeof(NetStringDictionary<Item, NetRef<Item>>), AccessTools.Method(typeof(FarmerExtData), nameof(FarmerExtData.get_equippables)), AccessTools.Method(typeof(FarmerExtData), nameof(FarmerExtData.set_equippables)));

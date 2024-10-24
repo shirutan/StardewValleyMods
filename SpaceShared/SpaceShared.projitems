@@ -52,6 +52,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)UI\Label.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\RootElement.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\Scrollbar.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ui\ScrollContainer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\Slider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\StaticContainer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\Table.cs" />

@@ -55,6 +55,8 @@ namespace SpaceShared.UI
             element.Parent?.RemoveChild(element);
             this.ChildrenImpl.Add(element);
             element.Parent = this;
+
+            OnChildrenChanged();
         }
 
         public void RemoveChild(Element element)
@@ -63,6 +65,12 @@ namespace SpaceShared.UI
                 throw new ArgumentException("Element must be a child of this container.");
             this.ChildrenImpl.Remove(element);
             element.Parent = null;
+
+            OnChildrenChanged();
+        }
+
+        public virtual void OnChildrenChanged()
+        {
         }
 
         /// <inheritdoc />
