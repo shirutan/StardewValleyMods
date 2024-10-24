@@ -269,7 +269,7 @@ Provided functionality for content pack authors:
 * New dialogue keys:
     * `HitBySlingshot_(O)ItemId` for if they get hit with a slingshot shot of the `(O)ItemId` item.
     * `HitBySlingshot_context_tag` for if they get hit with a slingshot shot of an item with the context tag `context_tag`.
-* Guidebooks - You can add guidebooks with dynamioc contents, openable via trigger action.
+* Guidebooks - You can add guidebooks with dynamic contents, openable via trigger action.
     * The trigger action to open them is `spacechase0.SpaceCore_OpenGuidebook guidebookId optionalChpaterId optionalPageId`
     * The guidebooks are stored in `spacechase0.SpaceCore/Guidebooks`. You can find example data [here](https://gist.github.com/spacechase0/18743e1ead1c33fadc807040fdb3626c).
     * Each entry must have the following:
