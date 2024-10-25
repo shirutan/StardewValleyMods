@@ -51,6 +51,8 @@ using SpaceCore.Guidebooks;
 namespace SpaceCore
 {
     // Remove this once vanilla fixes it
+    // Reenable once I fix the marriage schedule issue
+#if false
     [HarmonyPatch(typeof(NPC), "parseMasterScheduleImpl")]
     public static class FixZeroSchedulePatch
     {
@@ -84,6 +86,7 @@ namespace SpaceCore
             Game1.warpCharacter(npc, map, pos);
         }
     }
+#endif
 
     public class FarmerExtData
     {
