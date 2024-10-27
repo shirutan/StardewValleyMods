@@ -59,7 +59,7 @@ namespace SpaceShared.UI
             UpdateScrollbar();
         }
 
-        int lastScroll = 0;
+        public int lastScroll = 0; // Feeling lazy, make this public for now and do a proper solution later
         /// <inheritdoc />
         public override void Update(bool isOffScreen = false)
         {

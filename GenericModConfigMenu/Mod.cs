@@ -11,7 +11,10 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
 using StardewValley;
+using StardewValley.Delegates;
 using StardewValley.Menus;
+using StardewValley.TokenizableStrings;
+using StardewValley.Triggers;
 
 
 namespace GenericModConfigMenu
@@ -41,7 +44,12 @@ namespace GenericModConfigMenu
         {
             get
             {
-                IClickableMenu menu = Game1.activeClickableMenu is TitleMenu ? TitleMenu.subMenu : Game1.activeClickableMenu;
+                if (Game1.activeClickableMenu is TitleMenu)
+                    return TitleMenu.subMenu;
+                IClickableMenu menu = Game1.activeClickableMenu;
+                if (menu == null) return null;
+                while (menu.GetChildMenu() != null)
+                    menu = menu.GetChildMenu();
                 return menu is ModConfigMenu or SpecificModConfigMenu
                     ? menu
                     : null;
@@ -49,7 +57,24 @@ namespace GenericModConfigMenu
             set
             {
                 if (Game1.activeClickableMenu is TitleMenu)
+                {
                     TitleMenu.subMenu = value;
+                }
+                else if (Game1.activeClickableMenu != null)
+                {
+                    var menu = Game1.activeClickableMenu;
+                    while (menu.GetChildMenu() != null)
+                        menu = menu.GetChildMenu();
+                    if (value == null)
+                    {
+                        if (menu.GetParentMenu() != null)
+                            menu.GetParentMenu().SetChildMenu(null);
+                        else
+                            Game1.activeClickableMenu = null;
+                    }
+                    else
+                        menu.SetChildMenu(value);
+                }
                 else
                     Game1.activeClickableMenu = value;
             }
@@ -77,6 +102,31 @@ namespace GenericModConfigMenu
             helper.Events.Input.ButtonsChanged += this.OnButtonChanged;
 
             helper.Events.Content.AssetRequested += static (_, e) => AssetManager.Apply(e);
+
+            TriggerActionManager.RegisterAction("spacechase0.GenericModConfigMenu_OpenModConfig", (string[] args, TriggerActionContext ctx, out string error) =>
+            {
+                if (args.Length < 2)
+                {
+                    error = "Not enough arguments";
+                    return false;
+                }
+                else if (!Helper.ModRegistry.IsLoaded(args[1]))
+                {
+                    error = $"Mod {args[1]} not loaded.";
+                    return false;
+                }
+                var manifest = Helper.ModRegistry.Get(args[1]).Manifest;
+                if (ConfigManager.Get(manifest, false) == null)
+                {
+                    error = $"Mod {args[1]} not registered with GMCM.";
+                    return false;
+                }
+
+                OpenModMenu(manifest, null, null);
+
+                error = null;
+                return true;
+            });
         }
 
         /// <inheritdoc />
@@ -110,7 +160,13 @@ namespace GenericModConfigMenu
             Mod.ActiveConfigMenu = new SpecificModConfigMenu(
                 mods: this.ConfigManager,
                 scrollSpeed: this.Config.ScrollSpeed,
-                returnToList: () => this.OpenListMenu(listScrollRow)
+                returnToList: () =>
+                {
+                    if (Game1.activeClickableMenu is TitleMenu)
+                        OpenListMenu(listScrollRow);
+                    else
+                        Mod.ActiveConfigMenu = null;
+                }
             );
         }
 
@@ -126,8 +182,19 @@ namespace GenericModConfigMenu
                 config: config,
                 scrollSpeed: this.Config.ScrollSpeed,
                 page: page,
-                openPage: newPage => this.OpenModMenu(mod, newPage, listScrollRow),
-                returnToList: () => this.OpenListMenu(listScrollRow)
+                openPage: newPage =>
+                {
+                    if (!(Game1.activeClickableMenu is TitleMenu))
+                        Mod.ActiveConfigMenu = null;
+                    this.OpenModMenu(mod, newPage, listScrollRow);
+                },
+                returnToList: () =>
+                {
+                    if (Game1.activeClickableMenu is TitleMenu)
+                        OpenListMenu(listScrollRow);
+                    else
+                        Mod.ActiveConfigMenu = null;
+                }
             );
         }
 
@@ -213,6 +280,10 @@ namespace GenericModConfigMenu
                 getValue: () => this.Config.OpenMenuKey,
                 setValue: value => this.Config.OpenMenuKey = value
             );
+
+            configMenu.AddPageLink(ModManifest, "meow", () => "meow", () => "meow");
+            configMenu.AddPage(ModManifest, "meow", () => "meow");
+            configMenu.AddParagraph(ModManifest, () => "meow");
         }
 
         private void FiveTicksAfterGameLaunched(object sender, UpdateTickingEventArgs e)

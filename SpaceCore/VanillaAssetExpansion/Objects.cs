@@ -253,7 +253,15 @@ namespace SpaceCore.VanillaAssetExpansion
                     Game1.screenGlowOnce(sprinkleColor, hold: false);
                     Utility.addSprinklesToLocation(location, Game1.player.TilePoint.X, Game1.player.TilePoint.Y, 16, 16, 1300, 20, Color.White, null, motionTowardCenter: true);
                     __result = dict[__instance.ItemId].TotemWarp.ConsumedOnUse;
-                    return false;
+                    didStuff = true;
+                }
+            }
+
+            if (didStuff)
+            {
+                if (__instance.Category == -102 || __instance.Category == -103)
+                {
+                    SpaceCore.Instance.Helper.Reflection.GetMethod(__instance, "readBook").Invoke(location);
                 }
             }
 

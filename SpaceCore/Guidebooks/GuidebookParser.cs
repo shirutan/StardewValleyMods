@@ -18,9 +18,23 @@ internal class GuidebookParser
         {
             PageLink,
             Action,
+            OnceAction,
         }
         public ClickType Type { get; set; }
         public string Value { get; set; }
+    }
+
+    public class HoverData
+    {
+        public enum HoverType
+        {
+            Text,
+            Item,
+            Image,
+        }
+        public HoverType Type { get; set; }
+        public string HoverTitle { get; set; }
+        public string HoverValue { get; set; }
     }
 
     public class Element
@@ -29,10 +43,14 @@ internal class GuidebookParser
         {
             Text,
             Image,
+            InlineImage,
+            MetaCommand,
         }
         public ElementType Type { get; set; }
+        public string TagName { get; set; } // Not valid for Text
         public string Value { get; set; }
         public ClickData OnClick { get; set; } = null;
+        public HoverData Hover { get; set; } = null;
 
         public Dictionary<string, string> Tags { get; set; } = new();
     }
@@ -42,6 +60,7 @@ internal class GuidebookParser
         List<Element> ret = new();
 
         Stack<ClickData> clicks = new();
+        Stack<HoverData> hovers = new();
         Stack<(string id, string val)> tags = new();
         string buffer = "";
         Stack<bool> ifSucceeded = new();
@@ -59,6 +78,9 @@ internal class GuidebookParser
         }
         void FlushBuffer()
         {
+            if (buffer == "")
+                return;
+
             if (!ifSucceeded.Any(b => !b))
             {
                 ret.Add(new Element()
@@ -66,6 +88,7 @@ internal class GuidebookParser
                     Type = Element.ElementType.Text,
                     Value = buffer,
                     OnClick = clicks.Count > 0 ? clicks.Peek() : null,
+                    Hover = hovers.Count > 0 ? hovers.Peek() : null,
                     Tags = GetActiveTags(),
                 });
             }
@@ -102,7 +125,7 @@ internal class GuidebookParser
                     tagName = tagName.Substring(1);
                 }
 
-                switch (tagName)
+                switch (tagName.ToLower())
                 {
                     case "image":
                         if (!ifSucceeded.Any(b => !b))
@@ -111,8 +134,38 @@ internal class GuidebookParser
                             ret.Add(new Element()
                             {
                                 Type = Element.ElementType.Image,
+                                TagName = tagName,
                                 Value = tagVal,
                                 OnClick = clicks.Count > 0 ? clicks.Peek() : null,
+                                Hover = hovers.Count > 0 ? hovers.Peek() : null,
+                                Tags = GetActiveTags(),
+                            });
+                        }
+                        break;
+                    case "icon":
+                        if (!ifSucceeded.Any(b => !b))
+                        {
+                            Rectangle? rect = null;
+                            ret.Add(new Element()
+                            {
+                                Type = Element.ElementType.InlineImage,
+                                TagName = tagName,
+                                Value = tagVal,
+                                OnClick = clicks.Count > 0 ? clicks.Peek() : null,
+                                Hover = hovers.Count > 0 ? hovers.Peek() : null,
+                                Tags = GetActiveTags(),
+                            });
+                        }
+                        break;
+                    case "nextposition":
+                    case "offset":
+                        if (!ifSucceeded.Any(b => !b))
+                        {
+                            ret.Add(new Element()
+                            {
+                                Type = Element.ElementType.MetaCommand,
+                                TagName = tagName,
+                                Value = tagVal,
                                 Tags = GetActiveTags(),
                             });
                         }
@@ -152,6 +205,7 @@ internal class GuidebookParser
                         }
                         break;
                     case "action":
+                    case "onceaction":
                         if (isEnd)
                         {
                             clicks.Pop();
@@ -160,8 +214,58 @@ internal class GuidebookParser
                         {
                             clicks.Push(new()
                             {
-                                Type = ClickData.ClickType.Action,
+                                Type = tagName == "action" ? ClickData.ClickType.Action : ClickData.ClickType.OnceAction,
                                 Value = tagVal,
+                            });
+                        }
+                        break;
+                    case "texttooltip":
+                        if (isEnd)
+                        {
+                            hovers.Pop();
+                        }
+                        else
+                        {
+                            int colon = tagVal.IndexOf(':');
+                            string a = tagVal.Substring(0, colon);
+                            string b = tagVal.Substring(colon + 1);
+                            hovers.Push(new()
+                            {
+                                Type = HoverData.HoverType.Text,
+                                HoverTitle = a,
+                                HoverValue = b,
+                            });
+                        }
+                        break;
+                    case "imagetooltip":
+                        if (isEnd)
+                        {
+                            hovers.Pop();
+                        }
+                        else
+                        {
+                            int colon = tagVal.IndexOf(':');
+                            string a = tagVal.Substring(0, colon);
+                            string b = tagVal.Substring(colon + 1);
+                            hovers.Push(new()
+                            {
+                                Type = HoverData.HoverType.Image,
+                                HoverTitle = a,
+                                HoverValue = b,
+                            });
+                        }
+                        break;
+                    case "itemtooltip":
+                        if (isEnd)
+                        {
+                            hovers.Pop();
+                        }
+                        else
+                        {
+                            hovers.Push(new()
+                            {
+                                Type = HoverData.HoverType.Item,
+                                HoverValue = tagVal,
                             });
                         }
                         break;
@@ -190,7 +294,7 @@ internal class GuidebookParser
             Element b = ret[i];
 
             if (a.Type == Element.ElementType.Text && b.Type == Element.ElementType.Text &&
-                a.OnClick == null && b.OnClick == null)
+                a.OnClick == null && b.OnClick == null && a.Hover == null && b.Hover == null)
             {
                 List<string> atags = a.Tags.Select(t => $"{t.Key}={t.Value}").ToList();
                 atags.Sort();

@@ -288,8 +288,9 @@ Provided functionality for content pack authors:
                 * `Id` - Optional, only needed if you want to link to a specific page. The ID to use for the `[link]` tag.
                 * `Contents` - The contents of the page (see further below for formatting). You should use `{{i18n}}` here.
                 * `Condition` - Optional, default `TRUE` - A GameStateQuery for if this page should be available.
-     * Page contents formatting - You should probably use newlines in this field. (In VSCode, set the format of your file to "JSON Lines" to hide errors from this - though this will cause comments to error). You can use the following tags inside the content, and you can next these tags as well (formatted like BBCode - see the example gist's i18n for examples).
-        * `[center]centered text[/center]` - Puts the text `centered text` centered horizontally on the page. May work when not a single line on its own.
+     * Page contents formatting - You should probably use newlines in this field. (In VSCode, set the format of your file to "JSON Lines" to hide errors from this - though this will cause comments to error). You can use the following tags inside the content, and you can nest these tags as well (formatted like BBCode - see the example gist's i18n for examples).
+        * `[center]centered text[/center]` - Puts the text `centered text` centered horizontally on the page. May not work when more than one line of text.
+        * `[center=width]centered text[/center]` - Puts the text `centered text` centered horizontally within the next `width` pixels (manually useful for when manually positioning things). May not work when more than one line of text.
         * `[font=FontName]text[/font]` - Puts the text `text` on the page in the `FontName` font. Valid fonts are: `default`, `dialogue`, `tiny`
         * `[color=Color]text[/color]` - Puts the text `text` on the page in the `Color` color. Valid color syntax can be found [on the Stardew wiki](https://stardewvalleywiki.com/Modding:Common_data_field_types#Color).
         * `[image=PathToImageAsset:SourceRect:Scale]` - Adds a centered image to the page. There are three parameters, separated by `:` (though the second and third parameters are optional).
@@ -297,10 +298,31 @@ Provided functionality for content pack authors:
                 * If you're doing this in your i18n and don't have access to tokens, you can use the undocumented syntax SMAPI uses internally: `SMAPI/mod.id/path_in_mod` - `mod.id` being your mod ID, and `path_in_mod` should be the path to your image file. (Note that everything except the initial `SMAPI` should be lowercase, even if it isn't normally lowercase.)
             * `SourceRect` - If specified, four values separated by commas indicating the X, Y, Width, and Height of the image to use. (You can also just put `null` to use the whole thing.)
             * `Scale` - The scale of the image to use. Defaults to 4 times the normal size, like most game assets.
+        * `[icon=PathToImageAsset:SourceRect:Scale]` - Adds a inline image to the page. There are three parameters, separated by `:` (though the second and third parameters are optional).
+            * `PathToImageAsset` - This is the asset path to the image you want to use. Normally you'd use `{{InternalAssetKey}}` here.
+                * If you're doing this in your i18n and don't have access to tokens, you can use the undocumented syntax SMAPI uses internally: `SMAPI/mod.id/path_in_mod` - `mod.id` being your mod ID, and `path_in_mod` should be the path to your image file. (Note that everything except the initial `SMAPI` should be lowercase, even if it isn't normally lowercase.)
+            * `SourceRect` - If specified, four values separated by commas indicating the X, Y, Width, and Height of the image to use. (You can also just put `null` to use the whole thing.)
+            * `Scale` - The scale of the image to use. Defaults to 4 times the normal size, like most game assets.
         * `[link=ChapterID/PageID]Click here[/link]` - Puts the text `Click here` that, when clicked, will link to the specified page in the specified chapter.
-        * `[action=TriggerActionActionHere]Click here[/link]`- Puts the text `Click here` that, when clicked, will run the specified trigger action when clicked.
+            * You can also use this to put HTTP links in that will open in the default browser of the user when clicked (this will force a tooltip of the url the link will go to).
+        * `[action=TriggerActionActionHere]Click here[/action]` - Puts the text `Click here` that, when clicked, will run the specified trigger action when clicked.
+        * `[onceaction=TriggerActionActionHere]Click here[/action]` - Same as `[action]`, but will make the clicked elements disappear after they are used. (This will only affect the clicked element, not everything inside the `[onceaction]` block.)
+        * `[texttooltip=Title:Description]meow[/texttooltip]` - Make the specified elements have a tooltip when hovered over with the specified values. If you don't want a title for the tooltip, just make it empty, ie. `[texttooltip=:Description]`.
+        * `[itemtooltip=QualifiedItemId]meow[/itemtooltip]` - Make the specified elements have a tooltip when hovered, matching the tooltip of the specified item. `QualifiedItemId` needs to be a qualified item ID, such as `(O)74`.
+        * `[imagetooltip=Title:PathToImageAsset:SourceRect:Scale]` - Make the specified elements have a tooltip when hovered showing an image with a title.
+            * `Title` - If specified, the title above the image in the tooltip. If you don't want a title for the tooltip, just make it empty, ie. `[imagetooltip=:PathToImageAsset:SourceRect:Scale]`.
+            * `PathToImageAsset` - This is the asset path to the image you want to use. Normally you'd use `{{InternalAssetKey}}` here.
+                * If you're doing this in your i18n and don't have access to tokens, you can use the undocumented syntax SMAPI uses internally: `SMAPI/mod.id/path_in_mod` - `mod.id` being your mod ID, and `path_in_mod` should be the path to your image file. (Note that everything except the initial `SMAPI` should be lowercase, even if it isn't normally lowercase.)
+            * `SourceRect` - If specified, four values separated by commas indicating the X, Y, Width, and Height of the image to use. (You can also just put `null` to use the whole thing.)
+            * `Scale` - The scale of the image to use. Defaults to 4 times the normal size, like most game assets.
         * `[if=Condition]meow[/if]` - Puts the text `meow` in the page, but only if the game state query `Condition` passes.
         * `[else]meow2[/else]` - If the most recent `[if]` that ended failed, put the text `meow2` on the page.
+        * `[nospacing]...[/nospacing]` - Anything inside a `[nospacing]` will not move the "cursor" around when placing elements.
+            * This means `[image]`s will no longer be automatically centered.
+            * It also means any text and `[icon]` elements will not cause subsequent elements to be moved after it.
+            * This is useful for manually positioning things on a page (see next two tags).
+        * `[nextposition=X,Y]` - Will set the position of the next element placed to the specified value. If `X` or `Y` is set to `null`, then it won't override that coordinate (useful if you want to only override one coordinate but not the other).
+        * `[offset=X,Y]` - Moves the next element placed from where it normally would be by the specified amount.
 
 The rest of the features assume you understand C# and the game code a little bit (and are only accessible via C#):
 * In the API provided through SMAPI's mod registry (see mod source for interface you can copy):

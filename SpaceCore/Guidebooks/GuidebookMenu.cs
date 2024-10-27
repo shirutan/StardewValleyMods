@@ -6,8 +6,11 @@ using System.Net.Http.Headers;
 using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Graphics.PackedVector;
+using Netcode;
 using SpaceCore.UI;
 using SpaceShared;
 using StardewValley;
@@ -109,7 +112,7 @@ internal class GuidebookMenu : IClickableMenu
         Ui.AddChild(PreviousPageButton);
         NextPageButton = new()
         {
-            LocalPosition = new Vector2(PageContainer.Width - 12*Game1.pixelZoom - 16, height - (50 - 11 * Game1.pixelZoom / 2)),
+            LocalPosition = new Vector2(PageContainer.Width - 12*Game1.pixelZoom, height - (50 - 11 * Game1.pixelZoom / 2)),
             Texture = Game1.mouseCursors,
             TexturePixelArea = new Rectangle(365, 495, 12, 11),
             Scale = Game1.pixelZoom,
@@ -170,11 +173,11 @@ internal class GuidebookMenu : IClickableMenu
             }
 
             ChapterTitle.String = Data.Chapters[CurrentChapter].Name;
-            ChapterTitle.LocalPosition = new((width - 64) / 2 - ChapterTitle.Width / 2, ChapterTitle.LocalPosition.Y);
+            ChapterTitle.LocalPosition = new((width - 64) / 2 - ChapterTitle.Width / 2 + 20, ChapterTitle.LocalPosition.Y);
 
             foreach (var tab in ChapterTabs.Values)
             {
-                tab.LocalPosition = new(-tab.Width, tab.LocalPosition.Y);
+                tab.LocalPosition = new(-tab.Width + 4, tab.LocalPosition.Y);
             }
             if (ChapterTabs.TryGetValue(CurrentChapter, out var currentTab))
             {
@@ -203,9 +206,13 @@ internal class GuidebookMenu : IClickableMenu
 
         float x = 0, y = 0;
         SpriteFont lastFont = GuidebookFont.Fonts["default"];
-        foreach (var elem in elems)
+        for (int ie = 0; ie < elems.Count; ++ie)
         {
-            if (elem.Value.Replace("\n", "") == "")
+            var elem = elems[ie];
+            GuidebookParser.Element nextElem = ie + 1 < elems.Count ? elems[ie + 1] : null;
+            if (elem.Type == GuidebookParser.Element.ElementType.Text &&
+                elem.Value.Replace("\n", "") == "" &&
+                ( nextElem == null || ( nextElem.Type != GuidebookParser.Element.ElementType.Text && nextElem.Type != GuidebookParser.Element.ElementType.InlineImage ) ) )
                 continue;
 
             switch (elem.Type)
@@ -224,18 +231,21 @@ internal class GuidebookMenu : IClickableMenu
                             prevC = c;
                         }
 
-                        int i = 0;
-                        for (; i < strWithoutEmptyLines.Length; ++i)
+                        if (!elem.Tags.ContainsKey("nospacing"))
                         {
-                            if (strWithoutEmptyLines[i] == '\n')
+                            int i = 0;
+                            for (; i < strWithoutEmptyLines.Length; ++i)
                             {
-                                x = 0;
-                                y += lastFont.LineSpacing;
+                                if (strWithoutEmptyLines[i] == '\n')
+                                {
+                                    x = 0;
+                                    y += lastFont.LineSpacing;
+                                }
+                                else
+                                    break;
                             }
-                            else
-                                break;
+                            strWithoutEmptyLines = strWithoutEmptyLines.Substring(i);
                         }
-                        strWithoutEmptyLines = strWithoutEmptyLines.Substring(i);
 
                         string usedFontId = elem.Tags.TryGetValue("font", out string fontId) ? fontId : "default";
                         lastFont = GuidebookFont.Fonts[usedFontId];
@@ -248,23 +258,50 @@ internal class GuidebookMenu : IClickableMenu
 
                         void AddLabel(string str, Vector2 pos)
                         {
+                            // Because of how the bounds of UI elements work, we want to split each line on their own.
+                            // Otherwise, the last line could have hover/click effects to the right of it because the previous line extended further to the right
+                            if (str.Contains('\n'))
+                            {
+                                string[] stuff = str.Split('\n');
+                                for (int i = 0; i < stuff.Length; ++i)
+                                {
+                                    AddLabel(stuff[i], pos + new Vector2(0, lastFont.LineSpacing * i));
+                                }
+                                return;
+                            }
+                            
                             Label label = new Label()
                             {
                                 IdleTextColor = textCol,
                                 Font = lastFont,
                                 String = str,
                                 LocalPosition = pos,
+                                UserData = elem.Hover,
                             };
 
-                            if (elem.Tags.ContainsKey("center"))
+                            if (elem.Tags.TryGetValue("center", out string centerStr))
                             {
-                                label.LocalPosition = new((PageSize.X - label.Width) / 2, pos.Y);
+                                float w = PageSize.X;
+                                if (!string.IsNullOrEmpty(centerStr))
+                                    float.TryParse(centerStr, out w);
+                                label.LocalPosition = new(pos.X + (w - label.Width) / 2, pos.Y);
                             }
 
                             if (elem.OnClick != null)
                             {
                                 var clickData = elem.OnClick;
-                                label.Callback = (_) => HandleClick(clickData);
+                                label.Callback = (_) => HandleClick(label, clickData);
+
+                                // We want users to always be aware when they are clicking a browser link
+                                if (elem.OnClick.Type == GuidebookParser.ClickData.ClickType.PageLink &&
+                                    (elem.OnClick.Value.StartsWith("http://") || elem.OnClick.Value.StartsWith("https://")))
+                                {
+                                    label.UserData = new GuidebookParser.HoverData()
+                                    {
+                                        Type = GuidebookParser.HoverData.HoverType.Text,
+                                        HoverValue = elem.OnClick.Value,
+                                    };
+                                }
                             }
 
                             PageContainer.AddChild(label);
@@ -279,83 +316,141 @@ internal class GuidebookMenu : IClickableMenu
                             string beforeFirstBreak = str.Substring(0, nl);
                             string afterFirstBreak = str.Substring(nl + 1);
                             AddLabel(beforeFirstBreak, new(x, y));
-                            y += lastFont.LineSpacing;
-                            AddLabel(afterFirstBreak, new(0, y));
+                            AddLabel(afterFirstBreak, new(0, y + lastFont.LineSpacing));
+                            /*if (!elem.Tags.ContainsKey("nospacing"))
+                            {
+                                y += lastFont.LineSpacing;
+                            }
+                            */
                         }
                         else
                         {
                             AddLabel(str, new( x, y ));
                         }
 
-                        x = offset.X;
-                        y += offset.Y;
+                        if (!elem.Tags.ContainsKey("nospacing"))
+                        {
+                            x = offset.X;
+                            y += offset.Y;
+                        }
                         break;
                     };
                 case GuidebookParser.Element.ElementType.Image:
-                    if (x > 0)
+                case GuidebookParser.Element.ElementType.InlineImage:
                     {
-                        x = 0;
-                        y += lastFont.LineSpacing;
-                    }
-                    string[] parts = elem.Value.Split(':');
-                    string imagePath = parts[0];
-                    Rectangle? rect = null;
-                    int scale = 4;
-                    if (parts.Length >= 2 && parts[1] != "null")
-                    {
-                        string[] rectParts = parts[1].Split(',');
-                        if (rectParts.Length == 4)
+                        if (elem.Type == GuidebookParser.Element.ElementType.Image && x > 0 && !elem.Tags.ContainsKey("nospacing"))
                         {
-                            try
+                            x = 0;
+                            y += lastFont.LineSpacing;
+                        }
+                        string[] parts = elem.Value.Split(':');
+                        string imagePath = parts[0];
+                        Rectangle? rect = null;
+                        int scale = elem.Type == GuidebookParser.Element.ElementType.InlineImage ? 2 : 4;
+                        if (parts.Length >= 2 && parts[1] != "null")
+                        {
+                            string[] rectParts = parts[1].Split(',');
+                            if (rectParts.Length == 4)
                             {
-                                int[] nums = rectParts.Select(s => int.Parse(s)).ToArray();
-                                rect = new Rectangle(nums[0], nums[1], nums[2], nums[3]);
+                                try
+                                {
+                                    int[] nums = rectParts.Select(s => int.Parse(s)).ToArray();
+                                    rect = new Rectangle(nums[0], nums[1], nums[2], nums[3]);
+                                }
+                                catch (FormatException e)
+                                {
+                                    Log.Warn($"Failed to parse \"{elem.Value}\" image subrect: One of the components wasn't an integer");
+                                }
                             }
-                            catch (FormatException e)
+                            else
                             {
-                                Log.Warn($"Failed to parse \"{elem.Value}\" image subrect: One of the components wasn't an integer");
+                                Log.Warn($"Failed to parse \"{elem.Value}\" image subrect: Exactly four integers must be specified (x,y,width,height)");
                             }
                         }
-                        else
+                        if (parts.Length >= 3)
                         {
-                            Log.Warn($"Failed to parse \"{elem.Value}\" image subrect: Exactly four integers must be specified (x,y,width,height)");
+                            if (!int.TryParse(parts[2], out scale))
+                            {
+                                Log.Warn($"Failed to parse \"{elem.Value}\" image scale: Must be an integer");
+                            }
+                        }
+
+                        Image img = new Image()
+                        {
+                            Texture = Game1.content.DoesAssetExist<Texture2D>(imagePath) ? Game1.content.Load<Texture2D>(imagePath) : Game1.staminaRect,
+                            TexturePixelArea = rect,
+                            Scale = scale,
+                            LocalPosition = new(x, y),
+                            UserData = elem.Hover,
+                        };
+                        if (!elem.Tags.ContainsKey("nospacing"))
+                        {
+                            if (elem.Type == GuidebookParser.Element.ElementType.Image)
+                            {
+                                img.LocalPosition = new((Data.PageSize.X - img.Width) / 2, img.LocalPosition.Y);
+                            }
+                            else if (elem.Type == GuidebookParser.Element.ElementType.InlineImage)
+                            {
+                                img.LocalPosition = new(img.LocalPosition.X, img.LocalPosition.Y + (lastFont.LineSpacing - (rect?.Height ?? img.Texture.Height) * scale) / 2);
+                            }
+                        }
+                        if (elem.OnClick != null)
+                        {
+                            var clickData = elem.OnClick;
+                            img.Callback = (_) => HandleClick(img, clickData);
+                        }
+
+                        PageContainer.AddChild(img);
+                        if (!elem.Tags.ContainsKey("nospacing"))
+                        {
+                            if (elem.Type == GuidebookParser.Element.ElementType.Image)
+                            {
+                                x = 0;
+                                y += (rect?.Height ?? img.Texture.Height) * scale;
+                            }
+                            else if (elem.Type == GuidebookParser.Element.ElementType.InlineImage)
+                            {
+                                x += (rect?.Width ?? img.Texture.Width) * scale;
+                                if (x >= PageSize.X)
+                                {
+                                    x = 0;
+                                    y += lastFont.LineSpacing;
+                                }
+                            }
                         }
                     }
-                    if (parts.Length >= 3)
+                    break;
+                case GuidebookParser.Element.ElementType.MetaCommand:
+                    switch (elem.TagName)
                     {
-                        if (!int.TryParse(parts[2], out scale))
-                        {
-                            Log.Warn($"Failed to parse \"{elem.Value}\" image scale: Must be an integer");
-                        }
+                        case "offset":
+                            {
+                                string[] parts = elem.Value.Split(',');
+                                int[] partsI = parts.Select(s => int.Parse(s)).ToArray();
+                                x += partsI[0];
+                                y += partsI[1];
+                            }
+                            break;
+                        case "nextposition":
+                            {
+                                string[] parts = elem.Value.Split(',');
+                                x = parts[0] == "null" ? x : int.Parse(parts[0]);
+                                y = parts[1] == "null" ? y : int.Parse(parts[1]);
+                            }
+                            break;
                     }
-
-                    Image img = new Image()
-                    {
-                        Texture = Game1.content.DoesAssetExist<Texture2D>(imagePath) ? Game1.content.Load<Texture2D>(imagePath) : Game1.staminaRect,
-                        TexturePixelArea = rect,
-                        Scale = scale,
-                        LocalPosition = new(0, y)
-                    };
-                    img.LocalPosition = new((Data.PageSize.X - img.Width) / 2, img.LocalPosition.Y);
-                    if (elem.OnClick != null)
-                    {
-                        var clickData = elem.OnClick;
-                        img.Callback = (_) => HandleClick(clickData);
-                    }
-
-                    PageContainer.AddChild(img);
-                    x = 0;
-                    y += (rect?.Height ?? img.Texture.Height) * scale;
                     break;
             }
         }
 
         PageLabel.String = $"{CurrentPage + 1}/{CurrentChapterPages.Count}";
-        PageLabel.LocalPosition = new((width - 64) / 2 - PageLabel.Width / 2, height - 50 + 16);
+        PageLabel.LocalPosition = new((width - 64) / 2 - PageLabel.Width / 2 + 20, height - 50 + 16);
         PageContainer.Scrollbar.ScrollTo(0);
+        PageContainer.lastScroll = 0;
     }
 
-    private void HandleClick(GuidebookParser.ClickData clickData)
+    private List<Element> RemoveBecauseClicked = new();
+    private void HandleClick(Element elem, GuidebookParser.ClickData clickData)
     {
         switch (clickData.Type)
         {
@@ -363,6 +458,7 @@ internal class GuidebookMenu : IClickableMenu
                 PendingGoto = clickData.Value;
                 break;
             case GuidebookParser.ClickData.ClickType.Action:
+            case GuidebookParser.ClickData.ClickType.OnceAction:
                 TriggerActionManager.TryRunAction(clickData.Value, out string error, out Exception exception);
                 if (exception != null)
                 {
@@ -372,6 +468,8 @@ internal class GuidebookMenu : IClickableMenu
                 {
                     Log.Error($"Error while running clicked action on chapter \"{CurrentChapter}\" page {CurrentPage}: {error}");
                 }
+                if (clickData.Type == GuidebookParser.ClickData.ClickType.OnceAction)
+                    RemoveBecauseClicked.Add(elem);
                 break;
         }
     }
@@ -384,12 +482,31 @@ internal class GuidebookMenu : IClickableMenu
 
     public override void update(GameTime time)
     {
+        foreach (var elem in RemoveBecauseClicked)
+        {
+            PageContainer.RemoveChild(elem);
+        }
+        RemoveBecauseClicked.Clear();
+
         if (PendingGoto != null)
         {
-            int slash = PendingGoto.IndexOf('/');
-            string chapter = slash == -1 ? PendingGoto : PendingGoto.Substring(0, slash);
-            string page = slash == -1 ? null : PendingGoto.Substring(slash + 1);
-            GotoChapter(chapter, page);
+            if (PendingGoto.StartsWith("http://") || PendingGoto.StartsWith("https://"))
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo(PendingGoto) { UseShellExecute = true });
+                }
+                catch (Exception)
+                {
+                }
+            }
+            else
+            {
+                int slash = PendingGoto.IndexOf('/');
+                string chapter = slash == -1 ? PendingGoto : PendingGoto.Substring(0, slash);
+                string page = slash == -1 ? null : PendingGoto.Substring(slash + 1);
+                GotoChapter(chapter, page);
+            }
             PendingGoto = null;
         }
 
@@ -419,13 +536,108 @@ internal class GuidebookMenu : IClickableMenu
 
         IClickableMenu.drawTextureBox(b, PageLabel.Bounds.X - 20, PageLabel.Bounds.Y - 20, PageLabel.Bounds.Width + 40, PageLabel.Bounds.Height + 40, Color.White);
         IClickableMenu.drawTextureBox(b, ChapterTitle.Bounds.X - 24, ChapterTitle.Bounds.Y - 24, ChapterTitle.Bounds.Width + 48, ChapterTitle.Bounds.Height + 48, Color.White);
-        SpriteText.drawStringWithScrollCenteredAt(b, Data.Title, (int)Ui.Position.X + (int)PageSize.X / 2, (int)Ui.Position.Y + 10, (int)PageSize.X - 64);
+        SpriteText.drawStringWithScrollCenteredAt(b, Data.Title, (int)Ui.Position.X + (int)PageSize.X / 2 + 16, (int)Ui.Position.Y + 10, (int)PageSize.X - 64);
 
         if (PageTexture != null)
         {
             b.Draw(PageTexture, PageContainer.Position, Color.White);
         }
         Ui.Draw(b);
+
+        foreach (var child in PageContainer.Children)
+        {
+            if (child.Hover && child.UserData is GuidebookParser.HoverData hover)
+            {
+                switch (hover.Type)
+                {
+                    case GuidebookParser.HoverData.HoverType.Text:
+                        drawHoverText(b, hover.HoverValue, Game1.smallFont, boldTitleText: string.IsNullOrEmpty(hover.HoverTitle) ? null : hover.HoverTitle);
+                        break;
+                    case GuidebookParser.HoverData.HoverType.Item:
+                        var item = ItemRegistry.Create(hover.HoverValue);
+                        drawHoverText(b, item.getDescription(), Game1.smallFont, boldTitleText: item.DisplayName, hoveredItem: item);
+                        break;
+                    case GuidebookParser.HoverData.HoverType.Image:
+                        {
+                            int x = Game1.getOldMouseX() + 32;
+                            int y = Game1.getOldMouseY() + 32;
+
+                            string[] parts = hover.HoverValue.Split(':');
+                            string imagePath = parts[0];
+                            Rectangle? rect = null;
+                            int scale = 4;
+                            if (parts.Length >= 2 && parts[1] != "null")
+                            {
+                                string[] rectParts = parts[1].Split(',');
+                                if (rectParts.Length == 4)
+                                {
+                                    try
+                                    {
+                                        int[] nums = rectParts.Select(s => int.Parse(s)).ToArray();
+                                        rect = new Rectangle(nums[0], nums[1], nums[2], nums[3]);
+                                    }
+                                    catch (FormatException e)
+                                    {
+                                        Log.Warn($"Failed to parse \"{hover.HoverValue}\" image subrect: One of the components wasn't an integer");
+                                    }
+                                }
+                                else
+                                {
+                                    Log.Warn($"Failed to parse \"{hover.HoverValue}\" image subrect: Exactly four integers must be specified (x,y,width,height)");
+                                }
+                            }
+                            if (parts.Length >= 3)
+                            {
+                                if (!int.TryParse(parts[2], out scale))
+                                {
+                                    Log.Warn($"Failed to parse \"{hover.HoverValue}\" image scale: Must be an integer");
+                                }
+                            }
+                            Texture2D tex = Game1.content.DoesAssetExist<Texture2D>(imagePath) ? Game1.content.Load<Texture2D>(imagePath) : Game1.staminaRect;
+
+                            int width = (rect?.Width ?? tex.Width) * scale;
+                            int height = (rect?.Height ?? tex.Height) * scale;
+
+                            if (!string.IsNullOrEmpty(hover.HoverTitle))
+                            {
+                                width = Math.Max(width, (int)Game1.dialogueFont.MeasureString(hover.HoverTitle).X + 32);
+                                height += (int)Game1.dialogueFont.MeasureString(hover.HoverTitle).Y + 32;
+                            }
+
+                            if (x + width > Utility.getSafeArea().Right)
+                            {
+                                x = Utility.getSafeArea().Right - width;
+                                y += 16;
+                            }
+
+                            if (y + height > Utility.getSafeArea().Bottom)
+                            {
+                                x += 16;
+                                if (x + width > Utility.getSafeArea().Right)
+                                {
+                                    x = Utility.getSafeArea().Right - width;
+                                }
+
+                                y = Utility.getSafeArea().Bottom - height;
+                            }
+
+                            drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60), x, y, width, height, Color.White);
+                            if (!string.IsNullOrEmpty(hover.HoverTitle))
+                            {
+                                drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60), x, y, width, (int)Game1.dialogueFont.MeasureString(hover.HoverTitle).Y + 32 - 4, Color.White, 1, drawShadow: false);
+                                b.Draw(Game1.menuTexture, new Rectangle(x + 12, y + (int)Game1.dialogueFont.MeasureString(hover.HoverTitle).Y + 32 - 4, width - 4 * 6, 4), new Rectangle(44, 300, 4, 4), Color.White);
+                                b.DrawString(Game1.dialogueFont, hover.HoverTitle, new Vector2(x + 16, y + 16 + 4) + new Vector2(2f, 2f), Game1.textShadowColor);
+                                b.DrawString(Game1.dialogueFont, hover.HoverTitle, new Vector2(x + 16, y + 16 + 4) + new Vector2(0f, 2f), Game1.textShadowColor);
+                                b.DrawString(Game1.dialogueFont, hover.HoverTitle, new Vector2(x + 16, y + 16 + 4), Game1.textColor);
+
+                                y += (int)Game1.dialogueFont.MeasureString(hover.HoverTitle).Y;
+                            }
+                            b.Draw(tex, new Vector2(x, y), rect, Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 1);
+                        }
+                        break;
+                }
+            }
+        }
 
         foreach (var entry in ChapterTabs)
         {
