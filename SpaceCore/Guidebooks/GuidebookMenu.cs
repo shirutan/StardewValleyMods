@@ -92,7 +92,6 @@ internal class GuidebookMenu : IClickableMenu
             Size = PageSize,
             OutlineColor = Data.PageTexture == null ? Color.White : null,
         };
-        Ui.AddChild(PageContainer);
 
         PreviousPageButton = new()
         {
@@ -155,6 +154,8 @@ internal class GuidebookMenu : IClickableMenu
             y += tab.Height;
         }
 
+        Ui.AddChild(PageContainer); // This needs to be later so the tabs draw underneath
+
         GotoChapter(Data.DefaultChapter, null);
     }
 
@@ -177,11 +178,11 @@ internal class GuidebookMenu : IClickableMenu
 
             foreach (var tab in ChapterTabs.Values)
             {
-                tab.LocalPosition = new(-tab.Width + 4, tab.LocalPosition.Y);
+                tab.LocalPosition = new(-tab.Width + 4 + 16, tab.LocalPosition.Y);
             }
             if (ChapterTabs.TryGetValue(CurrentChapter, out var currentTab))
             {
-                currentTab.LocalPosition = new(-currentTab.Width - 16, currentTab.LocalPosition.Y);
+                currentTab.LocalPosition = new(-currentTab.Width + 4, currentTab.LocalPosition.Y);
             }
 
             CurrentPage = 0;
