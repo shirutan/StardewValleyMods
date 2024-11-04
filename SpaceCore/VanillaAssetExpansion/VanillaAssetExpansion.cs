@@ -235,7 +235,6 @@ namespace SpaceCore.VanillaAssetExpansion
             manualTriggerActionsDirty = false;
             manualTriggerActionsById.Clear();
 
-            AccessTools.Method(typeof(TriggerActionManager), "InitializeIfNeeded").Invoke(null, []);
             var manual = TriggerActionManager.GetActionsForTrigger("Manual");
             foreach (var entry in manual)
             {

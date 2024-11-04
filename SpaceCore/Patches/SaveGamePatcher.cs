@@ -115,6 +115,7 @@ namespace SpaceCore.Patches
                     Log.Trace("\t" + meth.Name + " " + meth);
                 }
             }
+            ret.Add(AccessTools.Method(typeof(SaveGame), nameof(SaveGame.TryReadSaveFile)));
             ret.Add(PatchHelper.RequireMethod<LoadGameMenu>("FindSaveGames"));
             return ret;
         }

@@ -28,6 +28,7 @@ using StardewValley.Locations;
 using StardewValley.Monsters;
 using StardewValley.Network;
 using StardewValley.Objects;
+using StardewValley.Objects.Trinkets;
 using StardewValley.TerrainFeatures;
 using StardewValley.Tools;
 using StardewValley.Triggers;
