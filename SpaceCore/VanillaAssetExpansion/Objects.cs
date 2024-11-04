@@ -185,7 +185,7 @@ namespace SpaceCore.VanillaAssetExpansion
                     __result = false;
                     return false;
                 }
-                bool normal_gameplay = !Game1.eventUp && !Game1.isFestival() && !Game1.fadeToBlack && !Game1.player.swimming && !Game1.player.bathingClothes && !Game1.player.onBridge.Value;
+                bool normal_gameplay = !Game1.eventUp && !Game1.isFestival() && !Game1.fadeToBlack && !Game1.player.swimming.Value && !Game1.player.bathingClothes.Value && !Game1.player.onBridge.Value;
                 if (normal_gameplay)
                 {
                     Game1.player.jitterStrength = 1f;

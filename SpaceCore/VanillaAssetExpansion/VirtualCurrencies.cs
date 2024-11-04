@@ -190,7 +190,7 @@ namespace SpaceCore.VanillaAssetExpansion
             if (obj != null && obj.specialItem)
             {
                 string key = (obj.IsRecipe ? ("-" + obj.ItemId) : obj.ItemId);
-                if ((bool)obj.bigCraftable || obj is Furniture)
+                if ((bool)obj.bigCraftable.Value || obj is Furniture)
                 {
                     if (!__instance.specialBigCraftables.Contains(key))
                     {
@@ -207,12 +207,9 @@ namespace SpaceCore.VanillaAssetExpansion
             {
                 actualItem.Stack = countAdded;
                 __instance.NotifyQuests(q => q.OnItemReceived(actualItem, countAdded));
-                if (__instance.team.specialOrders != null)
+                foreach (SpecialOrder specialOrder in __instance.team.specialOrders)
                 {
-                    foreach (SpecialOrder specialOrder in __instance.team.specialOrders)
-                    {
-                        specialOrder.onItemCollected?.Invoke(__instance, actualItem);
-                    }
+                    specialOrder.onItemCollected?.Invoke(__instance, actualItem);
                 }
             }
             finally

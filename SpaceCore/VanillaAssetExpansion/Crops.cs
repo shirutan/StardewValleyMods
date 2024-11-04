@@ -183,16 +183,16 @@ namespace SpaceCore.VanillaAssetExpansion
                         numToHarvest++;
                     }
                 }
-                Item harvestedItem = (__instance.programColored ? new ColoredObject(__instance.indexOfHarvest, 1, __instance.tintColor.Value)
+                Item harvestedItem = (__instance.programColored.Value ? new ColoredObject(__instance.indexOfHarvest.Value, 1, __instance.tintColor.Value)
                 {
                     Quality = cropQuality
-                } : ItemRegistry.Create(__instance.indexOfHarvest, 1, cropQuality));
+                } : ItemRegistry.Create(__instance.indexOfHarvest.Value, 1, cropQuality));
 
                 bool localSuccess = false;
                 DoStuff(harvestedItem, numToHarvest, ref localSuccess);
                 if (localSuccess)
                 {
-                    harvestedItem = (__instance.programColored ? new ColoredObject(__instance.indexOfHarvest, 1, __instance.tintColor.Value) : ItemRegistry.Create(__instance.indexOfHarvest));
+                    harvestedItem = (__instance.programColored.Value ? new ColoredObject(__instance.indexOfHarvest.Value, 1, __instance.tintColor.Value) : ItemRegistry.Create(__instance.indexOfHarvest.Value));
                     int price = 0;
                     StardewValley.Object obj = harvestedItem as StardewValley.Object;
                     if (obj != null)

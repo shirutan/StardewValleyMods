@@ -912,15 +912,15 @@ namespace SpaceCore.Interface
 		    x += 124;
 		    //b.Draw(Game1.staminaRect, new Rectangle(x, y - 16, 4, (int)((float)base.height / 3f) - 32 - 4), new Color(214, 143, 84));
 		    int xHouseOffset = 0;
-		    if (Game1.smallFont.MeasureString(Game1.content.LoadString("Strings\\UI:Inventory_PortraitHover_Level", (int)Game1.player.houseUpgradeLevel + 1)).X > 120f)
+		    if (Game1.smallFont.MeasureString(Game1.content.LoadString("Strings\\UI:Inventory_PortraitHover_Level", (int)Game1.player.houseUpgradeLevel.Value + 1)).X > 120f)
 		    {
 			    xHouseOffset -= 20;
 		    }
 		    y += 108;
 		    x += 28;
 		    b.Draw(Game1.mouseCursors, new Vector2(x + xHouseOffset + 20, y - 4), new Rectangle(653, 880, 10, 10), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.7f);
-		    Utility.drawTextWithShadow(b, Game1.content.LoadString("Strings\\UI:Inventory_PortraitHover_Level", (int)Game1.player.houseUpgradeLevel + 1), Game1.smallFont, new Vector2(x + xHouseOffset + 72, y), Game1.textColor);
-		    if ((int)Game1.player.houseUpgradeLevel >= 3)
+		    Utility.drawTextWithShadow(b, Game1.content.LoadString("Strings\\UI:Inventory_PortraitHover_Level", (int)Game1.player.houseUpgradeLevel.Value + 1), Game1.smallFont, new Vector2(x + xHouseOffset + 72, y), Game1.textColor);
+		    if ((int)Game1.player.houseUpgradeLevel.Value >= 3)
 		    {
 			    int interval = 709;
 			    b.Draw(Game1.mouseCursors, new Vector2((float)(x + xHouseOffset) + 50f, (float)y - 4f) + new Vector2(0f, (float)((0.0 - Game1.currentGameTime.TotalGameTime.TotalMilliseconds) % 2000.0) * 0.01f), new Rectangle(372, 1956, 10, 10), new Color(80, 80, 80) * 1f * 0.53f * (1f - (float)(Game1.currentGameTime.TotalGameTime.TotalMilliseconds % 2000.0) / 2000f), (float)((0.0 - Game1.currentGameTime.TotalGameTime.TotalMilliseconds) % 2000.0) * 0.001f, new Vector2(3f, 3f), 0.5f + (float)(Game1.currentGameTime.TotalGameTime.TotalMilliseconds % 2000.0) / 1000f, SpriteEffects.None, 0.7f);

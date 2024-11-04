@@ -339,7 +339,7 @@ namespace SpaceCore.Dungeons
             var spawnDefs = Game1.content.Load<Dictionary<string, SpawnableDefinitionData>>("spacechase0.SpaceCore/SpawnableDefinitions");
             foreach (var sp in ext.setPieceCache)
             {
-                var data = spawnDefs[sp.FromSpawnDef];
+                var data = spawnDefs[sp.FromSpawnDef.Value];
                 if (new Rectangle(sp.Tile.Value, new(data.SetPieceSizeX, data.SetPieceSizeY)).Contains(tile))
                     return false;
             }
@@ -966,7 +966,7 @@ namespace SpaceCore.Dungeons
                 __instance.Location.playSound("hammer", tileLocation);
             }
 
-            float power = Math.Max(1f, (float)((int)t.upgradeLevel + 1) * 0.75f);
+            float power = Math.Max(1f, (float)((int)t.upgradeLevel.Value + 1) * 0.75f);
             __instance.health.Value -= power;
 
             if (t.hasEnchantmentOfType<ShavingEnchantment>() && Game1.random.NextDouble() <= (double)(power / 12f) &&
@@ -1206,11 +1206,11 @@ namespace SpaceCore.Dungeons
             }
             if (Game1.netWorldState.Value.GoldenWalnutsFound >= 100)
             {
-                if ((bool)monster.isHardModeMonster && Game1.stats.Get("hardModeMonstersKilled") > 50 && Game1.random.NextDouble() < 0.001 + (double)((float)who.LuckLevel * 0.0002f))
+                if ((bool)monster.isHardModeMonster.Value && Game1.stats.Get("hardModeMonstersKilled") > 50 && Game1.random.NextDouble() < 0.001 + (double)((float)who.LuckLevel * 0.0002f))
                 {
                     monster.ModifyMonsterLoot(Game1.createItemDebris(ItemRegistry.Create("(O)896"), new Vector2(x, y), -1, __instance));
                 }
-                else if ((bool)monster.isHardModeMonster && Game1.random.NextDouble() < 0.008 + (double)((float)who.LuckLevel * 0.002f))
+                else if ((bool)monster.isHardModeMonster.Value && Game1.random.NextDouble() < 0.008 + (double)((float)who.LuckLevel * 0.002f))
                 {
                     monster.ModifyMonsterLoot(Game1.createItemDebris(ItemRegistry.Create("(O)858"), new Vector2(x, y), -1, __instance));
                 }

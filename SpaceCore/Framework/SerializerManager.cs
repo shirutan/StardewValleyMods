@@ -45,6 +45,17 @@ namespace SpaceCore.Framework
             typeof(Item),
             typeof(TerrainFeature)
         };
+        private readonly Type[] VanillaDescriptionElementTypes =
+        {
+            typeof(Character),
+            typeof(Item)
+        };
+        private readonly Type[] VanillaLegacyDescriptionElementTypes =
+        {
+            typeof(DescriptionElement),
+            typeof(Character),
+            typeof(Item)
+        };
 
 
         /*********
@@ -87,6 +98,8 @@ namespace SpaceCore.Framework
                 SaveGame.serializer = this.InitializeSerializer(typeof(SaveGame), this.VanillaMainTypes);
                 SaveGame.farmerSerializer = this.InitializeSerializer(typeof(Farmer), this.VanillaFarmerTypes);
                 SaveGame.locationSerializer = this.InitializeSerializer(typeof(GameLocation), this.VanillaGameLocationTypes);
+                SaveGame.descriptionElementSerializer = this.InitializeSerializer(typeof(DescriptionElement), this.VanillaDescriptionElementTypes);
+                SaveGame.legacyDescriptionElementSerializer = this.InitializeSerializer(typeof(DescriptionElement), this.VanillaLegacyDescriptionElementTypes);
             }
         }
 

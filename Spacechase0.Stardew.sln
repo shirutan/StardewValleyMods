@@ -284,7 +284,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YarnEvents", "YarnEvents\Ya
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MiserableLife", "7thaxisMiserableLife\MiserableLife.csproj", "{ED79699D-06AF-4B23-B60E-1BED2D06BE8D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Potioncraft", "Potioncraft\Potioncraft.csproj", "{CF639A6A-C97F-4409-BE34-53E60D2092CC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Potioncraft", "Potioncraft\Potioncraft.csproj", "{CF639A6A-C97F-4409-BE34-53E60D2092CC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -1429,6 +1429,8 @@ Global
 		SpaceShared\SpaceShared.projitems*{cf639a6a-c97f-4409-be34-53e60d2092cc}*SharedItemsImports = 5
 		SpaceShared.Common\SpaceShared.Common.projitems*{daae6853-63d4-40b1-9318-800291b1aa66}*SharedItemsImports = 5
 		SpaceShared\SpaceShared.projitems*{daae6853-63d4-40b1-9318-800291b1aa66}*SharedItemsImports = 5
+		SpaceShared.Common\SpaceShared.Common.projitems*{ddce02ff-e34c-47e0-b293-b90ac68ef2f4}*SharedItemsImports = 5
+		SpaceShared\SpaceShared.projitems*{ddce02ff-e34c-47e0-b293-b90ac68ef2f4}*SharedItemsImports = 5
 		SpaceShared.Common\SpaceShared.Common.projitems*{ed79699d-06af-4b23-b60e-1bed2d06be8d}*SharedItemsImports = 5
 		SpaceShared\SpaceShared.projitems*{ed79699d-06af-4b23-b60e-1bed2d06be8d}*SharedItemsImports = 5
 	EndGlobalSection

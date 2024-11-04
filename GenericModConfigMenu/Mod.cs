@@ -280,10 +280,6 @@ namespace GenericModConfigMenu
                 getValue: () => this.Config.OpenMenuKey,
                 setValue: value => this.Config.OpenMenuKey = value
             );
-
-            configMenu.AddPageLink(ModManifest, "meow", () => "meow", () => "meow");
-            configMenu.AddPage(ModManifest, "meow", () => "meow");
-            configMenu.AddParagraph(ModManifest, () => "meow");
         }
 
         private void FiveTicksAfterGameLaunched(object sender, UpdateTickingEventArgs e)

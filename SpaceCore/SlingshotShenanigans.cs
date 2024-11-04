@@ -69,7 +69,7 @@ namespace SpaceCore
                 }
                 if (npc.Sprite.Texture != null)
                 {
-                    location.debris.Add(new Debris(npc.Sprite.textureName, Game1.random.Next(3, 8), Utility.PointToVector2(npc.StandingPixel)));
+                    location.debris.Add(new Debris(npc.Sprite.textureName.Value, Game1.random.Next(3, 8), Utility.PointToVector2(npc.StandingPixel)));
                 }
             }
             if (npc.Name.Equals("Bouncer"))

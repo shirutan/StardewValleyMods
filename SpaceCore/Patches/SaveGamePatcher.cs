@@ -10,6 +10,7 @@ using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 using HarmonyLib;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Newtonsoft.Json;
 using Spacechase.Shared.Patching;
 using SpaceCore.Framework;
@@ -19,6 +20,7 @@ using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Inventories;
 using StardewValley.Menus;
+using StardewValley.SaveSerialization;
 
 namespace SpaceCore.Patches
 {
@@ -47,7 +49,7 @@ namespace SpaceCore.Patches
         public override void Apply(Harmony harmony, IMonitor monitor)
         {
             harmony.Patch(
-                original: this.RequireMethod<SaveGame>(nameof(SaveGame.GetSerializer)),
+                original: AccessTools.Method(typeof(SaveSerializer), nameof(SaveSerializer.GetSerializer)),
                 prefix: this.GetHarmonyMethod(nameof(Before_GetSerializer))
             );
 
@@ -417,7 +419,7 @@ namespace SpaceCore.Patches
 
             foreach (var insn in insns)
             {
-                if ( insn.operand is MethodInfo meth && meth == AccessTools.Method( typeof(SaveGame), nameof(SaveGame.GetSerializer ) ) )
+                if ( insn.operand is MethodInfo meth && meth == AccessTools.Method( typeof(SaveSerializer), nameof(SaveSerializer.GetSerializer ) ) )
                 {
                     insn.operand = AccessTools.Method(typeof(RedirectGetSerializerForNonWindowsPatch1), nameof(RedirectGetSerializerForNonWindowsPatch1.GetSerializerProxy));
                 }
